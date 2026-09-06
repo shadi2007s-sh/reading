@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>تدرّب على القراءة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#fbf6e9;--ink:#2f3437;--rule:#cfe0e8;--margin:#e2725b;
+    --ok:#2f8f5b;--ok-soft:#dff0e3;--live:#e0a11b;
+    --shadow:0 18px 40px -18px rgba(47,52,55,.45);
+    --font-read:"Noto Naskh Arabic",serif;
+    --font-ui:"Baloo Bhaijaan 2","Noto Naskh Arabic",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--font-ui);
+    background:radial-gradient(circle at 15% 10%,#fff7e2 0%,transparent 55%),
+               radial-gradient(circle at 85% 90%,#eaf3f6 0%,transparent 55%),#efe7d4;
+    color:var(--ink);min-height:100vh;padding:14px 12px 170px}
+  .wrap{max-width:760px;margin:0 auto}
+  header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+  h1{font-size:1.2rem;margin:0;font-weight:800}
+  h1 span{color:var(--margin)}
+  .stats{display:flex;gap:6px}
+  .pill{background:#fff;border:2px solid #e6dcc6;border-radius:999px;padding:5px 11px;
+    font-size:.85rem;font-weight:700;box-shadow:0 2px 0 #e6dcc6;white-space:nowrap}
+  .sheet{position:relative;background:var(--paper);border-radius:18px;padding:26px 22px;
+    box-shadow:var(--shadow);border:1px solid #e6dcc6;
+    background-image:repeating-linear-gradient(to bottom,transparent 0 61px,var(--rule) 61px 62px);overflow:hidden}
+  .sheet::before{content:"";position:absolute;top:0;bottom:0;right:52px;width:2px;background:var(--margin);opacity:.55}
+  .lesson-title{font-weight:800;font-size:1rem;color:#6b7176;margin:0 0 14px;text-align:center}
+  #text{font-family:var(--font-read);font-size:2rem;line-height:1.95;text-align:justify}
+  .w{display:inline-block;padding:2px 6px;margin:0 1px;border-radius:10px;transition:all .18s;position:relative}
+  .w.done{color:var(--ok);background:var(--ok-soft)}
+  .w.done::after{content:"✓";font-size:.5em;position:absolute;top:-2px;left:-2px;color:var(--ok)}
+  .w.now{background:#fff3cf;box-shadow:0 0 0 3px #f6d97a inset;animation:beat 1.4s ease-in-out infinite}
+  @keyframes beat{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+  .w.miss{animation:shake .35s}
+  @keyframes shake{25%{transform:translateX(6px)}75%{transform:translateX(-6px)}}
+  .w.pop{animation:pop .4s}
+  @keyframes pop{40%{transform:scale(1.35) rotate(-3deg)}}
+  .bar{height:12px;background:#e6dcc6;border-radius:999px;margin:14px 0 4px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#f0b429,#2f8f5b);transition:width .3s}
+  .heard{margin-top:10px;min-height:26px;font-size:.9rem;color:#7b8085;text-align:center}
+  .heard b{color:var(--live)}
+  .controls{position:fixed;bottom:0;right:0;left:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top,#efe7d4 72%,rgba(239,231,212,0))}
+  .row{display:flex;gap:8px;max-width:760px;margin:0 auto}
+  button{font-family:var(--font-ui);font-weight:700;font-size:1rem;border:2px solid var(--ink);
+    border-radius:14px;background:#fff;color:var(--ink);padding:12px 10px;cursor:pointer;flex:1;
+    box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s;touch-action:manipulation}
+  button:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
+  button.mic{background:#2f8f5b;color:#fff;border-color:#1e5c3b;box-shadow:0 4px 0 #1e5c3b;flex:2}
+  button.mic.on{background:#e2725b;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;animation:glow 1.2s infinite}
+  button.mic.hold{background:#5aa9d6;border-color:#2d6a8f;box-shadow:0 4px 0 #2d6a8f}
+  @keyframes glow{50%{filter:brightness(1.15)}}
+  button.ghost{background:transparent;border-style:dashed;box-shadow:none;font-size:.82rem;padding:8px}
+  button.ghost:active{transform:none}
+  .row.small{margin-top:8px}
+  dialog{border:none;border-radius:18px;padding:18px;max-width:92vw;width:560px;
+    box-shadow:var(--shadow);background:var(--paper);font-family:var(--font-ui)}
+  dialog::backdrop{background:rgba(47,52,55,.5)}
+  textarea{width:100%;height:170px;font-family:var(--font-read);font-size:1.15rem;
+    border:2px solid #d9cdb2;border-radius:12px;padding:10px;background:#fff}
+  #diag{font-size:.8rem;line-height:1.7;background:#fff;border-radius:12px;padding:10px;border:2px solid #e6dcc6}
+  #diag div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #eee;padding:3px 0}
+  .win{position:fixed;inset:0;display:none;place-items:center;background:rgba(47,52,55,.75);z-index:9;text-align:center;color:#fff;padding:20px}
+  .win.show{display:grid}
+  .win h2{font-size:2rem;margin:.2em 0}
+  .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
+  small.note{display:block;text-align:center;color:#8b9096;font-size:.75rem;margin-top:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>اقرئي <span>كلمة كلمة</span> 📖</h1>
+    <div class="stats">
+      <div class="pill">⭐ <span id="score">0</span></div>
+      <div class="pill">📊 <span id="prog">0</span>%</div>
+    </div>
+  </header>
+
+  <div class="sheet">
+    <p class="lesson-title">الإملاء لهذا الأسبوع اختباري</p>
+    <div id="text"></div>
+    <div class="bar"><i id="fill"></i></div>
+    <div class="heard" id="heard">اضغطي «ابدئي القراءة» واسمحي للمايك، ثم اقرئي الكلمة المضيّئة.</div>
+  </div>
+  <small class="note">إذا ما ضبط المايك، جرّبي زر «🎙 اضغطي واحكِ» أو افحصي 🩺</small>
+</div>
+
+<div class="controls">
+  <div class="row">
+    <button class="mic" id="micBtn">🎤 ابدئي القراءة</button>
+    <button id="sayBtn">🔊 اسمعي</button>
+    <button id="okBtn">✓ صح</button>
+  </div>
+  <div class="row small">
+    <button class="mic hold" id="holdBtn" style="flex:2">🎙 اضغطي واحكِ</button>
+    <button class="ghost" id="skipBtn">↷ تخطّي</button>
+    <button class="ghost" id="diagBtn">🩺 فحص</button>
+  </div>
+  <div class="row small">
+    <button class="ghost" id="readAllBtn">▶ اسمعي النص كامل</button>
+    <button class="ghost" id="editBtn">✎ غيّري النص</button>
+    <button class="ghost" id="resetBtn">↺ من البداية</button>
+  </div>
+</div>
+
+<div class="win" id="win">
+  <div>
+    <div style="font-size:4rem">🏆</div>
+    <h2>أحسنتِ! خلّصتِ النص</h2>
+    <p id="winMsg"></p>
+    <button style="max-width:220px;margin:auto;background:#fff" onclick="restart()">↺ مرة ثانية</button>
+  </div>
+</div>
+
+<dialog id="dlg">
+  <h3 style="margin-top:0">غيّري النص</h3>
+  <textarea id="ta"></textarea>
+  <div class="row" style="margin-top:10px">
+    <button onclick="applyText()">حفظ وابدأ</button>
+    <button class="ghost" onclick="document.getElementById('dlg').close()">إلغاء</button>
+  </div>
+</dialog>
+
+<dialog id="diagDlg">
+  <h3 style="margin-top:0">🩺 فحص المايك</h3>
+  <div id="diag">جارٍ الفحص…</div>
+  <div class="row" style="margin-top:10px">
+    <button onclick="document.getElementById('diagDlg').close()">تمام</button>
+  </div>
+</dialog>
+
+<script>
+const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟";
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+            (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const LANGS = ['ar-JO','ar-SA','ar-EG','ar'];
+let langI = 0, words = [], idx = 0, score = 0, listening = false, rec = null, micOK = false;
+
+const $ = id => document.getElementById(id);
+const say = (html) => $('heard').innerHTML = html;
+
+function norm(s){
+  return (s||"").replace(/[ً-ْٰـ]/g,"")
+    .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
+    .replace(/ؤ/g,"و").replace(/ئ/g,"ي")
+    .replace(/[^ء-ي0-9a-zA-Z]/g,"").trim();
+}
+function sim(a,b){
+  if(a===b) return 1;
+  if(!a||!b) return 0;
+  const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return 1-d[m][n]/Math.max(m,n);
+}
+function accept(said,target){
+  const t=norm(target), s=norm(said);
+  if(!t) return true; if(!s) return false; if(s===t) return true;
+  if(t.length>3 && (s.includes(t)||t.includes(s))) return true;
+  const th = t.length<=3 ? .95 : (t.length<=5 ? .75 : .68);
+  return sim(s,t) >= th;
+}
+function build(txt){
+  const box=$('text'); box.innerHTML="";
+  words = txt.trim().split(/s+/).filter(Boolean);
+  words.forEach((w,i)=>{
+    const el=document.createElement('span');
+    el.className='w'; el.textContent=w; el.onclick=()=>{idx=i;paint();};
+    box.appendChild(el); box.appendChild(document.createTextNode(' '));
+  });
+  idx=0; score=0; paint();
+}
+function paint(){
+  document.querySelectorAll('.w').forEach((el,i)=>{
+    el.classList.toggle('done',i<idx); el.classList.toggle('now',i===idx);
+  });
+  const pct = words.length ? Math.round(idx/words.length*100) : 0;
+  $('fill').style.width=pct+'%'; $('prog').textContent=pct; $('score').textContent=score;
+  const cur=document.querySelector('.w.now'); if(cur) cur.scrollIntoView({block:'center',behavior:'smooth'});
+}
+let ac;
+function beep(f,d,t){
+  try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(),g=ac.createGain(); o.type=t||'sine'; o.frequency.value=f;
+    g.gain.setValueAtTime(.001,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.25,ac.currentTime+.02);
+    g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+d);
+  }catch(e){}
+}
+function speak(t){
+  try{ speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(t); u.lang='ar-SA'; u.rate=.82;
+    const v=speechSynthesis.getVoices().find(v=>/ar/i.test(v.lang)); if(v) u.voice=v;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function correct(){
+  const el=document.querySelector('.w.now');
+  if(el){el.classList.add('pop'); setTimeout(()=>el.classList.remove('pop'),400);}
+  beep(880,.12); setTimeout(()=>beep(1320,.14),90);
+  score++; idx++;
+  if(idx>=words.length){paint();finish();return;}
+  paint();
+}
+function finish(){
+  stopMic();
+  $('winMsg').textContent='قرأتِ '+words.length+' كلمة وجمعتِ '+score+' نجمة ⭐';
+  $('win').classList.add('show');
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
+  for(let i=0;i<60;i++) confetti();
+}
+function confetti(){
+  const c=document.createElement('div'); c.className='confetti';
+  c.style.left=Math.random()*100+'vw';
+  c.style.background=['#e2725b','#f0b429','#2f8f5b','#5aa9d6','#fff'][Math.floor(Math.random()*5)];
+  document.body.appendChild(c);
+  c.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(105vh) rotate(720deg)'}],
+    {duration:2200+Math.random()*1600,easing:'ease-in'}).onfinish=()=>c.remove();
+}
+function restart(){ $('win').classList.remove('show'); idx=0; score=0; paint(); }
+
+async function primeMic(){
+  if(micOK) return true;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ micOK=true; return true; }
+  try{
+    const st = await navigator.mediaDevices.getUserMedia({audio:true});
+    st.getTracks().forEach(t=>t.stop());
+    micOK = true; return true;
+  }catch(e){
+    say('⛔ المايك مرفوض ('+e.name+'). اسمحي للموقع باستخدام المايك من إعدادات المتصفح، أو استخدمي زر <b>✓ صح</b>.');
+    return false;
+  }
+}
+function handleTranscript(heard){
+  say('سمعت: <b>'+heard.trim()+'</b>');
+  const toks = heard.trim().split(/s+/);
+  let guard=0;
+  for(const tk of toks){
+    if(idx>=words.length) break;
+    if(accept(tk,words[idx])){ correct(); guard++; }
+    else if(idx+1<words.length && accept(tk,words[idx+1])){ correct(); correct(); guard++; }
+    if(guard>25) break;
+  }
+}
+function makeRec(continuous){
+  const r = new SR();
+  r.lang = LANGS[langI];
+  r.continuous = continuous && !IOS;
+  r.interimResults = !IOS;
+  r.maxAlternatives = 3;
+  r.onresult = e=>{
+    let h="";
+    for(let i=e.resultIndex;i<e.results.length;i++)
+      for(let a=0;a<e.results[i].length;a++) h += " " + e.results[i][a].transcript;
+    handleTranscript(h);
+  };
+  r.onerror = ev=>{
+    if(ev.error==='language-not-supported' && langI < LANGS.length-1){
+      langI++; say('بجرّب لغة ثانية: '+LANGS[langI]+' …');
+      if(listening){ stopMic(); setTimeout(startMic,300); }
+      return;
+    }
+    if(ev.error==='not-allowed' || ev.error==='service-not-allowed'){
+      say('⛔ المتصفح رافض المايك. من إعدادات الموقع اسمحي بالمايكروفون، أو استخدمي <b>✓ صح</b>.');
+      stopMic(); return;
+    }
+    if(ev.error==='network'){ say('🌐 التعرّف على الصوت محتاج إنترنت — تأكدي من الاتصال.'); return; }
+    if(ev.error!=='no-speech' && ev.error!=='aborted') say('خطأ: <b>'+ev.error+'</b>');
+  };
+  return r;
+}
+async function startMic(){
+  if(!SR){ say('😕 هذا المتصفح ما بيدعم التعرّف على الصوت. جرّبي <b>Chrome</b> على أندرويد/كمبيوتر أو <b>Safari</b> على آيفون/آيباد. لهلأ استخدمي <b>✓ صح</b>.'); return; }
+  if(!window.isSecureContext){ say('🔒 لازم الرابط يكون https — المايك ما بيشتغل على http.'); return; }
+  if(!(await primeMic())) return;
+  try{
+    rec = makeRec(true);
+    rec.onend = ()=>{ if(listening){ try{ rec.start(); }catch(e){} } };
+    rec.start();
+    listening = true;
+    $('micBtn').classList.add('on'); $('micBtn').textContent='⏹ إيقاف';
+    say('🎧 أنا أسمعك… اقرئي الكلمة المضيّئة بصوت واضح.');
+  }catch(e){ say('ما قدرت أشغّل المايك: '+e.message); }
+}
+function stopMic(){
+  listening=false;
+  try{ rec && (rec.onend=null, rec.stop()); }catch(e){}
+  $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
+}
+
+let holdRec=null;
+async function holdStart(ev){
+  ev.preventDefault();
+  if(!SR){ say('المتصفح ما بيدعم التعرّف على الصوت.'); return; }
+  if(!(await primeMic())) return;
+  stopMic();
+  try{
+    holdRec = makeRec(false);
+    holdRec.onend = ()=>{ $('holdBtn').textContent='🎙 اضغطي واحكِ'; };
+    holdRec.start();
+    $('holdBtn').textContent='🔴 احكِ الآن…';
+    say('🎧 اقرئي الكلمة، وارفعي إصبعك لما تخلّصي.');
+  }catch(e){}
+}
+function holdEnd(){ try{ holdRec && holdRec.stop(); }catch(e){} }
+
+async function runDiag(){
+  const rows=[];
+  const add=(k,v,good)=>rows.push('<div><span>'+k+'</span><b style="color:'+(good?'#2f8f5b':'#e2725b')+'">'+v+'</b></div>');
+  add('دعم التعرّف على الصوت', SR?'موجود ✓':'غير موجود ✗', !!SR);
+  add('اتصال آمن (https)', window.isSecureContext?'نعم ✓':'لا ✗', window.isSecureContext);
+  add('العنوان', location.protocol, location.protocol!=='file:');
+  add('الجهاز', IOS?'iPhone/iPad':'غير آبل', true);
+  let perm='غير معروف', good=true;
+  try{ const p=await navigator.permissions.query({name:'microphone'}); perm=p.state; good=(p.state!=='denied'); }catch(e){}
+  add('إذن المايك', perm, good);
+  try{
+    const st=await navigator.mediaDevices.getUserMedia({audio:true});
+    st.getTracks().forEach(t=>t.stop()); add('فتح المايك','نجح ✓',true);
+  }catch(e){ add('فتح المايك','فشل: '+e.name,false); }
+  add('اللغة المستخدمة', LANGS[langI], true);
+  $('diag').innerHTML = rows.join('') +
+    '<p style="margin:10px 0 0;color:#7b8085">إذا كل الأسطر خضراء والمايك ما زال ما بيسمع: جرّبي زر «اضغطي واحكِ»، وتأكدي إن الإملاء/Dictation مفعّل من إعدادات الجهاز.</p>';
+}
+
+$('micBtn').onclick = ()=> listening ? stopMic() : startMic();
+$('sayBtn').onclick = ()=> words[idx] && speak(words[idx]);
+$('okBtn').onclick = ()=> idx<words.length && correct();
+$('skipBtn').onclick = ()=>{ if(idx<words.length){ const el=document.querySelector('.w.now');
+  if(el){el.classList.add('miss');setTimeout(()=>el.classList.remove('miss'),350);} idx++; paint(); if(idx>=words.length) finish(); } };
+$('readAllBtn').onclick = ()=> speak(words.join(' '));
+$('resetBtn').onclick = restart;
+$('editBtn').onclick = ()=>{ $('ta').value = words.join(' '); $('dlg').showModal(); };
+$('diagBtn').onclick = ()=>{ $('diag').innerHTML='جارٍ الفحص…'; $('diagDlg').showModal(); runDiag(); };
+const hb=$('holdBtn');
+hb.addEventListener('pointerdown', holdStart);
+hb.addEventListener('pointerup', holdEnd);
+hb.addEventListener('pointercancel', holdEnd);
+hb.addEventListener('pointerleave', holdEnd);
+function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
+if(window.speechSynthesis) speechSynthesis.onvoiceschanged=()=>{};
+build(DEFAULT_TEXT);
+</script>
+</body>
+</html>
