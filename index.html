@@ -190,7 +190,7 @@ function accept(said,target){
 }
 function build(txt){
   const box=$('text'); box.innerHTML="";
-  words = txt.trim().split(/s+/).filter(Boolean);
+  words = txt.trim().split(/\s+/).filter(Boolean);
   words.forEach((w,i)=>{
     const el=document.createElement('span');
     el.className='w'; el.textContent=w; el.onclick=()=>{idx=i;paint();};
@@ -315,7 +315,7 @@ function listenOnce(cb){
       for(let a=0;a<e.results[i].length;a++) h += " " + e.results[i][a].transcript;
     say('سمعت: <b>'+h.trim()+'</b>');
     if(done) return;
-    const hit = h.trim().split(/s+/).some(t=>accept(t, words[idx]));
+    const hit = h.trim().split(/\s+/).some(t=>accept(t, words[idx]));
     if(hit){ done=true; try{r.stop();}catch(e){} cb(true); }
   };
   r.onend = ()=>{ if(!done){ done=true; cb(false); } };
@@ -347,7 +347,7 @@ function makeRec(continuous){
 function handleT(h){
   say('سمعت: <b>'+h.trim()+'</b>');
   let guard=0;
-  for(const tk of h.trim().split(/s+/)){
+  for(const tk of h.trim().split(/\s+/)){
     if(idx>=words.length) break;
     if(accept(tk,words[idx])){ correct(); guard++; }
     else if(idx+1<words.length && accept(tk,words[idx+1])){ correct(); correct(); guard++; }
