@@ -85,6 +85,12 @@
   .win h2{font-size:2rem;margin:.2em 0}
   .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
   .hide{display:none}
+  .banner{background:#ffe9e2;border:2px solid #e2725b;color:#8c3a26;border-radius:14px;
+    padding:10px 12px;font-size:.85rem;line-height:1.6;margin-bottom:10px}
+  .set label{display:block;font-size:.85rem;font-weight:700;margin:12px 0 4px}
+  .set select,.set input[type=range]{width:100%;font-family:var(--font-ui);font-size:1rem;
+    padding:8px;border:2px solid #d9cdb2;border-radius:10px;background:#fff}
+  .set .chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700;font-size:.9rem}
 </style>
 </head>
 <body>
@@ -96,6 +102,7 @@
       <div class="pill">📊 <span id="prog">0</span>%</div>
     </div>
   </header>
+  <div id="banner" class="banner hide"></div>
   <div class="tabs">
     <button id="tabCard" class="act">🔠 كلمة وحدة</button>
     <button id="tabFull">📄 النص كامل</button>
@@ -129,6 +136,7 @@
     <button id="echoBtn">🔁 رددي ورايي</button>
   </div>
   <div class="row">
+    <button class="ghost" id="voiceBtn">🎚 الصوت</button>
     <button class="ghost" id="diagBtn">🩺 فحص</button>
     <button class="ghost" id="editBtn">✎ غيّري النص</button>
     <button class="ghost" id="resetBtn">↺ من البداية</button>
@@ -150,6 +158,21 @@
     <button class="ghost" onclick="document.getElementById('dlg').close()">إلغاء</button>
   </div>
 </dialog>
+<dialog id="voiceDlg">
+  <h3 style="margin-top:0">🎚 إعدادات الصوت</h3>
+  <div class="set">
+    <label>الصوت المستخدم</label>
+    <select id="voiceSel"></select>
+    <label>سرعة القراءة: <span id="rateVal">0.70</span></label>
+    <input type="range" id="rateSel" min="0.4" max="1.1" step="0.05" value="0.7">
+    <div class="chk"><input type="checkbox" id="noTash"> <span>انطق بدون تشكيل (جرّبيها إذا اللفظ غريب)</span></div>
+    <div class="row" style="margin-top:12px">
+      <button onclick="testVoice()">🔊 جرّبي الصوت</button>
+      <button class="ghost" onclick="document.getElementById('voiceDlg').close()">تمام</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="diagDlg">
   <h3 style="margin-top:0">🩺 فحص الصوت والمايك</h3>
   <div id="diag">جارٍ الفحص…</div>
@@ -224,19 +247,49 @@ function beep(f,d){
     o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+d);
   }catch(e){}
 }
-function arVoice(){
-  const vs = speechSynthesis.getVoices();
-  return vs.find(v=>/^ar/i.test(v.lang)) || vs.find(v=>/arab/i.test(v.name)) || null;
+function allVoices(){ return speechSynthesis.getVoices(); }
+function arVoices(){ return allVoices().filter(v=>/^ar/i.test(v.lang)||/arab/i.test(v.name)); }
+let chosenVoice=null, rate=0.7, stripTash=false, warned=false;
+function fillVoices(){
+  const sel=$('voiceSel'); if(!sel) return;
+  const ar=arVoices(), all=allVoices();
+  const list = ar.length ? ar : all;
+  sel.innerHTML='';
+  list.forEach(v=>{ const o=document.createElement('option');
+    o.value=v.name; o.textContent=v.name+' ('+v.lang+')'; sel.appendChild(o); });
+  if(!chosenVoice && list.length) chosenVoice=list[0];
+  if(chosenVoice) sel.value=chosenVoice.name;
+  checkVoice();
 }
-function speak(t, rate, cb){
+function checkVoice(){
+  const bn=$('banner'); if(!bn) return;
+  if(arVoices().length===0 && allVoices().length>0){
+    bn.classList.remove('hide');
+    bn.innerHTML='⚠️ <b>ما في صوت عربي على هذا الجهاز</b> — القراءة الصوتية رح يطلع لفظها غلط.<br>'+
+      '📱 آيفون/آيباد: الإعدادات ‹ إمكانية الوصول ‹ المحتوى المنطوق ‹ الأصوات ‹ العربية.<br>'+
+      '🤖 أندرويد: الإعدادات ‹ اللغة والإدخال ‹ تحويل النص إلى كلام ‹ تثبيت بيانات صوتية ‹ العربية.<br>'+
+      '💻 ويندوز: الإعدادات ‹ الوقت واللغة ‹ اللغة ‹ إضافة لغة ‹ العربية مع خيار الكلام (Speech).<br>'+
+      'باقي الأزرار شغّالة عادي بدون صوت 👍';
+  } else bn.classList.add('hide');
+}
+function speak(t, r, cb){
   try{
-    const u=new SpeechSynthesisUtterance(t);
-    u.lang='ar-SA'; u.rate=rate||.8; u.pitch=1;
-    const v=arVoice(); if(v){ u.voice=v; u.lang=v.lang; }
+    if(arVoices().length===0){
+      if(!warned){ warned=true; checkVoice(); say('⚠️ ما في صوت عربي على الجهاز — نزّليه عشان النطق يطلع صح.'); }
+      cb&&cb(); return;
+    }
+    const txt = stripTash ? t.replace(/[\u064B-\u0652\u0670]/g,'') : t;
+    const u=new SpeechSynthesisUtterance(txt);
+    const v=chosenVoice||arVoices()[0];
+    if(v){ u.voice=v; u.lang=v.lang; } else u.lang='ar-SA';
+    u.rate = r || rate; u.pitch=1;
     u.onend=()=>cb&&cb(); u.onerror=()=>cb&&cb();
     speechSynthesis.speak(u);
   }catch(e){ cb&&cb(); }
 }
+function testVoice(){ speak('مَرحَبًا، أنا رح أقرا معكِ', rate); }
+function arVoice(){ return chosenVoice || arVoices()[0] || null; }
+
 function correct(){
   const b=$('bigword'); b.classList.add('ok','pop'); setTimeout(()=>b.classList.remove('pop'),450);
   beep(880,.12); setTimeout(()=>beep(1320,.14),90);
@@ -276,7 +329,7 @@ function readAloud(from){
     $('prevw').textContent = i>0?words[i-1]:'';
     $('nextw').textContent = i<words.length-1?words[i+1]:'';
     say('🎧 بقرا: <b>'+words[i]+'</b>');
-    speak(words[i], .75, ()=>{ i++; setTimeout(step, 260); });
+    speak(words[i], rate, ()=>{ i++; setTimeout(step, 260); });
   };
   step();
 }
@@ -296,7 +349,7 @@ async function echoStep(){
   if(!echo || idx>=words.length) return;
   if(!(await primeMic())){ echo=false; $('echoBtn').textContent='🔁 رددي ورايي'; return; }
   paint(); say('🎧 اسمعي: <b>'+words[idx]+'</b>');
-  speak(words[idx], .7, ()=>{
+  speak(words[idx], rate, ()=>{
     if(!echo) return;
     say('🎤 دورك… رددي الكلمة');
     listenOnce(ok=>{
@@ -417,7 +470,7 @@ $('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView')
 $('tabFull').onclick=()=>{ $('fullView').classList.remove('hide'); $('cardView').classList.add('hide');
   $('tabFull').classList.add('act'); $('tabCard').classList.remove('act'); paint(); };
 $('micBtn').onclick=()=> listening?stopMic():startMic();
-$('sayBtn').onclick=()=> words[idx] && speak(words[idx], .7);
+$('sayBtn').onclick=()=> words[idx] && speak(words[idx], rate);
 $('okBtn').onclick=()=> idx<words.length && correct();
 $('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
 $('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
@@ -432,7 +485,11 @@ hb.addEventListener('pointerup',holdEnd);
 hb.addEventListener('pointercancel',holdEnd);
 hb.addEventListener('pointerleave',holdEnd);
 function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
-if(window.speechSynthesis) speechSynthesis.onvoiceschanged=()=>{};
+$('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
+$('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
+$('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); };
+$('noTash').onchange=e=>{ stripTash=e.target.checked; };
+if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); }; setTimeout(fillVoices,600); }
 build(DEFAULT_TEXT);
 </script>
 </body>
