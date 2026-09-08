@@ -161,10 +161,16 @@
 <dialog id="voiceDlg">
   <h3 style="margin-top:0">🎚 إعدادات الصوت</h3>
   <div class="set">
-    <label>الصوت المستخدم</label>
+    <label>محرك النطق</label>
+    <select id="engineSel">
+      <option value="google">🌐 Google — نطق أوضح (بحاجة إنترنت)</option>
+      <option value="device">📱 صوت الجهاز (ماجد)</option>
+    </select>
+    <label>الصوت المستخدم (لصوت الجهاز)</label>
     <select id="voiceSel"></select>
     <label>سرعة القراءة: <span id="rateVal">0.70</span></label>
     <input type="range" id="rateSel" min="0.4" max="1.1" step="0.05" value="0.7">
+    <div class="chk"><input type="checkbox" id="sentMode" checked> <span>اقرأ الجملة كاملة (نطق أصح من الكلمة لحالها)</span></div>
     <div class="chk"><input type="checkbox" id="noTash"> <span>انطق بدون تشكيل (جرّبيها إذا اللفظ غريب)</span></div>
     <div class="row" style="margin-top:12px">
       <button onclick="testVoice()">🔊 جرّبي الصوت</button>
@@ -263,7 +269,7 @@ function fillVoices(){
 }
 function checkVoice(){
   const bn=$('banner'); if(!bn) return;
-  if(arVoices().length===0 && allVoices().length>0){
+  if(engine!=='google' && arVoices().length===0 && allVoices().length>0){
     bn.classList.remove('hide');
     bn.innerHTML='⚠️ <b>ما في صوت عربي على هذا الجهاز</b> — القراءة الصوتية رح يطلع لفظها غلط.<br>'+
       '📱 آيفون/آيباد: الإعدادات ‹ إمكانية الوصول ‹ المحتوى المنطوق ‹ الأصوات ‹ العربية.<br>'+
@@ -272,7 +278,26 @@ function checkVoice(){
       'باقي الأزرار شغّالة عادي بدون صوت 👍';
   } else bn.classList.add('hide');
 }
+let engine='google', sentenceMode=true;
+const gAudio = new Audio(); gAudio.preload='auto';
+function gUrl(t){ return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=' + encodeURIComponent(t); }
+function gRate(){ return Math.min(1, Math.max(.55, rate + .2)); }
+function stripT(t){ return t.replace(/[\u064B-\u0652\u0670]/g,''); }
+function gSpeak(t, cb){
+  try{
+    gAudio.pause();
+    gAudio.src = gUrl(stripTash ? stripT(t) : t);
+    gAudio.playbackRate = gRate();
+    gAudio.onended = ()=> cb && cb();
+    gAudio.onerror = ()=>{ say('⚠️ صوت Google ما اشتغل — رجعنا لصوت الجهاز.'); engine='device'; speakDevice(t, rate, cb); };
+    gAudio.play().catch(()=>{ say('اضغطي الزر مرة ثانية لتشغيل الصوت 🔊'); cb && cb(); });
+  }catch(e){ cb && cb(); }
+}
 function speak(t, r, cb){
+  if(engine==='google') return gSpeak(t, cb);
+  return speakDevice(t, r, cb);
+}
+function speakDevice(t, r, cb){
   try{
     if(arVoices().length===0){
       if(!warned){ warned=true; checkVoice(); say('⚠️ ما في صوت عربي على الجهاز — نزّليه عشان النطق يطلع صح.'); }
@@ -316,25 +341,83 @@ function confetti(){
     {duration:2200+Math.random()*1600,easing:'ease-in'}).onfinish=()=>c.remove();
 }
 function restart(){ $('win').classList.remove('show'); idx=0; score=0; paint(); }
+function hi(i){
+  document.querySelectorAll('.w').forEach((el,k)=>el.classList.toggle('spk',k===i));
+  if(words[i]!==undefined){
+    $('bigword').textContent=words[i]; $('cnow').textContent=i+1;
+    $('prevw').textContent=i>0?words[i-1]:''; $('nextw').textContent=i<words.length-1?words[i+1]:'';
+  }
+}
 function readAloud(from){
   if(reading){ stopRead(); return; }
   stopMic(); echo=false;
   reading=true; $('readBtn').textContent='⏹ وقّف القراءة';
-  let i = (from!==undefined?from:idx);
+  const start = (from!==undefined?from:idx);
+  say('🎧 بقرا…');
+  if(sentenceMode) readSentence(start); else readWords(start);
+}
+function readWords(i){
   const step = ()=>{
     if(!reading || i>=words.length){ stopRead(); return; }
-    document.querySelectorAll('.w').forEach((el,k)=>el.classList.toggle('spk',k===i));
-    $('bigword').textContent = words[i];
-    $('cnow').textContent = i+1;
-    $('prevw').textContent = i>0?words[i-1]:'';
-    $('nextw').textContent = i<words.length-1?words[i+1]:'';
-    say('🎧 بقرا: <b>'+words[i]+'</b>');
-    speak(words[i], rate, ()=>{ i++; setTimeout(step, 260); });
+    hi(i);
+    speak(words[i], rate, ()=>{ i++; setTimeout(step, 240); });
   };
   step();
 }
+function readSentence(start){
+  const slice = words.slice(start);
+  const chunks=[]; let cur=[], len=0, ci=start;
+  slice.forEach((w,i)=>{
+    if(len + w.length + 1 > 170 && cur.length){ chunks.push({from:ci, ws:cur}); ci=start+i; cur=[]; len=0; }
+    cur.push(w); len += w.length+1;
+  });
+  if(cur.length) chunks.push({from:ci, ws:cur});
+  let k=0, timers=[];
+  const clearT = ()=>{ timers.forEach(t=>clearTimeout(t)); timers=[]; };
+  const schedule = (c, dur)=>{
+    const total = c.ws.reduce((x,w)=>x+w.length+1, 0);
+    let t=0;
+    c.ws.forEach((w,j)=>{
+      const at=t;
+      timers.push(setTimeout(()=>{ if(reading) hi(c.from+j); }, at*1000));
+      t += dur * ((w.length+1)/total);
+    });
+  };
+  const play = ()=>{
+    clearT();
+    if(!reading || k>=chunks.length){ stopRead(); return; }
+    const c = chunks[k], text = c.ws.join(' ');
+    const chars = c.ws.reduce((x,w)=>x+w.length+1, 0);
+    hi(c.from);
+    if(engine==='google'){
+      gAudio.pause();
+      gAudio.src = gUrl(stripTash ? stripT(text) : text);
+      gAudio.playbackRate = gRate();
+      gAudio.onloadedmetadata = ()=> schedule(c, (gAudio.duration || chars*.085) / gAudio.playbackRate);
+      gAudio.onended = ()=>{ k++; play(); };
+      gAudio.onerror = ()=>{ say('⚠️ صوت Google ما اشتغل — رجعنا لصوت الجهاز.'); engine='device'; play(); };
+      gAudio.play().catch(()=>{ say('اضغطي 📖 مرة ثانية 🔊'); stopRead(); });
+    } else {
+      const u = new SpeechSynthesisUtterance(stripTash ? stripT(text) : text);
+      const v = chosenVoice || arVoices()[0];
+      if(v){ u.voice=v; u.lang=v.lang; } else u.lang='ar-SA';
+      u.rate = rate;
+      let got=false;
+      u.onboundary = e=>{ got=true; clearT();
+        let j=0, p=0;
+        for(let n=0;n<c.ws.length;n++){ if(e.charIndex>=p) j=n; p += c.ws[n].length+1; }
+        hi(c.from+j); };
+      u.onstart = ()=>{ setTimeout(()=>{ if(!got) schedule(c, chars*.085/rate); }, 120); };
+      u.onend = ()=>{ k++; play(); };
+      u.onerror = ()=>{ k++; play(); };
+      speechSynthesis.speak(u);
+    }
+  };
+  play();
+}
 function stopRead(){
   reading=false; try{speechSynthesis.cancel();}catch(e){}
+  try{ gAudio.pause(); }catch(e){}
   document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
   $('readBtn').textContent='📖 اقرأ لي النص';
   paint(); say('خلصت القراءة ✨ جرّبي تقرئي إنتِ هلأ.');
@@ -489,6 +572,8 @@ $('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
 $('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
 $('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); };
 $('noTash').onchange=e=>{ stripTash=e.target.checked; };
+$('engineSel').onchange=e=>{ engine=e.target.value; checkVoice(); say(engine==='google'?'صوت Google مفعّل 🌐':'صوت الجهاز مفعّل 📱'); };
+$('sentMode').onchange=e=>{ sentenceMode=e.target.checked; };
 if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); }; setTimeout(fillVoices,600); }
 build(DEFAULT_TEXT);
 </script>
