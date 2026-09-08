@@ -163,8 +163,8 @@
   <div class="set">
     <label>محرك النطق</label>
     <select id="engineSel">
-      <option value="google">🌐 Google — نطق أوضح (بحاجة إنترنت)</option>
-      <option value="device">📱 صوت الجهاز (ماجد)</option>
+      <option value="device">📱 صوت الجهاز (الافتراضي)</option>
+      <option value="google">🌐 Google (محجوب حالياً)</option>
     </select>
     <label>الصوت المستخدم (لصوت الجهاز)</label>
     <select id="voiceSel"></select>
@@ -278,7 +278,7 @@ function checkVoice(){
       'باقي الأزرار شغّالة عادي بدون صوت 👍';
   } else bn.classList.add('hide');
 }
-let engine='google', sentenceMode=true;
+let engine='device', sentenceMode=true;
 const gAudio = new Audio(); gAudio.preload='auto';
 function gUrl(t){
   return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&total=1&idx=0&prev=input&textlen=' + t.length + '&q=' + encodeURIComponent(t);
