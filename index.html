@@ -52,6 +52,7 @@
   .w{display:inline-block;padding:2px 6px;margin:0 1px;border-radius:10px;transition:all .18s;position:relative;cursor:pointer}
   .w.done{color:var(--ok);background:var(--ok-soft)}
   .w.now{background:#fff3cf;box-shadow:0 0 0 3px #f6d97a inset}
+  .w.rec{border-bottom:3px solid #5aa9d6}
   .w.spk{background:#d7ecfa;box-shadow:0 0 0 3px #7cc0e8 inset}
   .bar{height:12px;background:#e6dcc6;border-radius:999px;margin:14px 0 4px;overflow:hidden}
   .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#f0b429,#2f8f5b);transition:width .3s}
@@ -136,6 +137,7 @@
     <button id="echoBtn">🔁 رددي ورايي</button>
   </div>
   <div class="row">
+    <button class="ghost" id="recBtn">🎙 سجّل بصوتك</button>
     <button class="ghost" id="voiceBtn">🎚 الصوت</button>
     <button class="ghost" id="diagBtn">🩺 فحص</button>
     <button class="ghost" id="editBtn">✎ غيّري النص</button>
@@ -158,6 +160,33 @@
     <button class="ghost" onclick="document.getElementById('dlg').close()">إلغاء</button>
   </div>
 </dialog>
+<dialog id="recDlg">
+  <h3 style="margin-top:0">🎙 سجّلي الكلمات بصوتك</h3>
+  <p style="margin:0 0 8px;font-size:.85rem;color:#7b8085">
+    اضغطي مطوّلاً على الزر الأحمر واقرأي الكلمة، وارفعي إصبعك. بتنحفظ على هذا الجهاز.</p>
+  <div style="text-align:center;background:#fbf6e9;border-radius:14px;padding:10px;border:1px solid #e6dcc6">
+    <div style="font-size:.8rem;color:#8b9096;font-weight:700">
+      <span id="rNow">1</span> / <span id="rTot">1</span> — مسجّلة: <span id="rDone">0</span></div>
+    <div id="rWord" style="font-family:var(--font-read);font-size:2.4rem;font-weight:700;padding:6px"></div>
+    <div id="rState" style="font-size:.8rem;color:#8b9096;min-height:1.2em"></div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button id="rRec" style="background:#e2725b;color:#fff;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;flex:2">⏺ اضغطي واقرأي</button>
+    <button id="rPlay">▶ اسمعي</button>
+  </div>
+  <div class="row" style="margin-top:7px">
+    <button class="ghost" id="rPrev">⏮ السابقة</button>
+    <button class="ghost" id="rNext">⏭ التالية</button>
+    <button class="ghost" id="rDel">🗑 امسحي</button>
+  </div>
+  <div class="row" style="margin-top:7px">
+    <button class="ghost" id="rExp">⬇ نسخة احتياطية</button>
+    <button class="ghost" id="rImp">⬆ استرجاع</button>
+    <button class="ghost" onclick="document.getElementById('recDlg').close()">تمام</button>
+  </div>
+  <input type="file" id="rFile" accept="application/json" style="display:none">
+</dialog>
+
 <dialog id="voiceDlg">
   <h3 style="margin-top:0">🎚 إعدادات الصوت</h3>
   <div class="set">
@@ -225,7 +254,7 @@ function build(txt){
     el.className='w'; el.textContent=w; el.onclick=()=>{idx=i;paint();};
     box.appendChild(el); box.appendChild(document.createTextNode(' '));
   });
-  idx=0; score=0; paint();
+  idx=0; score=0; paint(); refreshRecSet();
 }
 function paint(){
   document.querySelectorAll('.w').forEach((el,i)=>{
@@ -314,7 +343,56 @@ function gSpeak(t, cb){
     gAudio.play().catch(()=>{ clearTimeout(guard); engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); });
   }catch(e){ cb && cb(); }
 }
-function speak(t, r, cb){
+const recAudio = new Audio();
+let recSet = new Set(), recIdx = 0, mr=null, mrChunks=[], mrStream=null;
+function idb(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open('readingRecs',1);
+    r.onupgradeneeded = ()=> r.result.createObjectStore('recs');
+    r.onsuccess = ()=> res(r.result);
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function recGet(w){
+  try{ const d=await idb(); return await new Promise(res=>{
+    const q=d.transaction('recs').objectStore('recs').get(norm(w));
+    q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; }
+}
+async function recPut(w,blob){
+  try{ const d=await idb(); await new Promise(res=>{
+    const q=d.transaction('recs','readwrite').objectStore('recs').put(blob,norm(w));
+    q.onsuccess=res; q.onerror=res; }); }catch(e){}
+}
+async function recDelete(w){
+  try{ const d=await idb(); await new Promise(res=>{
+    const q=d.transaction('recs','readwrite').objectStore('recs').delete(norm(w));
+    q.onsuccess=res; q.onerror=res; }); }catch(e){}
+}
+async function recKeys(){
+  try{ const d=await idb(); return await new Promise(res=>{
+    const q=d.transaction('recs').objectStore('recs').getAllKeys();
+    q.onsuccess=()=>res(q.result||[]); q.onerror=()=>res([]); }); }catch(e){ return []; }
+}
+async function refreshRecSet(){
+  recSet = new Set(await recKeys());
+  document.querySelectorAll('.w').forEach((el,i)=>el.classList.toggle('rec', recSet.has(norm(words[i]))));
+  const d=$('rDone'); if(d) d.textContent = words.filter(w=>recSet.has(norm(w))).length;
+}
+function hasRec(w){ return recSet.has(norm(w)); }
+async function speak(t, r, cb){
+  if(hasRec(t)){
+    const b = await recGet(t);
+    if(b){
+      try{
+        const u = URL.createObjectURL(b);
+        recAudio.src = u;
+        recAudio.onended = ()=>{ URL.revokeObjectURL(u); cb && cb(); };
+        recAudio.onerror = ()=>{ cb && cb(); };
+        await recAudio.play();
+        return;
+      }catch(e){}
+    }
+  }
   if(engine==='google') return gSpeak(t, cb);
   return speakDevice(t, r, cb);
 }
@@ -375,7 +453,8 @@ function readAloud(from){
   reading=true; $('readBtn').textContent='⏹ وقّف القراءة';
   const start = (from!==undefined?from:idx);
   say('🎧 بقرا…');
-  if(sentenceMode) readSentence(start); else readWords(start);
+  const allRec = words.slice(start).every(w=>hasRec(w));
+  if(sentenceMode && !allRec) readSentence(start); else readWords(start);
 }
 function readWords(i){
   const step = ()=>{
@@ -593,6 +672,68 @@ hb.addEventListener('pointerdown',holdStart);
 hb.addEventListener('pointerup',holdEnd);
 hb.addEventListener('pointercancel',holdEnd);
 hb.addEventListener('pointerleave',holdEnd);
+function renderRec(){
+  $('rWord').textContent = words[recIdx] || '';
+  $('rNow').textContent = Math.min(recIdx+1, words.length);
+  $('rTot').textContent = words.length;
+  $('rDone').textContent = words.filter(w=>recSet.has(norm(w))).length;
+  $('rState').textContent = hasRec(words[recIdx]) ? '✅ مسجّلة' : '— مش مسجّلة';
+}
+async function mrStart(ev){
+  ev.preventDefault();
+  if(!navigator.mediaDevices || !window.MediaRecorder){ $('rState').textContent='المتصفح ما بيدعم التسجيل'; return; }
+  try{
+    mrStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    mrChunks = [];
+    mr = new MediaRecorder(mrStream);
+    mr.ondataavailable = e=>{ if(e.data && e.data.size) mrChunks.push(e.data); };
+    mr.onstop = async ()=>{
+      const blob = new Blob(mrChunks, {type: (mr && mr.mimeType) || 'audio/webm'});
+      if(blob.size > 500){ await recPut(words[recIdx], blob); await refreshRecSet(); }
+      try{ mrStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+      $('rRec').textContent='⏺ اضغطي واقرأي';
+      renderRec();
+      if(recIdx < words.length-1){ recIdx++; setTimeout(renderRec, 350); }
+    };
+    mr.start();
+    $('rRec').textContent='🔴 بسجّل… ارفعي إصبعك';
+    $('rState').textContent='اقرأي الكلمة الآن';
+  }catch(e){ $('rState').textContent='المايك مرفوض ⛔'; }
+}
+function mrStop(){ try{ if(mr && mr.state!=='inactive') mr.stop(); }catch(e){} }
+function b64(blob){ return new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); }); }
+async function exportRecs(){
+  const keys = await recKeys(); const out={};
+  for(const k of keys){ const b=await recGet(k); if(b) out[k]= await b64(b); }
+  const blob = new Blob([JSON.stringify(out)], {type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='my-recordings.json'; a.click();
+}
+async function importRecs(file){
+  try{
+    const obj = JSON.parse(await file.text());
+    for(const k in obj){
+      const r = await fetch(obj[k]); const b = await r.blob();
+      const d = await idb();
+      await new Promise(res=>{ const q=d.transaction('recs','readwrite').objectStore('recs').put(b,k); q.onsuccess=res; q.onerror=res; });
+    }
+    await refreshRecSet(); renderRec(); $('rState').textContent='✅ تم الاسترجاع';
+  }catch(e){ $('rState').textContent='الملف مش مظبوط'; }
+}
+$('recBtn').onclick = async ()=>{ recIdx = idx; await refreshRecSet(); renderRec(); $('recDlg').showModal(); };
+const rr = $('rRec');
+rr.addEventListener('pointerdown', mrStart);
+rr.addEventListener('pointerup', mrStop);
+rr.addEventListener('pointercancel', mrStop);
+rr.addEventListener('pointerleave', mrStop);
+$('rPlay').onclick = ()=> speak(words[recIdx], rate);
+$('rPrev').onclick = ()=>{ if(recIdx>0){ recIdx--; renderRec(); } };
+$('rNext').onclick = ()=>{ if(recIdx<words.length-1){ recIdx++; renderRec(); } };
+$('rDel').onclick = async ()=>{ await recDelete(words[recIdx]); await refreshRecSet(); renderRec(); };
+$('rExp').onclick = exportRecs;
+$('rImp').onclick = ()=> $('rFile').click();
+$('rFile').onchange = e=>{ if(e.target.files[0]) importRecs(e.target.files[0]); };
+
 function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
 $('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
 $('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
