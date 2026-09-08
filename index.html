@@ -280,7 +280,26 @@ function checkVoice(){
 }
 let engine='google', sentenceMode=true;
 const gAudio = new Audio(); gAudio.preload='auto';
-function gUrl(t){ return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&q=' + encodeURIComponent(t); }
+function gUrl(t){
+  return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&total=1&idx=0&prev=input&textlen=' + t.length + '&q=' + encodeURIComponent(t);
+}
+let audioUnlocked=false;
+function unlockAudio(){
+  if(audioUnlocked) return;
+  audioUnlocked=true;
+  try{
+    gAudio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
+    gAudio.play().then(()=>{ gAudio.pause(); }).catch(()=>{});
+  }catch(e){}
+}
+document.addEventListener('pointerdown', unlockAudio, {once:true});
+function gTest(cb){
+  const a=new Audio();
+  const to=setTimeout(()=>cb({ok:false,why:'timeout'}),5000);
+  a.onloadedmetadata=()=>{clearTimeout(to); cb({ok:true,dur:a.duration});};
+  a.onerror=()=>{clearTimeout(to); cb({ok:false,why:(a.error&&a.error.message)||'error'});};
+  a.src=gUrl('مرحبا'); a.load();
+}
 function gRate(){ return Math.min(1, Math.max(.55, rate + .2)); }
 function stripT(t){ return t.replace(/[\u064B-\u0652\u0670]/g,''); }
 function gSpeak(t, cb){
@@ -290,7 +309,9 @@ function gSpeak(t, cb){
     gAudio.playbackRate = gRate();
     gAudio.onended = ()=> cb && cb();
     gAudio.onerror = ()=>{ say('⚠️ صوت Google ما اشتغل — رجعنا لصوت الجهاز.'); engine='device'; speakDevice(t, rate, cb); };
-    gAudio.play().catch(()=>{ say('اضغطي الزر مرة ثانية لتشغيل الصوت 🔊'); cb && cb(); });
+    const guard=setTimeout(()=>{ if(gAudio.paused){ engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); } }, 3500);
+    gAudio.onplaying=()=>clearTimeout(guard);
+    gAudio.play().catch(()=>{ clearTimeout(guard); engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); });
   }catch(e){ cb && cb(); }
 }
 function speak(t, r, cb){
@@ -396,7 +417,9 @@ function readSentence(start){
       gAudio.onloadedmetadata = ()=> schedule(c, (gAudio.duration || chars*.085) / gAudio.playbackRate);
       gAudio.onended = ()=>{ k++; play(); };
       gAudio.onerror = ()=>{ say('⚠️ صوت Google ما اشتغل — رجعنا لصوت الجهاز.'); engine='device'; play(); };
-      gAudio.play().catch(()=>{ say('اضغطي 📖 مرة ثانية 🔊'); stopRead(); });
+      const guard=setTimeout(()=>{ if(gAudio.paused && reading){ engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); play(); } }, 3500);
+      gAudio.onplaying=()=>clearTimeout(guard);
+      gAudio.play().catch(()=>{ clearTimeout(guard); engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); play(); });
     } else {
       const u = new SpeechSynthesisUtterance(stripTash ? stripT(text) : text);
       const v = chosenVoice || arVoices()[0];
@@ -545,6 +568,9 @@ async function runDiag(){
     st.getTracks().forEach(t=>t.stop()); add('فتح المايك','نجح ✓',true);
   }catch(e){ add('فتح المايك','فشل: '+e.name,false); }
   add('اللغة', LANGS[langI], true);
+  add('المحرك الحالي', engine==='google'?'🌐 Google':'📱 الجهاز', true);
+  const g = await new Promise(r=>gTest(r));
+  add('اختبار صوت Google', g.ok ? ('يعمل ✓ ('+Math.round(g.dur*10)/10+'ث)') : ('فشل: '+g.why), g.ok);
   $('diag').innerHTML = rows.join('') +
    '<p style="margin:10px 0 0;color:#7b8085">إذا «صوت عربي» أحمر: نزّلي صوت عربي من إعدادات الجهاز (Android: إعدادات ثم اللغة ثم تحويل النص لكلام ثم تنزيل العربية — iPhone: الإعدادات ثم إمكانية الوصول ثم المحتوى المنطوق ثم الأصوات ثم العربية).</p>';
 }
