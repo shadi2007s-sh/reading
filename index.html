@@ -3,171 +3,182 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>تدريب الإملاء</title>
+<title>تدرّب على القراءة - النسخة الشاملة (دعم iPad)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --paper:#fbf6e9;--ink:#2f3437;--rule:#cfe0e8;--margin:#e2725b;
-    --ok:#2f8f5b;--ok-soft:#dff0e3;--bad:#e2725b;--bad-soft:#ffe4dc;--live:#e0a11b;
+    --bg-grad-1: #fff7e2; --bg-grad-2: #eaf3f6; --bg-main: #efe7d4;
+    --paper:#fbf6e9; --ink:#2f3437; --rule:#cfe0e8; --margin:#e2725b;
+    --ok:#2f8f5b; --ok-soft:#dff0e3; --live:#e0a11b;
+    --card-border: #e6dcc6; --btn-bg: #ffffff;
     --shadow:0 18px 40px -18px rgba(47,52,55,.45);
     --font-read:"Noto Naskh Arabic",serif;
     --font-ui:"Baloo Bhaijaan 2","Noto Naskh Arabic",sans-serif;
   }
+  body.dark {
+    --bg-grad-1: #1a1c1e; --bg-grad-2: #111315; --bg-main: #141618;
+    --paper: #222629; --ink: #e8eaed; --rule: #343a40; --margin: #e2725b;
+    --ok: #4caf50; --ok-soft: #1b3823; --live: #ffd54f;
+    --card-border: #33383c; --btn-bg: #2c3035;
+    --shadow: 0 18px 40px -18px rgba(0,0,0,.7);
+  }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
   body{font-family:var(--font-ui);
-    background:radial-gradient(circle at 15% 10%,#fff7e2 0%,transparent 55%),
-               radial-gradient(circle at 85% 90%,#eaf3f6 0%,transparent 55%),#efe7d4;
-    color:var(--ink);min-height:100vh;padding:12px 12px 200px}
+    background:radial-gradient(circle at 15% 10%,var(--bg-grad-1) 0%,transparent 55%),
+               radial-gradient(circle at 85% 90%,var(--bg-grad-2) 0%,transparent 55%),var(--bg-main);
+    color:var(--ink);min-height:100vh;padding:12px 12px 210px; transition: background .3s, color .3s}
   .wrap{max-width:760px;margin:0 auto}
   header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
   h1{font-size:1.05rem;margin:0;font-weight:800}
   h1 span{color:var(--margin)}
-  .stats{display:flex;gap:6px}
-  .pill{background:#fff;border:2px solid #e6dcc6;border-radius:999px;padding:4px 10px;
-    font-size:.8rem;font-weight:700;box-shadow:0 2px 0 #e6dcc6;white-space:nowrap}
-  a.back{display:inline-block;font-size:.8rem;color:#5aa9d6;text-decoration:none;margin-bottom:8px;font-weight:700}
-  .card{background:var(--paper);border-radius:22px;border:1px solid #e6dcc6;box-shadow:var(--shadow);
-    padding:18px;text-align:center}
+  .stats{display:flex;gap:6px;align-items:center}
+  .pill{background:var(--paper);border:2px solid var(--card-border);border-radius:999px;padding:4px 10px;
+    font-size:.8rem;font-weight:700;box-shadow:0 2px 0 var(--card-border);white-space:nowrap;color:var(--ink)}
+  .tabs{display:flex;gap:6px;margin-bottom:10px}
+  .tabs button{flex:1;padding:9px;font-size:.9rem;border-radius:12px;border:2px solid var(--card-border);
+    background:var(--btn-bg);color:var(--ink);box-shadow:none;font-weight:700}
+  .tabs button.act{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+  .card{background:var(--paper);border-radius:22px;border:1px solid var(--card-border);box-shadow:var(--shadow);
+    padding:18px;text-align:center;position:relative;overflow:hidden}
   .counter{font-size:.85rem;color:#8b9096;font-weight:700}
-  .slots{font-family:var(--font-read);font-size:2rem;letter-spacing:.25em;color:#c9bfa6;padding:10px 0 4px;min-height:1.6em}
-  input#ans{width:100%;font-family:var(--font-read);font-size:2.1rem;text-align:center;
-    border:3px solid #d9cdb2;border-radius:16px;padding:10px;background:#fff;color:var(--ink)}
-  input#ans:focus{outline:none;border-color:var(--live)}
-  .fb{font-family:var(--font-read);font-size:2rem;min-height:1.6em;padding:8px 0;letter-spacing:.06em}
-  .fb i{font-style:normal;padding:0 2px;border-radius:6px}
-  .fb i.g{color:var(--ok);background:var(--ok-soft)}
-  .fb i.b{color:var(--bad);background:var(--bad-soft);text-decoration:underline wavy}
-  .fb i.m{color:#fff;background:var(--bad);border-radius:6px}
-  .msg{font-size:.9rem;color:#7b8085;min-height:1.4em;margin-top:4px}
-  .msg b{color:var(--live)}
-  .bar{height:12px;background:#e6dcc6;border-radius:999px;margin:14px 0 4px;overflow:hidden}
+  .ghostw{font-family:var(--font-read);font-size:1.25rem;color:#bfb69f;min-height:1.6em;
+    display:flex;justify-content:center;gap:14px;align-items:center}
+  .bigword{font-family:var(--font-read);font-size:clamp(3rem,17vw,6rem);font-weight:700;
+    line-height:1.5;padding:6px 4px 10px;letter-spacing:.02em;transition:transform .2s;color:var(--ink);cursor:pointer}
+  .bigword.ok{color:var(--ok)}
+  .bigword.pop{animation:pop .45s}
+  @keyframes pop{40%{transform:scale(1.18) rotate(-2deg)}}
+  .bigword.miss{animation:shake .35s}
+  @keyframes shake{25%{transform:translateX(10px)}75%{transform:translateX(-10px)}}
+  .sheet{position:relative;background:var(--paper);border-radius:18px;padding:24px 20px;
+    box-shadow:var(--shadow);border:1px solid var(--card-border);
+    background-image:repeating-linear-gradient(to bottom,transparent 0 61px,var(--rule) 61px 62px);overflow:hidden}
+  .sheet::before{content:"";position:absolute;top:0;bottom:0;right:46px;width:2px;background:var(--margin);opacity:.5}
+  #text{font-family:var(--font-read);font-size:1.9rem;line-height:1.95;text-align:justify}
+  .w{display:inline-block;padding:2px 6px;margin:0 1px;border-radius:10px;transition:all .18s;position:relative;cursor:pointer}
+  .w.done{color:var(--ok);background:var(--ok-soft)}
+  .w.now{background:#fff3cf;color:#2f3437;box-shadow:0 0 0 3px #f6d97a inset}
+  body.dark .w.now{background:#4d3d00;color:#fff;box-shadow:0 0 0 3px #f0b429 inset}
+  .bar{height:12px;background:var(--card-border);border-radius:999px;margin:14px 0 4px;overflow:hidden}
   .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#f0b429,#2f8f5b);transition:width .3s}
+  .heard{margin-top:8px;min-height:24px;font-size:.88rem;color:#8b9096;text-align:center}
+  .heard b{color:var(--live)}
   .controls{position:fixed;bottom:0;right:0;left:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
-    background:linear-gradient(to top,#efe7d4 74%,rgba(239,231,212,0))}
+    background:linear-gradient(to top,var(--bg-main) 74%,rgba(0,0,0,0))}
   .row{display:flex;gap:7px;max-width:760px;margin:0 auto}
   .row+.row{margin-top:7px}
   button{font-family:var(--font-ui);font-weight:700;font-size:.98rem;border:2px solid var(--ink);
-    border-radius:14px;background:#fff;color:var(--ink);padding:11px 8px;cursor:pointer;flex:1;
+    border-radius:14px;background:var(--btn-bg);color:var(--ink);padding:11px 8px;cursor:pointer;flex:1;
     box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s;touch-action:manipulation}
   button:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
-  button.main{background:#2f8f5b;color:#fff;border-color:#1e5c3b;box-shadow:0 4px 0 #1e5c3b;flex:2}
-  button.hear{background:#5aa9d6;color:#fff;border-color:#2d6a8f;box-shadow:0 4px 0 #2d6a8f;flex:2}
-  button.ghost{background:transparent;border-style:dashed;box-shadow:none;font-size:.8rem;padding:7px}
+  button.mic{background:#2f8f5b;color:#fff;border-color:#1e5c3b;box-shadow:0 4px 0 #1e5c3b;flex:2}
+  button.mic.on{background:#e2725b;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;animation:glow 1.2s infinite}
+  button.say{background:#f0b429;border-color:#9a7413;box-shadow:0 4px 0 #9a7413;color:#2f3437;flex:2}
+  button.read{background:#5aa9d6;color:#fff;border-color:#2d6a8f;box-shadow:0 4px 0 #2d6a8f;flex:2}
+  @keyframes glow{50%{filter:brightness(1.15)}}
+  button.ghost{background:transparent;border-style:dashed;box-shadow:none;font-size:.8rem;padding:7px;color:var(--ink);border-color:var(--card-border)}
   button.ghost:active{transform:none}
   dialog{border:none;border-radius:18px;padding:18px;max-width:92vw;width:560px;
-    box-shadow:var(--shadow);background:var(--paper);font-family:var(--font-ui)}
-  dialog::backdrop{background:rgba(47,52,55,.5)}
-  textarea{width:100%;height:150px;font-family:var(--font-read);font-size:1.15rem;
-    border:2px solid #d9cdb2;border-radius:12px;padding:10px;background:#fff}
-  .win{position:fixed;inset:0;display:none;place-items:center;background:rgba(47,52,55,.78);z-index:9;
-    text-align:center;color:#fff;padding:20px}
+    box-shadow:var(--shadow);background:var(--paper);color:var(--ink);font-family:var(--font-ui)}
+  dialog::backdrop{background:rgba(0,0,0,.6)}
+  textarea, select{width:100%;font-family:var(--font-ui);font-size:1rem;
+    border:2px solid var(--card-border);border-radius:12px;padding:10px;background:var(--paper);color:var(--ink)}
+  textarea{height:120px;font-family:var(--font-read);font-size:1.15rem}
+  .win{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.8);z-index:9;text-align:center;color:#fff;padding:20px}
   .win.show{display:grid}
-  .win h2{font-size:1.8rem;margin:.2em 0}
-  .wrongs{font-family:var(--font-read);font-size:1.3rem;background:rgba(255,255,255,.12);
-    border-radius:12px;padding:10px;margin:10px 0;max-height:32vh;overflow:auto;text-align:right}
-  .wrongs div{padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.2)}
-  .modes{display:flex;gap:6px;margin:0 0 10px}
-  .modes button{flex:1;padding:9px;font-size:.88rem;border-radius:12px;border:2px solid #d9cdb2;
-    background:#fff;box-shadow:none;font-weight:700}
-  .modes button.act{background:var(--ink);color:#fff;border-color:var(--ink)}
-  #tileBox{font-family:var(--font-read);font-size:2.1rem;min-height:3rem;background:#fff;
-    border:3px solid #d9cdb2;border-radius:16px;padding:8px;letter-spacing:.04em}
-  .tiles{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:10px}
-  .tiles button{flex:0 0 auto;min-width:44px;padding:9px 6px;font-family:var(--font-read);
-    font-size:1.35rem;border-radius:10px;box-shadow:0 3px 0 var(--ink)}
-  .tiles button.sp{min-width:74px;font-size:.85rem;font-family:var(--font-ui)}
-  #pad{width:100%;height:230px;background:#fff;border:3px solid #d9cdb2;border-radius:16px;
-    touch-action:none;display:block}
-  .padwrap{position:relative}
-  .reveal{font-family:var(--font-read);font-size:2.2rem;color:var(--ok);min-height:1.4em;margin-top:6px}
-  .selfrow{display:flex;gap:7px;margin-top:8px}
-  .selfrow button{flex:1}
-  .hide{display:none}
+  .win h2{font-size:2rem;margin:.2em 0}
+  .missed-box{background:rgba(255,255,255,.1);border-radius:12px;padding:12px;margin:12px 0;max-height:140px;overflow-y:auto}
+  .missed-tag{display:inline-block;background:#e2725b;color:#fff;padding:3px 8px;border-radius:6px;margin:3px;font-size:.9rem}
   .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
+  .hide{display:none}
+  .tip-box{background:#fff3cf; color:#2f3437; padding:12px; border-radius:10px; font-size:.9rem; margin:12px 0; text-align:right;}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <a class="back" href="./">← رجوع لتدريب القراءة</a>
   <header>
-    <h1>تدريب <span>الإملاء</span> ✍️</h1>
+    <h1>اقرئي <span>كلمة كلمة</span> 📖</h1>
     <div class="stats">
+      <div class="pill">🔥 <span id="streak">0</span></div>
       <div class="pill">⭐ <span id="score">0</span></div>
       <div class="pill">📊 <span id="prog">0</span>%</div>
+      <button id="themeBtn" class="ghost" style="padding:4px 8px;font-size:1rem" title="الوضع الداكن">🌙</button>
     </div>
   </header>
 
-  <div class="modes">
-    <button id="mKb" class="act">⌨️ لوحة</button>
-    <button id="mTile">🔤 حروف</button>
-    <button id="mDraw">✍️ بالإصبع</button>
+  <div class="tabs">
+    <button id="tabCard" class="act">🔠 كلمة وحدة</button>
+    <button id="tabFull">📄 النص كامل</button>
   </div>
 
-  <div class="card">
+  <div class="card" id="cardView">
     <div class="counter">الكلمة <span id="cnow">1</span> من <span id="ctot">1</span></div>
-    <div class="slots" id="slots"></div>
-    <input id="ans" type="text" dir="rtl" autocomplete="off" autocorrect="off"
-           spellcheck="false" placeholder="اكتبي الكلمة هنا">
-
-    <div id="tileWrap" class="hide">
-      <div id="tileBox"></div>
-      <div class="tiles" id="tiles"></div>
-    </div>
-
-    <div id="drawWrap" class="hide">
-      <div class="padwrap"><canvas id="pad"></canvas></div>
-      <div class="selfrow">
-        <button class="ghost" id="pUndo">↩ تراجع</button>
-        <button class="ghost" id="pClear">🗑 مسح</button>
-        <button class="hear" id="pShow">👁 أظهري الكلمة</button>
-      </div>
-      <div class="reveal" id="reveal"></div>
-      <div class="selfrow hide" id="selfMark">
-        <button id="pRight" style="background:#2f8f5b;color:#fff;border-color:#1e5c3b;box-shadow:0 4px 0 #1e5c3b">✓ كتبتها صح</button>
-        <button id="pWrong" style="background:#e2725b;color:#fff;border-color:#a8442f;box-shadow:0 4px 0 #a8442f">✗ غلط</button>
-      </div>
-    </div>
-    <div class="fb" id="fb"></div>
-    <div class="msg" id="msg">اضغطي 🔊 لتسمعي الكلمة، واكتبيها.</div>
+    <div class="ghostw"><span id="prevw"></span></div>
+    <div class="bigword" id="bigword" title="اضغطي للاستماع">…</div>
+    <div class="ghostw"><span id="nextw"></span></div>
   </div>
+
+  <div class="sheet hide" id="fullView">
+    <div id="text"></div>
+  </div>
+
   <div class="bar"><i id="fill"></i></div>
+  <div class="heard" id="heard">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
 </div>
 
 <div class="controls">
   <div class="row">
-    <button class="hear" id="hearBtn">🔊 اسمعي الكلمة</button>
-    <button class="main" id="okBtn">✓ تحقّقي</button>
+    <button class="mic" id="micBtn">🎤 ابدئي القراءة</button>
+    <button class="say" id="sayBtn">🔊 اسمعي الكلمة</button>
+    <button id="okBtn">✓ صح</button>
   </div>
   <div class="row">
-    <button id="slowBtn">🐢 ببطء</button>
-    <button id="hintBtn">💡 تلميح</button>
-    <button id="skipBtn">⏭ تخطّي</button>
+    <button class="read" id="readBtn">📖 اقرأ لي النص كامل</button>
+    <button id="prevBtn">⏮ السابقة</button>
+    <button id="nextBtn">⏭ التالية</button>
   </div>
   <div class="row">
-    <button class="ghost" id="editBtn">✎ غيّري النص</button>
+    <button class="ghost" id="editBtn">📚 المكتبة والنص</button>
     <button class="ghost" id="resetBtn">↺ من البداية</button>
-    <button class="ghost" id="sentBtn">📝 وضع الجملة</button>
   </div>
 </div>
 
+<!-- نافذة الفوز والإنجاز -->
 <div class="win" id="win">
   <div>
-    <div style="font-size:3.4rem" id="wIcon">🏆</div>
-    <h2 id="wTitle">خلّصتِ الإملاء!</h2>
-    <p id="wMsg" style="margin:.2em 0 0"></p>
-    <div class="wrongs" id="wList"></div>
-    <div class="row" style="max-width:420px;margin:auto">
-      <button id="againWrong" style="background:#fff">🔁 درّبي على الأخطاء</button>
-      <button id="againAll" class="ghost" style="color:#fff;border-color:#fff">↺ النص كامل</button>
+    <div style="font-size:4rem">🏆</div>
+    <h2>أحسنتِ! اكتمل النص</h2>
+    <p id="winMsg"></p>
+    <div id="missedReport"></div>
+    <div class="row" style="margin-top:14px">
+      <button id="retryMissedBtn" style="background:#f0b429;display:none" onclick="retryMissed()">🎯 إعادة الكلمات الصعبة</button>
+      <button style="background:#fff;color:#2f3437" onclick="restart()">↺ النص كامل</button>
     </div>
   </div>
 </div>
 
+<!-- نافذة تنبيه توافق iPad / iOS -->
+<div class="win" id="fixModal">
+  <div style="max-width:480px; text-align:right; background:var(--paper); color:var(--ink); padding:24px; border-radius:20px;">
+    <h3 style="color:var(--margin); margin-top:0;">تنبيه توافق الجهاز 📱</h3>
+    <div id="modalBody"></div>
+    <button style="width:100%; margin-top:15px; background:var(--ink); color:var(--paper);" onclick="closeFixModal()">حسناً، استمرار</button>
+  </div>
+</div>
+
 <dialog id="dlg">
-  <h3 style="margin-top:0">غيّري النص</h3>
+  <h3 style="margin-top:0">اختر نصاً من المكتبة أو أدخل نصك</h3>
+  <label style="font-size:.85rem;font-weight:700">مكتبة النصوص الجاهزة:</label>
+  <select id="presetSel" style="margin:4px 0 12px">
+    <option value="">-- اختر نصاً جاهزاً --</option>
+    <option value="p1">🌱 المستوى الأول (سهل): الشمس طالعة</option>
+    <option value="p2">🌿 المستوى الثاني (متوسط): العلم نور</option>
+    <option value="p3">🌳 المستوى الثالث (متقدم): تدوين رؤوس الأقلام</option>
+  </select>
+  <label style="font-size:.85rem;font-weight:700">أو اكتب النص هنا:</label>
   <textarea id="ta"></textarea>
   <div class="row" style="margin-top:10px">
     <button onclick="applyText()">حفظ وابدأ</button>
@@ -176,65 +187,154 @@
 </dialog>
 
 <script>
-const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟";
+const PRESETS = {
+  p1: "الشَّمْسُ طَالِعَةٌ، وَالسَّمَاءُ صَافِيَةٌ، وَالْحَيَاةُ جَمِيلَةٌ.",
+  p2: "الْعِلْمُ نُورٌ يَهْدِي الْإِنْسَانَ فِي حَيَاتِهِ، وَبِالْقِرَاءَةِ نَرْتَقِي وَنَبْنِي الْمُسْتَقْبَلَ.",
+  p3: "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟"
+};
+const DEFAULT_TEXT = PRESETS.p3;
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+let words = [], idx = 0, score = 0, streak = 0, missedWords = new Set();
+let listening = false, rec = null, ac = null;
+
 const $ = id => document.getElementById(id);
+const say = text => $('heard').innerHTML = text;
 
-let words = [], idx = 0, score = 0, tries = 0, wrongs = [], sentenceMode = false, rate = 0.75;
-let mode = 'kb', tileStr = '';
-const LETTERS = ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي','أ','إ','آ','ء','ؤ','ئ','ة','ى','ال'];
+/* ===== 1. فك حظر الصوت وإعداد iPad / iOS ===== */
+function unlockIOSAudio() {
+  const unlock = () => {
+    if (!ac) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (AudioCtx) ac = new AudioCtx();
+    }
+    if (ac && ac.state === 'suspended') ac.resume();
+    if ('speechSynthesis' in window) {
+      const u = new SpeechSynthesisUtterance('');
+      window.speechSynthesis.speak(u);
+    }
+    document.removeEventListener('touchstart', unlock);
+    document.removeEventListener('click', unlock);
+  };
+  document.addEventListener('touchstart', unlock, { once: true });
+  document.addEventListener('click', unlock, { once: true });
+}
 
-/* مفتاح التسجيلات: نفس تطبيع صفحة القراءة */
-function keyNorm(s){
+function checkiPadCompatibility() {
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  const isSecure = window.location.protocol === 'https:' || 
+                   window.location.hostname === 'localhost' || 
+                   window.location.protocol === 'file:';
+  const hasSR = !!SR;
+  const hasTTS = 'speechSynthesis' in window;
+
+  let issues = [];
+  if (!isSecure) issues.push("يلزم فتح التطبيق عبر رابط آمن (HTTPS) ليعمل المايك.");
+  if (!hasSR) issues.push("التعرف الصوتي (المايك) غير مدعوم على هذا المتصفح.");
+  if (!hasTTS) issues.push("خاصية نطق الصوت غير مدعومة في متصفحك الحالي.");
+
+  if (issues.length > 0) {
+    let html = `<ul>${issues.map(i=>`<li>${i}</li>`).join('')}</ul>`;
+    if (isIOS && !hasSR) {
+      html += `<div class="tip-box"><b>حل مشكلة المايك على iPad:</b><br>افتح الرابط باستخدام متصفح <b>Safari</b> لتفعيل المايك.</div>`;
+    }
+    html += `<p style="font-size:0.85rem;">يمكنك دائماً استخدام زر <b>(✓ صح)</b> للتقييم اليدوي.</p>`;
+    $('modalBody').innerHTML = html;
+    $('fixModal').classList.add('show');
+  }
+}
+
+function closeFixModal() { $('fixModal').classList.remove('show'); }
+
+/* ===== 2. الصوت المباشر (Web Speech API) ===== */
+function playText(text) {
+  if (!text) return;
+  if ('speechSynthesis' in window) {
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text.trim());
+    utterance.lang = 'ar-SA';
+    utterance.rate = 0.85;
+    window.speechSynthesis.speak(utterance);
+  } else {
+    say("عذراً، محرك الصوت غير مدعوم في هذا المتصفح.");
+  }
+}
+
+/* ===== 3. الوضع الداكن والتقدم ===== */
+$('themeBtn').onclick = () => {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  $('themeBtn').textContent = isDark ? '☀️' : '🌙';
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+};
+if(localStorage.getItem('theme') === 'dark') {
+  document.body.classList.add('dark');
+  $('themeBtn').textContent = '☀️';
+}
+
+function loadProgress(){ score = parseInt(localStorage.getItem('reading_score')||'0'); $('score').textContent = score; }
+function saveProgress(){ localStorage.setItem('reading_score', score.toString()); }
+
+/* ===== 4. معالجة وتدقيق النصوص ===== */
+function norm(s){
   return (s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
     .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
     .replace(/ؤ/g,"و").replace(/ئ/g,"ي")
     .replace(/[^\u0621-\u064A0-9a-zA-Z]/g,"").trim();
 }
-/* تدقيق الإملاء: نشيل التشكيل والترقيم فقط — الهمزات والتاء المربوطة تفرق */
-function spellNorm(s){
-  return (s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
-    .replace(/[^\u0621-\u064A0-9]/g,"").trim();
+function sim(a,b){
+  if(a===b) return 1; if(!a||!b) return 0;
+  const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return 1-d[m][n]/Math.max(m,n);
+}
+function accept(said,target){
+  const t=norm(target), s=norm(said);
+  if(!t) return true; if(!s) return false; if(s===t) return true;
+  if(t.length>3 && (s.includes(t)||t.includes(s))) return true;
+  return sim(s,t) >= (t.length<=3 ? .95 : (t.length<=5 ? .75 : .68));
 }
 
-/* ===== الصوت: تسجيلاتك أولاً، بعدها صوت الجهاز ===== */
-const recAudio = new Audio();
-function idb(){
-  return new Promise((res,rej)=>{
-    const r = indexedDB.open('readingRecs',1);
-    r.onupgradeneeded = ()=> r.result.createObjectStore('recs');
-    r.onsuccess = ()=> res(r.result);
-    r.onerror = ()=> rej(r.error);
+/* ===== 5. بناء واجهة النص والعرض ===== */
+function build(txt){
+  const box=$('text'); box.innerHTML="";
+  words = txt.trim().split(/\s+/).filter(Boolean);
+  words.forEach((w,i)=>{
+    const el=document.createElement('span');
+    el.className='w'; el.textContent=w; 
+    el.onclick=()=>{
+      idx=i; 
+      paint();
+      playText(words[idx]);
+    };
+    box.appendChild(el); box.appendChild(document.createTextNode(' '));
   });
+  idx=0; paint();
 }
-async function recGet(w){
-  try{ const d=await idb(); return await new Promise(res=>{
-    const q=d.transaction('recs').objectStore('recs').get(keyNorm(w));
-    q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; }
+
+function paint(){
+  document.querySelectorAll('.w').forEach((el,i)=>{
+    el.classList.toggle('done',i<idx);
+    el.classList.toggle('now',i===idx);
+  });
+  $('bigword').textContent = words[idx] || '🎉';
+  $('bigword').className = 'bigword';
+  $('prevw').textContent = idx>0 ? words[idx-1] : '';
+  $('nextw').textContent = idx<words.length-1 ? words[idx+1] : '';
+  $('cnow').textContent = Math.min(idx+1, words.length);
+  $('ctot').textContent = words.length;
+  $('streak').textContent = streak;
+  const pct = words.length ? Math.round(idx/words.length*100) : 0;
+  $('fill').style.width=pct+'%'; $('prog').textContent=pct; $('score').textContent=score;
+  
+  const cur=document.querySelector('.w.now');
+  if(cur && !$('fullView').classList.contains('hide')) cur.scrollIntoView({block:'center',behavior:'smooth'});
 }
-function arVoice(){
-  const vs = speechSynthesis.getVoices();
-  return vs.find(v=>/^ar/i.test(v.lang)) || vs.find(v=>/arab/i.test(v.name)) || null;
-}
-async function say(t, r){
-  const b = await recGet(t);
-  if(b){
-    try{
-      const u = URL.createObjectURL(b);
-      recAudio.src = u; recAudio.playbackRate = 1;
-      recAudio.onended = ()=> URL.revokeObjectURL(u);
-      await recAudio.play(); return;
-    }catch(e){}
-  }
-  const v = arVoice();
-  if(!v){ msg('⚠️ ما في صوت عربي على الجهاز — سجّلي الكلمات من صفحة القراءة، أو نزّلي صوت عربي.'); return; }
-  try{
-    speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(t);
-    u.voice = v; u.lang = v.lang; u.rate = r || rate;
-    speechSynthesis.speak(u);
-  }catch(e){}
-}
-let ac;
+
+/* ===== 6. الأصوات والتفاعل ===== */
 function beep(f,d){
   try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)();
     const o=ac.createOscillator(),g=ac.createGain(); o.frequency.value=f;
@@ -245,91 +345,47 @@ function beep(f,d){
   }catch(e){}
 }
 
-/* ===== العرض ===== */
-function msg(h){ $('msg').innerHTML = h; }
-function target(){ return sentenceMode ? words.join(' ') : words[idx]; }
-function build(txt){
-  words = txt.trim().split(/\s+/).filter(Boolean);
-  idx=0; score=0; tries=0; wrongs=[]; paint();
-}
-function paint(){
-  const t = target() || '';
-  $('cnow').textContent = Math.min(idx+1, words.length);
-  $('ctot').textContent = words.length;
-  $('slots').textContent = sentenceMode ? '' : '_ '.repeat(spellNorm(t).length).trim();
-  $('ans').value=''; $('fb').innerHTML='';
-  tileStr=''; if($('tiles').dataset.done) renderTiles();
-  if(mode==='draw') resetPad();
-  const pct = words.length ? Math.round(idx/words.length*100) : 0;
-  $('fill').style.width = pct+'%'; $('prog').textContent = pct; $('score').textContent = score;
-  tries = 0;
-  if(mode==='kb') $('ans').focus();
+function correct(){
+  const b=$('bigword'); b.classList.add('ok','pop'); setTimeout(()=>b.classList.remove('pop'),450);
+  beep(880,.12); setTimeout(()=>beep(1320,.14),90);
+  score++; streak++; saveProgress();
+  if(streak % 5 === 0) { say('🔥 ممتازة! '+streak+' كلمات متتالية صحيحة!'); }
+  idx++;
+  if(idx>=words.length){ paint(); finish(); return; }
+  setTimeout(paint,180);
 }
 
-/* ===== مقارنة الحروف ===== */
-function diff(a, b){   // a = المكتوب، b = الصحيح
-  const m=a.length, n=b.length;
-  const d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
-  for(let j=0;j<=n;j++) d[0][j]=j;
-  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
-    d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1]===b[j-1]?0:1));
-  let i=m, j=n, out=[];
-  while(i>0 || j>0){
-    if(i>0 && j>0 && a[i-1]===b[j-1] && d[i][j]===d[i-1][j-1]){ out.unshift({c:b[j-1],k:'g'}); i--; j--; }
-    else if(i>0 && j>0 && d[i][j]===d[i-1][j-1]+1){ out.unshift({c:b[j-1],k:'b'}); i--; j--; }
-    else if(j>0 && d[i][j]===d[i][j-1]+1){ out.unshift({c:b[j-1],k:'m'}); j--; }
-    else { i--; }   // حرف زائد بالمكتوب
-  }
-  return out;
-}
-function showDiff(a, b){
-  $('fb').innerHTML = diff(a,b).map(x=>'<i class="'+x.k+'">'+x.c+'</i>').join('');
+function wrong(){
+  if(words[idx]) missedWords.add(words[idx]);
+  streak = 0;
+  const b=$('bigword'); b.classList.add('miss'); setTimeout(()=>b.classList.remove('miss'),350);
 }
 
-/* ===== التحقّق ===== */
-function check(){
-  const raw = mode==='tile' ? tileStr : $('ans').value;
-  const typed = spellNorm(raw);
-  const right = spellNorm(target());
-  if(!typed){ msg('اكتبي الكلمة أول 🙂'); return; }
-  if(typed === right){
-    beep(880,.12); setTimeout(()=>beep(1320,.14),90);
-    score++;
-    $('fb').innerHTML = '<i class="g">'+target()+'</i>';
-    msg('✅ صح! أحسنتِ');
-    if(sentenceMode || idx >= words.length-1){ idx = words.length; setTimeout(finish, 700); return; }
-    idx++;
-    setTimeout(()=>{ paint(); say(target(), rate); }, 800);
-    return;
-  }
-  tries++;
-  beep(220,.18);
-  showDiff(typed, right);
-  if(tries >= 3){
-    if(!wrongs.includes(target())) wrongs.push(target());
-    msg('الكلمة الصحيحة: <b>'+target()+'</b> — الحروف الملوّنة هي الغلط.');
-    if(sentenceMode || idx >= words.length-1){ idx = words.length; setTimeout(finish, 1800); return; }
-    idx++;
-    setTimeout(()=>{ paint(); say(target(), rate); }, 2200);
-  } else {
-    msg('مش مضبوط، جرّبي كمان مرة ('+tries+'/3) — الأحمر غلط والمخطوط ناقص.');
-    $('ans').select();
-  }
-}
 function finish(){
-  paint();
-  const total = sentenceMode ? 1 : words.length;
-  $('wIcon').textContent = wrongs.length ? '💪' : '🏆';
-  $('wTitle').textContent = wrongs.length ? 'خلّصتِ! في كلمات بتحتاج تمرين' : 'ممتازة! كل الكلمات صح';
-  $('wMsg').textContent = 'صح '+score+' من '+total;
-  $('wList').innerHTML = wrongs.length
-    ? '<div style="font-weight:700;border:none">كلمات للتمرين:</div>' + wrongs.map(w=>'<div>• '+w+'</div>').join('')
-    : '';
-  $('againWrong').style.display = wrongs.length ? '' : 'none';
+  stopMic();
+  $('winMsg').textContent='قرأتِ '+words.length+' كلمة وحصلتِ على '+score+' نجمة ⭐';
+  const mr = $('missedReport');
+  if(missedWords.size > 0){
+    mr.innerHTML = '<div class="missed-box"><b>الكلمات الصعبة للتدرب عليها:</b><br>' + 
+      Array.from(missedWords).map(w=>`<span class="missed-tag">${w}</span>`).join('') + '</div>';
+    $('retryMissedBtn').style.display = 'inline-block';
+  } else {
+    mr.innerHTML = '<p style="color:#2f8f5b">🎉 قراءة ممتازة بدون أي أخطاء!</p>';
+    $('retryMissedBtn').style.display = 'none';
+  }
   $('win').classList.add('show');
-  if(!wrongs.length){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
-    for(let i=0;i<50;i++) confetti(); }
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
+  for(let i=0;i<50;i++) confetti();
 }
+
+function retryMissed(){
+  if(!missedWords.size) return;
+  const arr = Array.from(missedWords);
+  missedWords.clear();
+  build(arr.join(' '));
+  $('win').classList.remove('show');
+}
+
 function confetti(){
   const c=document.createElement('div'); c.className='confetti';
   c.style.left=Math.random()*100+'vw';
@@ -339,139 +395,55 @@ function confetti(){
     {duration:2200+Math.random()*1600,easing:'ease-in'}).onfinish=()=>c.remove();
 }
 
-/* ===== أوضاع الإدخال ===== */
-function setMode(m){
-  mode = m;
-  $('mKb').classList.toggle('act', m==='kb');
-  $('mTile').classList.toggle('act', m==='tile');
-  $('mDraw').classList.toggle('act', m==='draw');
-  $('ans').classList.toggle('hide', m!=='kb');
-  $('tileWrap').classList.toggle('hide', m!=='tile');
-  $('drawWrap').classList.toggle('hide', m!=='draw');
-  $('okBtn').classList.toggle('hide', m==='draw');
-  if(m==='tile'){ tileStr=''; renderTiles(); }
-  if(m==='draw'){ setupPad(); resetPad(); }
-  if(m==='kb') $('ans').focus();
-  $('fb').innerHTML='';
-  msg(m==='draw' ? 'اسمعي الكلمة واكتبيها بإصبعك، بعدين اضغطي 👁 لتشوفي الصح.'
-    : (m==='tile' ? 'اسمعي الكلمة وركّبيها من الحروف 🔤' : 'اسمعي الكلمة واكتبيها ⌨️'));
-}
-function renderTiles(){
-  $('tileBox').textContent = tileStr || ' ';
-  const box = $('tiles');
-  if(box.dataset.done) return;
-  box.dataset.done = '1';
-  LETTERS.forEach(L=>{
-    const b=document.createElement('button');
-    b.textContent = L;
-    b.onclick = ()=>{ tileStr += L; renderTiles(); };
-    box.appendChild(b);
-  });
-  const sp=document.createElement('button');
-  sp.className='sp'; sp.textContent='مسافة';
-  sp.onclick=()=>{ tileStr += ' '; renderTiles(); };
-  box.appendChild(sp);
-  const bs=document.createElement('button');
-  bs.className='sp'; bs.textContent='⌫ حرف';
-  bs.onclick=()=>{ tileStr = tileStr.slice(0,-1); renderTiles(); };
-  box.appendChild(bs);
-  const cl=document.createElement('button');
-  cl.className='sp'; cl.textContent='🗑 مسح';
-  cl.onclick=()=>{ tileStr=''; renderTiles(); };
-  box.appendChild(cl);
+function restart(){ $('win').classList.remove('show'); missedWords.clear(); streak=0; idx=0; paint(); }
+
+/* ===== 7. المايك والتعرف الصوتي ===== */
+function startMic(){
+  if(!SR){ checkiPadCompatibility(); return; }
+  listening=true; $('micBtn').classList.add('on'); $('micBtn').textContent='⏹ إيقاف';
+  try{
+    rec = new SR(); rec.lang='ar-SA'; rec.continuous=true; rec.interimResults=true;
+    rec.onresult = e => {
+      let h=""; for(let i=e.resultIndex; i<e.results.length; i++) h += e.results[i][0].transcript;
+      say('سمعت: <b>'+h+'</b>');
+      for(const tk of h.trim().split(/\s+/)){
+        if(idx < words.length && accept(tk, words[idx])) correct();
+      }
+    };
+    rec.onerror = () => { checkiPadCompatibility(); stopMic(); };
+    rec.onend = ()=>{ if(listening) try{rec.start();}catch(e){} };
+    rec.start();
+    say('🎧 أنا أسمعك… اقرئي الكلمة الكبيرة.');
+  }catch(e){ stopMic(); }
 }
 
-/* ===== لوح الكتابة بالإصبع ===== */
-let pad, pctx, drawing=false, strokes=[], cur=null, padReady=false;
-function setupPad(){
-  pad = $('pad');
-  if(!padReady){
-    padReady = true;
-    pad.addEventListener('pointerdown', e=>{ e.preventDefault(); drawing=true;
-      cur=[[e.offsetX,e.offsetY]]; strokes.push(cur); });
-    pad.addEventListener('pointermove', e=>{ if(!drawing) return; e.preventDefault();
-      cur.push([e.offsetX,e.offsetY]); drawPad(); });
-    ['pointerup','pointercancel','pointerleave'].forEach(ev=>
-      pad.addEventListener(ev, ()=>{ drawing=false; }));
-    window.addEventListener('resize', ()=>{ sizePad(); drawPad(); });
-  }
-  sizePad(); drawPad();
-}
-function sizePad(){
-  const r = pad.getBoundingClientRect();
-  const dpr = window.devicePixelRatio || 1;
-  pad.width = r.width*dpr; pad.height = r.height*dpr;
-  pctx = pad.getContext('2d');
-  pctx.scale(dpr,dpr);
-  pctx.lineWidth = 5; pctx.lineJoin='round'; pctx.lineCap='round'; pctx.strokeStyle='#2f3437';
-}
-function drawPad(){
-  const r = pad.getBoundingClientRect();
-  pctx.clearRect(0,0,r.width,r.height);
-  pctx.save();
-  pctx.strokeStyle='#cfe0e8'; pctx.lineWidth=2;
-  pctx.beginPath(); pctx.moveTo(10, r.height*0.68); pctx.lineTo(r.width-10, r.height*0.68); pctx.stroke();
-  pctx.restore();
-  pctx.strokeStyle='#2f3437'; pctx.lineWidth=5;
-  strokes.forEach(st=>{
-    pctx.beginPath();
-    st.forEach((p,i)=> i? pctx.lineTo(p[0],p[1]) : pctx.moveTo(p[0],p[1]));
-    pctx.stroke();
-  });
-}
-function resetPad(){ strokes=[]; if(pctx) drawPad(); $('reveal').textContent=''; $('selfMark').classList.add('hide'); }
-function nextAfterMark(){
-  if(sentenceMode || idx >= words.length-1){ idx = words.length; finish(); return; }
-  idx++; paint(); resetPad(); say(target(), rate);
+function stopMic(){
+  listening=false; try{ rec && rec.stop(); }catch(e){}
+  $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
 }
 
-/* ===== الأزرار ===== */
-$('mKb').onclick = ()=> setMode('kb');
-$('mTile').onclick = ()=> setMode('tile');
-$('mDraw').onclick = ()=> setMode('draw');
-$('pUndo').onclick = ()=>{ strokes.pop(); drawPad(); };
-$('pClear').onclick = ()=>{ strokes=[]; drawPad(); };
-$('pShow').onclick = ()=>{
-  $('reveal').textContent = target();
-  $('selfMark').classList.remove('hide');
-  msg('قارني كتابتك مع الكلمة، واضغطي صح أو غلط.');
-};
-$('pRight').onclick = ()=>{ score++; beep(880,.12); setTimeout(()=>beep(1320,.14),90); nextAfterMark(); };
-$('pWrong').onclick = ()=>{ if(!wrongs.includes(target())) wrongs.push(target()); beep(220,.18); nextAfterMark(); };
-$('hearBtn').onclick = ()=> say(target(), rate);
-$('slowBtn').onclick = ()=> say(target(), .5);
-$('okBtn').onclick = check;
-$('ans').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); check(); } });
-$('hintBtn').onclick = ()=>{
-  const t = spellNorm(target());
-  const shown = Math.min(t.length, 1 + Math.floor(tries));
-  $('slots').textContent = t.slice(0, shown).split('').join(' ') + ' ' + '_ '.repeat(Math.max(0,t.length-shown)).trim();
-  msg('التلميح: الكلمة فيها <b>'+t.length+'</b> حروف.');
-};
-$('skipBtn').onclick = ()=>{
-  if(!wrongs.includes(target())) wrongs.push(target());
-  if(sentenceMode || idx >= words.length-1){ idx = words.length; finish(); return; }
-  idx++; paint(); say(target(), rate);
-};
-$('resetBtn').onclick = ()=>{ $('win').classList.remove('show'); idx=0; score=0; wrongs=[]; sentenceMode=false;
-  $('sentBtn').textContent='📝 وضع الجملة'; paint(); };
-$('editBtn').onclick = ()=>{ $('ta').value = words.join(' '); $('dlg').showModal(); };
-$('sentBtn').onclick = ()=>{
-  sentenceMode = !sentenceMode;
-  $('sentBtn').textContent = sentenceMode ? '🔠 وضع الكلمة' : '📝 وضع الجملة';
-  idx=0; score=0; wrongs=[]; paint();
-  msg(sentenceMode ? 'اسمعي الجملة كاملة واكتبيها 📝' : 'كلمة كلمة 🔠');
-};
-$('againWrong').onclick = ()=>{
-  if(!wrongs.length) return;
-  build(wrongs.join(' '));
-  $('win').classList.remove('show');
-  say(target(), rate);
-};
-$('againAll').onclick = ()=>{ $('win').classList.remove('show'); build(words.join(' ')); };
+/* ===== 8. أحداث الأزرار والتشغيل ===== */
+$('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView').classList.add('hide'); $('tabCard').classList.add('act'); $('tabFull').classList.remove('act'); };
+$('tabFull').onclick=()=>{ $('fullView').classList.remove('hide'); $('cardView').classList.add('hide'); $('tabFull').classList.add('act'); $('tabCard').classList.remove('act'); paint(); };
+$('micBtn').onclick=()=> listening ? stopMic() : startMic();
+$('sayBtn').onclick=()=> words[idx] && playText(words[idx]);
+$('bigword').onclick=()=> words[idx] && playText(words[idx]);
+$('readBtn').onclick=()=> words.length && playText(words.join(' '));
+$('okBtn').onclick=()=> idx<words.length && correct();
+$('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
+$('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
+$('resetBtn').onclick=()=>{ stopMic(); restart(); };
+$('editBtn').onclick=()=>{ $('ta').value=words.join(' '); $('dlg').showModal(); };
+$('presetSel').onchange=e=>{ if(PRESETS[e.target.value]) $('ta').value = PRESETS[e.target.value]; };
+
 function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
-if(window.speechSynthesis) speechSynthesis.onvoiceschanged = ()=>{};
-build(DEFAULT_TEXT);
+
+window.addEventListener('DOMContentLoaded', () => {
+  unlockIOSAudio();
+  checkiPadCompatibility();
+  loadProgress();
+  build(DEFAULT_TEXT);
+});
 </script>
 </body>
 </html>
