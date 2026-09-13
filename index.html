@@ -1,294 +1,477 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>التطبيق التفاعلي - دعم كامل لـ iPad</title>
-  <style>
-    :root {
-      --primary-color: #4a90e2;
-      --success-color: #2ecc71;
-      --warning-color: #e2725b;
-      --bg-color: #f4f7f6;
-    }
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background-color: var(--bg-color);
-      margin: 0;
-      padding: 20px;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      box-sizing: border-box;
-    }
-
-    .card {
-      background: white;
-      padding: 30px;
-      border-radius: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-      width: 100%;
-      max-width: 500px;
-      text-align: center;
-    }
-
-    h2 {
-      color: #333;
-      margin-bottom: 20px;
-    }
-
-    .btn-group {
-      display: flex;
-      gap: 10px;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-
-    button {
-      padding: 12px 24px;
-      font-size: 1rem;
-      font-weight: bold;
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .btn-main { background-color: var(--primary-color); color: white; }
-    .btn-success { background-color: var(--success-color); color: white; }
-    button:active { transform: scale(0.96); }
-
-    /* نافذة التنبيه والحلول Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0, 0, 0, 0.5);
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      padding: 20px;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-    }
-
-    .modal-overlay.active {
-      opacity: 1;
-      pointer-events: auto;
-    }
-
-    .modal-content {
-      background: white;
-      padding: 25px;
-      border-radius: 16px;
-      max-width: 450px;
-      width: 100%;
-      text-align: right;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-    }
-
-    .modal-content h3 { color: var(--warning-color); margin-top: 0; }
-    .modal-content ul { padding-right: 20px; line-height: 1.6; }
-    .modal-content .tip-box {
-      background: #fff3cf;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 0.9rem;
-      margin: 15px 0;
-    }
-
-    .status-text {
-      margin-top: 15px;
-      font-size: 0.95rem;
-      color: #666;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>تدريب الإملاء</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#fbf6e9;--ink:#2f3437;--rule:#cfe0e8;--margin:#e2725b;
+    --ok:#2f8f5b;--ok-soft:#dff0e3;--bad:#e2725b;--bad-soft:#ffe4dc;--live:#e0a11b;
+    --shadow:0 18px 40px -18px rgba(47,52,55,.45);
+    --font-read:"Noto Naskh Arabic",serif;
+    --font-ui:"Baloo Bhaijaan 2","Noto Naskh Arabic",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--font-ui);
+    background:radial-gradient(circle at 15% 10%,#fff7e2 0%,transparent 55%),
+               radial-gradient(circle at 85% 90%,#eaf3f6 0%,transparent 55%),#efe7d4;
+    color:var(--ink);min-height:100vh;padding:12px 12px 200px}
+  .wrap{max-width:760px;margin:0 auto}
+  header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  h1{font-size:1.05rem;margin:0;font-weight:800}
+  h1 span{color:var(--margin)}
+  .stats{display:flex;gap:6px}
+  .pill{background:#fff;border:2px solid #e6dcc6;border-radius:999px;padding:4px 10px;
+    font-size:.8rem;font-weight:700;box-shadow:0 2px 0 #e6dcc6;white-space:nowrap}
+  a.back{display:inline-block;font-size:.8rem;color:#5aa9d6;text-decoration:none;margin-bottom:8px;font-weight:700}
+  .card{background:var(--paper);border-radius:22px;border:1px solid #e6dcc6;box-shadow:var(--shadow);
+    padding:18px;text-align:center}
+  .counter{font-size:.85rem;color:#8b9096;font-weight:700}
+  .slots{font-family:var(--font-read);font-size:2rem;letter-spacing:.25em;color:#c9bfa6;padding:10px 0 4px;min-height:1.6em}
+  input#ans{width:100%;font-family:var(--font-read);font-size:2.1rem;text-align:center;
+    border:3px solid #d9cdb2;border-radius:16px;padding:10px;background:#fff;color:var(--ink)}
+  input#ans:focus{outline:none;border-color:var(--live)}
+  .fb{font-family:var(--font-read);font-size:2rem;min-height:1.6em;padding:8px 0;letter-spacing:.06em}
+  .fb i{font-style:normal;padding:0 2px;border-radius:6px}
+  .fb i.g{color:var(--ok);background:var(--ok-soft)}
+  .fb i.b{color:var(--bad);background:var(--bad-soft);text-decoration:underline wavy}
+  .fb i.m{color:#fff;background:var(--bad);border-radius:6px}
+  .msg{font-size:.9rem;color:#7b8085;min-height:1.4em;margin-top:4px}
+  .msg b{color:var(--live)}
+  .bar{height:12px;background:#e6dcc6;border-radius:999px;margin:14px 0 4px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#f0b429,#2f8f5b);transition:width .3s}
+  .controls{position:fixed;bottom:0;right:0;left:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top,#efe7d4 74%,rgba(239,231,212,0))}
+  .row{display:flex;gap:7px;max-width:760px;margin:0 auto}
+  .row+.row{margin-top:7px}
+  button{font-family:var(--font-ui);font-weight:700;font-size:.98rem;border:2px solid var(--ink);
+    border-radius:14px;background:#fff;color:var(--ink);padding:11px 8px;cursor:pointer;flex:1;
+    box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s;touch-action:manipulation}
+  button:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
+  button.main{background:#2f8f5b;color:#fff;border-color:#1e5c3b;box-shadow:0 4px 0 #1e5c3b;flex:2}
+  button.hear{background:#5aa9d6;color:#fff;border-color:#2d6a8f;box-shadow:0 4px 0 #2d6a8f;flex:2}
+  button.ghost{background:transparent;border-style:dashed;box-shadow:none;font-size:.8rem;padding:7px}
+  button.ghost:active{transform:none}
+  dialog{border:none;border-radius:18px;padding:18px;max-width:92vw;width:560px;
+    box-shadow:var(--shadow);background:var(--paper);font-family:var(--font-ui)}
+  dialog::backdrop{background:rgba(47,52,55,.5)}
+  textarea{width:100%;height:150px;font-family:var(--font-read);font-size:1.15rem;
+    border:2px solid #d9cdb2;border-radius:12px;padding:10px;background:#fff}
+  .win{position:fixed;inset:0;display:none;place-items:center;background:rgba(47,52,55,.78);z-index:9;
+    text-align:center;color:#fff;padding:20px}
+  .win.show{display:grid}
+  .win h2{font-size:1.8rem;margin:.2em 0}
+  .wrongs{font-family:var(--font-read);font-size:1.3rem;background:rgba(255,255,255,.12);
+    border-radius:12px;padding:10px;margin:10px 0;max-height:32vh;overflow:auto;text-align:right}
+  .wrongs div{padding:3px 0;border-bottom:1px dashed rgba(255,255,255,.2)}
+  .modes{display:flex;gap:6px;margin:0 0 10px}
+  .modes button{flex:1;padding:9px;font-size:.88rem;border-radius:12px;border:2px solid #d9cdb2;
+    background:#fff;box-shadow:none;font-weight:700}
+  .modes button.act{background:var(--ink);color:#fff;border-color:var(--ink)}
+  #tileBox{font-family:var(--font-read);font-size:2.1rem;min-height:3rem;background:#fff;
+    border:3px solid #d9cdb2;border-radius:16px;padding:8px;letter-spacing:.04em}
+  .tiles{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;margin-top:10px}
+  .tiles button{flex:0 0 auto;min-width:44px;padding:9px 6px;font-family:var(--font-read);
+    font-size:1.35rem;border-radius:10px;box-shadow:0 3px 0 var(--ink)}
+  .tiles button.sp{min-width:74px;font-size:.85rem;font-family:var(--font-ui)}
+  #pad{width:100%;height:230px;background:#fff;border:3px solid #d9cdb2;border-radius:16px;
+    touch-action:none;display:block}
+  .padwrap{position:relative}
+  .reveal{font-family:var(--font-read);font-size:2.2rem;color:var(--ok);min-height:1.4em;margin-top:6px}
+  .selfrow{display:flex;gap:7px;margin-top:8px}
+  .selfrow button{flex:1}
+  .hide{display:none}
+  .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
+</style>
 </head>
 <body>
+<div class="wrap">
+  <a class="back" href="./">← رجوع لتدريب القراءة</a>
+  <header>
+    <h1>تدريب <span>الإملاء</span> ✍️</h1>
+    <div class="stats">
+      <div class="pill">⭐ <span id="score">0</span></div>
+      <div class="pill">📊 <span id="prog">0</span>%</div>
+    </div>
+  </header>
+
+  <div class="modes">
+    <button id="mKb" class="act">⌨️ لوحة</button>
+    <button id="mTile">🔤 حروف</button>
+    <button id="mDraw">✍️ بالإصبع</button>
+  </div>
 
   <div class="card">
-    <h2>التمرين التفاعلي ✏️</h2>
-    <p>اقرأ الكلمة بصوت عالٍ أو استخدم الزر اليدوي عند الحاجة:</p>
-    
-    <div class="btn-group">
-      <button class="btn-main" onclick="listenSpeech()">🎤 التحدث (المايك)</button>
-      <button class="btn-success" onclick="markCorrect()">✓ صح (تقييم يدوي)</button>
+    <div class="counter">الكلمة <span id="cnow">1</span> من <span id="ctot">1</span></div>
+    <div class="slots" id="slots"></div>
+    <input id="ans" type="text" dir="rtl" autocomplete="off" autocorrect="off"
+           spellcheck="false" placeholder="اكتبي الكلمة هنا">
+
+    <div id="tileWrap" class="hide">
+      <div id="tileBox"></div>
+      <div class="tiles" id="tiles"></div>
     </div>
 
-    <div id="status" class="status-text">جاهز لبدء التمرين...</div>
+    <div id="drawWrap" class="hide">
+      <div class="padwrap"><canvas id="pad"></canvas></div>
+      <div class="selfrow">
+        <button class="ghost" id="pUndo">↩ تراجع</button>
+        <button class="ghost" id="pClear">🗑 مسح</button>
+        <button class="hear" id="pShow">👁 أظهري الكلمة</button>
+      </div>
+      <div class="reveal" id="reveal"></div>
+      <div class="selfrow hide" id="selfMark">
+        <button id="pRight" style="background:#2f8f5b;color:#fff;border-color:#1e5c3b;box-shadow:0 4px 0 #1e5c3b">✓ كتبتها صح</button>
+        <button id="pWrong" style="background:#e2725b;color:#fff;border-color:#a8442f;box-shadow:0 4px 0 #a8442f">✗ غلط</button>
+      </div>
+    </div>
+    <div class="fb" id="fb"></div>
+    <div class="msg" id="msg">اضغطي 🔊 لتسمعي الكلمة، واكتبيها.</div>
   </div>
+  <div class="bar"><i id="fill"></i></div>
+</div>
 
-  <!-- نافذة الحلول عند وجود مشكلة توافق على iPad -->
-  <div id="fixModal" class="modal-overlay">
-    <div class="modal-content">
-      <h3>تنبيه توافق الجهاز 📱</h3>
-      <div id="modalBody"></div>
-      <button class="btn-main" style="width: 100%; margin-top: 15px; justify-content: center;" onclick="closeFixModal()">حسناً، فهمت</button>
+<div class="controls">
+  <div class="row">
+    <button class="hear" id="hearBtn">🔊 اسمعي الكلمة</button>
+    <button class="main" id="okBtn">✓ تحقّقي</button>
+  </div>
+  <div class="row">
+    <button id="slowBtn">🐢 ببطء</button>
+    <button id="hintBtn">💡 تلميح</button>
+    <button id="skipBtn">⏭ تخطّي</button>
+  </div>
+  <div class="row">
+    <button class="ghost" id="editBtn">✎ غيّري النص</button>
+    <button class="ghost" id="resetBtn">↺ من البداية</button>
+    <button class="ghost" id="sentBtn">📝 وضع الجملة</button>
+  </div>
+</div>
+
+<div class="win" id="win">
+  <div>
+    <div style="font-size:3.4rem" id="wIcon">🏆</div>
+    <h2 id="wTitle">خلّصتِ الإملاء!</h2>
+    <p id="wMsg" style="margin:.2em 0 0"></p>
+    <div class="wrongs" id="wList"></div>
+    <div class="row" style="max-width:420px;margin:auto">
+      <button id="againWrong" style="background:#fff">🔁 درّبي على الأخطاء</button>
+      <button id="againAll" class="ghost" style="color:#fff;border-color:#fff">↺ النص كامل</button>
     </div>
   </div>
+</div>
 
-  <script>
-    /* ===== المتغيرات العامة ===== */
-    let ac = null;
-    let recognition = null;
+<dialog id="dlg">
+  <h3 style="margin-top:0">غيّري النص</h3>
+  <textarea id="ta"></textarea>
+  <div class="row" style="margin-top:10px">
+    <button onclick="applyText()">حفظ وابدأ</button>
+    <button class="ghost" onclick="document.getElementById('dlg').close()">إلغاء</button>
+  </div>
+</dialog>
 
-    // تهيئة الصوت والنطق
-    function initAudioContext() {
-      if (!ac) {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        if (AudioCtx) ac = new AudioCtx();
-      }
-    }
+<script>
+const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟";
+const $ = id => document.getElementById(id);
 
-    /* ===== 1. فك حظر الصوت في iOS / iPad ===== */
-    function unlockIOSAudio() {
-      const unlock = () => {
-        initAudioContext();
-        
-        // فك حظر محرك نطق الكلمات (SpeechSynthesis)
-        if ('speechSynthesis' in window) {
-          const u = new SpeechSynthesisUtterance('');
-          window.speechSynthesis.speak(u);
-        }
-        
-        // فك حظر نغمات AudioContext
-        if (ac && ac.state === 'suspended') {
-          ac.resume();
-        }
+let words = [], idx = 0, score = 0, tries = 0, wrongs = [], sentenceMode = false, rate = 0.75;
+let mode = 'kb', tileStr = '';
+const LETTERS = ['ا','ب','ت','ث','ج','ح','خ','د','ذ','ر','ز','س','ش','ص','ض','ط','ظ','ع','غ','ف','ق','ك','ل','م','ن','ه','و','ي','أ','إ','آ','ء','ؤ','ئ','ة','ى','ال'];
 
-        // إزالة المستمعات بعد التفعيل الأول
-        document.removeEventListener('touchstart', unlock);
-        document.removeEventListener('click', unlock);
-      };
+/* مفتاح التسجيلات: نفس تطبيع صفحة القراءة */
+function keyNorm(s){
+  return (s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
+    .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
+    .replace(/ؤ/g,"و").replace(/ئ/g,"ي")
+    .replace(/[^\u0621-\u064A0-9a-zA-Z]/g,"").trim();
+}
+/* تدقيق الإملاء: نشيل التشكيل والترقيم فقط — الهمزات والتاء المربوطة تفرق */
+function spellNorm(s){
+  return (s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
+    .replace(/[^\u0621-\u064A0-9]/g,"").trim();
+}
 
-      document.addEventListener('touchstart', unlock, { once: true });
-      document.addEventListener('click', unlock, { once: true });
-    }
+/* ===== الصوت: تسجيلاتك أولاً، بعدها صوت الجهاز ===== */
+const recAudio = new Audio();
+function idb(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open('readingRecs',1);
+    r.onupgradeneeded = ()=> r.result.createObjectStore('recs');
+    r.onsuccess = ()=> res(r.result);
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function recGet(w){
+  try{ const d=await idb(); return await new Promise(res=>{
+    const q=d.transaction('recs').objectStore('recs').get(keyNorm(w));
+    q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; }
+}
+function arVoice(){
+  const vs = speechSynthesis.getVoices();
+  return vs.find(v=>/^ar/i.test(v.lang)) || vs.find(v=>/arab/i.test(v.name)) || null;
+}
+async function say(t, r){
+  const b = await recGet(t);
+  if(b){
+    try{
+      const u = URL.createObjectURL(b);
+      recAudio.src = u; recAudio.playbackRate = 1;
+      recAudio.onended = ()=> URL.revokeObjectURL(u);
+      await recAudio.play(); return;
+    }catch(e){}
+  }
+  const v = arVoice();
+  if(!v){ msg('⚠️ ما في صوت عربي على الجهاز — سجّلي الكلمات من صفحة القراءة، أو نزّلي صوت عربي.'); return; }
+  try{
+    speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(t);
+    u.voice = v; u.lang = v.lang; u.rate = r || rate;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+let ac;
+function beep(f,d){
+  try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(),g=ac.createGain(); o.frequency.value=f;
+    g.gain.setValueAtTime(.001,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.22,ac.currentTime+.02);
+    g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+d);
+  }catch(e){}
+}
 
-    /* ===== 2. فحص توافق iPad و iOS ===== */
-    function checkiPadCompatibility() {
-      // الكشف عن iPad حتى في حال التصفح بوضع سطح المكتب (iPadOS 13+)
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      const isSecure = window.location.protocol === 'https:' || 
-                       window.location.hostname === 'localhost' || 
-                       window.location.protocol === 'file:';
-                       
-      const hasSR = !!(window.SpeechRecognition || window.webkitSpeechRecognition);
-      const hasTTS = 'speechSynthesis' in window;
+/* ===== العرض ===== */
+function msg(h){ $('msg').innerHTML = h; }
+function target(){ return sentenceMode ? words.join(' ') : words[idx]; }
+function build(txt){
+  words = txt.trim().split(/\s+/).filter(Boolean);
+  idx=0; score=0; tries=0; wrongs=[]; paint();
+}
+function paint(){
+  const t = target() || '';
+  $('cnow').textContent = Math.min(idx+1, words.length);
+  $('ctot').textContent = words.length;
+  $('slots').textContent = sentenceMode ? '' : '_ '.repeat(spellNorm(t).length).trim();
+  $('ans').value=''; $('fb').innerHTML='';
+  tileStr=''; if($('tiles').dataset.done) renderTiles();
+  if(mode==='draw') resetPad();
+  const pct = words.length ? Math.round(idx/words.length*100) : 0;
+  $('fill').style.width = pct+'%'; $('prog').textContent = pct; $('score').textContent = score;
+  tries = 0;
+  if(mode==='kb') $('ans').focus();
+}
 
-      let issues = [];
+/* ===== مقارنة الحروف ===== */
+function diff(a, b){   // a = المكتوب، b = الصحيح
+  const m=a.length, n=b.length;
+  const d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    d[i][j] = Math.min(d[i-1][j]+1, d[i][j-1]+1, d[i-1][j-1] + (a[i-1]===b[j-1]?0:1));
+  let i=m, j=n, out=[];
+  while(i>0 || j>0){
+    if(i>0 && j>0 && a[i-1]===b[j-1] && d[i][j]===d[i-1][j-1]){ out.unshift({c:b[j-1],k:'g'}); i--; j--; }
+    else if(i>0 && j>0 && d[i][j]===d[i-1][j-1]+1){ out.unshift({c:b[j-1],k:'b'}); i--; j--; }
+    else if(j>0 && d[i][j]===d[i][j-1]+1){ out.unshift({c:b[j-1],k:'m'}); j--; }
+    else { i--; }   // حرف زائد بالمكتوب
+  }
+  return out;
+}
+function showDiff(a, b){
+  $('fb').innerHTML = diff(a,b).map(x=>'<i class="'+x.k+'">'+x.c+'</i>').join('');
+}
 
-      // فحص الاتصال الآمن (HTTPS ضروري لتشغيل المايك)
-      if (!isSecure) {
-        issues.push("يجب فتح التطبيق عبر رابط آمن (HTTPS) ليعمل المايك بشكل صحيح.");
-      }
+/* ===== التحقّق ===== */
+function check(){
+  const raw = mode==='tile' ? tileStr : $('ans').value;
+  const typed = spellNorm(raw);
+  const right = spellNorm(target());
+  if(!typed){ msg('اكتبي الكلمة أول 🙂'); return; }
+  if(typed === right){
+    beep(880,.12); setTimeout(()=>beep(1320,.14),90);
+    score++;
+    $('fb').innerHTML = '<i class="g">'+target()+'</i>';
+    msg('✅ صح! أحسنتِ');
+    if(sentenceMode || idx >= words.length-1){ idx = words.length; setTimeout(finish, 700); return; }
+    idx++;
+    setTimeout(()=>{ paint(); say(target(), rate); }, 800);
+    return;
+  }
+  tries++;
+  beep(220,.18);
+  showDiff(typed, right);
+  if(tries >= 3){
+    if(!wrongs.includes(target())) wrongs.push(target());
+    msg('الكلمة الصحيحة: <b>'+target()+'</b> — الحروف الملوّنة هي الغلط.');
+    if(sentenceMode || idx >= words.length-1){ idx = words.length; setTimeout(finish, 1800); return; }
+    idx++;
+    setTimeout(()=>{ paint(); say(target(), rate); }, 2200);
+  } else {
+    msg('مش مضبوط، جرّبي كمان مرة ('+tries+'/3) — الأحمر غلط والمخطوط ناقص.');
+    $('ans').select();
+  }
+}
+function finish(){
+  paint();
+  const total = sentenceMode ? 1 : words.length;
+  $('wIcon').textContent = wrongs.length ? '💪' : '🏆';
+  $('wTitle').textContent = wrongs.length ? 'خلّصتِ! في كلمات بتحتاج تمرين' : 'ممتازة! كل الكلمات صح';
+  $('wMsg').textContent = 'صح '+score+' من '+total;
+  $('wList').innerHTML = wrongs.length
+    ? '<div style="font-weight:700;border:none">كلمات للتمرين:</div>' + wrongs.map(w=>'<div>• '+w+'</div>').join('')
+    : '';
+  $('againWrong').style.display = wrongs.length ? '' : 'none';
+  $('win').classList.add('show');
+  if(!wrongs.length){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
+    for(let i=0;i<50;i++) confetti(); }
+}
+function confetti(){
+  const c=document.createElement('div'); c.className='confetti';
+  c.style.left=Math.random()*100+'vw';
+  c.style.background=['#e2725b','#f0b429','#2f8f5b','#5aa9d6','#fff'][Math.floor(Math.random()*5)];
+  document.body.appendChild(c);
+  c.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(105vh) rotate(720deg)'}],
+    {duration:2200+Math.random()*1600,easing:'ease-in'}).onfinish=()=>c.remove();
+}
 
-      // فحص دعم التعرف على الصوت
-      if (!hasSR) {
-        issues.push("خاصية التعرف الصوتي (المايك) غير مدعومة على هذا المتصفح.");
-      }
+/* ===== أوضاع الإدخال ===== */
+function setMode(m){
+  mode = m;
+  $('mKb').classList.toggle('act', m==='kb');
+  $('mTile').classList.toggle('act', m==='tile');
+  $('mDraw').classList.toggle('act', m==='draw');
+  $('ans').classList.toggle('hide', m!=='kb');
+  $('tileWrap').classList.toggle('hide', m!=='tile');
+  $('drawWrap').classList.toggle('hide', m!=='draw');
+  $('okBtn').classList.toggle('hide', m==='draw');
+  if(m==='tile'){ tileStr=''; renderTiles(); }
+  if(m==='draw'){ setupPad(); resetPad(); }
+  if(m==='kb') $('ans').focus();
+  $('fb').innerHTML='';
+  msg(m==='draw' ? 'اسمعي الكلمة واكتبيها بإصبعك، بعدين اضغطي 👁 لتشوفي الصح.'
+    : (m==='tile' ? 'اسمعي الكلمة وركّبيها من الحروف 🔤' : 'اسمعي الكلمة واكتبيها ⌨️'));
+}
+function renderTiles(){
+  $('tileBox').textContent = tileStr || ' ';
+  const box = $('tiles');
+  if(box.dataset.done) return;
+  box.dataset.done = '1';
+  LETTERS.forEach(L=>{
+    const b=document.createElement('button');
+    b.textContent = L;
+    b.onclick = ()=>{ tileStr += L; renderTiles(); };
+    box.appendChild(b);
+  });
+  const sp=document.createElement('button');
+  sp.className='sp'; sp.textContent='مسافة';
+  sp.onclick=()=>{ tileStr += ' '; renderTiles(); };
+  box.appendChild(sp);
+  const bs=document.createElement('button');
+  bs.className='sp'; bs.textContent='⌫ حرف';
+  bs.onclick=()=>{ tileStr = tileStr.slice(0,-1); renderTiles(); };
+  box.appendChild(bs);
+  const cl=document.createElement('button');
+  cl.className='sp'; cl.textContent='🗑 مسح';
+  cl.onclick=()=>{ tileStr=''; renderTiles(); };
+  box.appendChild(cl);
+}
 
-      // فحص نطق الصوت
-      if (!hasTTS) {
-        issues.push("خاصية نطق الصوت غير مدعومة في متصفحك الحالي.");
-      }
+/* ===== لوح الكتابة بالإصبع ===== */
+let pad, pctx, drawing=false, strokes=[], cur=null, padReady=false;
+function setupPad(){
+  pad = $('pad');
+  if(!padReady){
+    padReady = true;
+    pad.addEventListener('pointerdown', e=>{ e.preventDefault(); drawing=true;
+      cur=[[e.offsetX,e.offsetY]]; strokes.push(cur); });
+    pad.addEventListener('pointermove', e=>{ if(!drawing) return; e.preventDefault();
+      cur.push([e.offsetX,e.offsetY]); drawPad(); });
+    ['pointerup','pointercancel','pointerleave'].forEach(ev=>
+      pad.addEventListener(ev, ()=>{ drawing=false; }));
+    window.addEventListener('resize', ()=>{ sizePad(); drawPad(); });
+  }
+  sizePad(); drawPad();
+}
+function sizePad(){
+  const r = pad.getBoundingClientRect();
+  const dpr = window.devicePixelRatio || 1;
+  pad.width = r.width*dpr; pad.height = r.height*dpr;
+  pctx = pad.getContext('2d');
+  pctx.scale(dpr,dpr);
+  pctx.lineWidth = 5; pctx.lineJoin='round'; pctx.lineCap='round'; pctx.strokeStyle='#2f3437';
+}
+function drawPad(){
+  const r = pad.getBoundingClientRect();
+  pctx.clearRect(0,0,r.width,r.height);
+  pctx.save();
+  pctx.strokeStyle='#cfe0e8'; pctx.lineWidth=2;
+  pctx.beginPath(); pctx.moveTo(10, r.height*0.68); pctx.lineTo(r.width-10, r.height*0.68); pctx.stroke();
+  pctx.restore();
+  pctx.strokeStyle='#2f3437'; pctx.lineWidth=5;
+  strokes.forEach(st=>{
+    pctx.beginPath();
+    st.forEach((p,i)=> i? pctx.lineTo(p[0],p[1]) : pctx.moveTo(p[0],p[1]));
+    pctx.stroke();
+  });
+}
+function resetPad(){ strokes=[]; if(pctx) drawPad(); $('reveal').textContent=''; $('selfMark').classList.add('hide'); }
+function nextAfterMark(){
+  if(sentenceMode || idx >= words.length-1){ idx = words.length; finish(); return; }
+  idx++; paint(); resetPad(); say(target(), rate);
+}
 
-      // إظهار الحلول إذا كانت هناك قيود
-      if (issues.length > 0) {
-        showFixModal(issues, isIOS && !hasSR);
-      }
-    }
-
-    /* ===== 3. عرض نافذة التنبيه والحلول ===== */
-    function showFixModal(issuesList, isNonSafariIOS) {
-      const modalBody = document.getElementById('modalBody');
-      
-      let html = `<ul>${issuesList.map(item => `<li>${item}</li>`).join('')}</ul>`;
-
-      if (isNonSafariIOS) {
-        html += `
-          <div class="tip-box">
-            <b>حل مشكلة المايك على iPad:</b><br>
-            Apple تمنع المايك عن المتصفحات الخارجية. يرجى نسخ رابط الصفحة وافتحه باستخدام متصفح <b>Safari</b>.
-          </div>
-        `;
-      }
-
-      html += `<p style="font-size:0.85rem; color:#666;">يمكنك دائماً استكمال التمرين يدوياً باستخدام زر <b>(✓ صح)</b>.</p>`;
-
-      modalBody.innerHTML = html;
-      document.getElementById('fixModal').classList.add('active');
-    }
-
-    function closeFixModal() {
-      document.getElementById('fixModal').classList.remove('active');
-    }
-
-    /* ===== 4. التشغيل التفاعلي للمايك والنطق ===== */
-    function speakText(text) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel(); // إيقاف أي صوت سابق
-        const msg = new SpeechSynthesisUtterance(text);
-        msg.lang = 'ar-SA';
-        window.speechSynthesis.speak(msg);
-      }
-    }
-
-    function listenSpeech() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-
-      if (!SpeechRecognition) {
-        checkiPadCompatibility();
-        return;
-      }
-
-      if (!recognition) {
-        recognition = new SpeechRecognition();
-        recognition.lang = 'ar-SA';
-        recognition.interimResults = false;
-
-        recognition.onstart = () => {
-          document.getElementById('status').innerText = "جاري الاستماع... اتكلم الآن";
-        };
-
-        recognition.onresult = (event) => {
-          const transcript = event.results[0][0].transcript;
-          document.getElementById('status').innerText = `تم الالتقاط: "${transcript}"`;
-          speakText("أحسنت! إجابة رائعة");
-        };
-
-        recognition.onerror = (event) => {
-          document.getElementById('status').innerText = "تعذر الاستماع، استخدم زر (✓ صح).";
-          checkiPadCompatibility();
-        };
-      }
-
-      try {
-        recognition.start();
-      } catch (e) {
-        recognition.stop();
-      }
-    }
-
-    function markCorrect() {
-      document.getElementById('status').innerText = "تم الاعتماد يدوياً! ممتاز 👍";
-      speakText("أحسنت عمل رائع");
-    }
-
-    /* ===== بدء الفحص عند تحميل الصفحة ===== */
-    window.addEventListener('DOMContentLoaded', () => {
-      unlockIOSAudio();
-      checkiPadCompatibility();
-    });
-  </script>
+/* ===== الأزرار ===== */
+$('mKb').onclick = ()=> setMode('kb');
+$('mTile').onclick = ()=> setMode('tile');
+$('mDraw').onclick = ()=> setMode('draw');
+$('pUndo').onclick = ()=>{ strokes.pop(); drawPad(); };
+$('pClear').onclick = ()=>{ strokes=[]; drawPad(); };
+$('pShow').onclick = ()=>{
+  $('reveal').textContent = target();
+  $('selfMark').classList.remove('hide');
+  msg('قارني كتابتك مع الكلمة، واضغطي صح أو غلط.');
+};
+$('pRight').onclick = ()=>{ score++; beep(880,.12); setTimeout(()=>beep(1320,.14),90); nextAfterMark(); };
+$('pWrong').onclick = ()=>{ if(!wrongs.includes(target())) wrongs.push(target()); beep(220,.18); nextAfterMark(); };
+$('hearBtn').onclick = ()=> say(target(), rate);
+$('slowBtn').onclick = ()=> say(target(), .5);
+$('okBtn').onclick = check;
+$('ans').addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); check(); } });
+$('hintBtn').onclick = ()=>{
+  const t = spellNorm(target());
+  const shown = Math.min(t.length, 1 + Math.floor(tries));
+  $('slots').textContent = t.slice(0, shown).split('').join(' ') + ' ' + '_ '.repeat(Math.max(0,t.length-shown)).trim();
+  msg('التلميح: الكلمة فيها <b>'+t.length+'</b> حروف.');
+};
+$('skipBtn').onclick = ()=>{
+  if(!wrongs.includes(target())) wrongs.push(target());
+  if(sentenceMode || idx >= words.length-1){ idx = words.length; finish(); return; }
+  idx++; paint(); say(target(), rate);
+};
+$('resetBtn').onclick = ()=>{ $('win').classList.remove('show'); idx=0; score=0; wrongs=[]; sentenceMode=false;
+  $('sentBtn').textContent='📝 وضع الجملة'; paint(); };
+$('editBtn').onclick = ()=>{ $('ta').value = words.join(' '); $('dlg').showModal(); };
+$('sentBtn').onclick = ()=>{
+  sentenceMode = !sentenceMode;
+  $('sentBtn').textContent = sentenceMode ? '🔠 وضع الكلمة' : '📝 وضع الجملة';
+  idx=0; score=0; wrongs=[]; paint();
+  msg(sentenceMode ? 'اسمعي الجملة كاملة واكتبيها 📝' : 'كلمة كلمة 🔠');
+};
+$('againWrong').onclick = ()=>{
+  if(!wrongs.length) return;
+  build(wrongs.join(' '));
+  $('win').classList.remove('show');
+  say(target(), rate);
+};
+$('againAll').onclick = ()=>{ $('win').classList.remove('show'); build(words.join(' ')); };
+function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
+if(window.speechSynthesis) speechSynthesis.onvoiceschanged = ()=>{};
+build(DEFAULT_TEXT);
+</script>
 </body>
 </html>
