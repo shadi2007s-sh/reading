@@ -92,6 +92,7 @@
   .set select,.set input[type=range]{width:100%;font-family:var(--font-ui);font-size:1rem;
     padding:8px;border:2px solid #d9cdb2;border-radius:10px;background:#fff}
   .set .chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700;font-size:.9rem}
+  .eng-note{display:block;font-size:.75rem;color:#8b9096;margin-top:4px;line-height:1.6}
 </style>
 </head>
 <body>
@@ -203,10 +204,12 @@
   <div class="set">
     <label>محرك النطق</label>
     <select id="engineSel">
-      <option value="device">📱 صوت الجهاز (الافتراضي)</option>
-      <option value="google">🌐 Google (محجوب حالياً)</option>
+      <option value="edge">🧠 Edge — صوت عصبي واقعي (افتراضي)</option>
+      <option value="device">📱 صوت الجهاز</option>
+      <option value="google">🌐 Google (قد يكون محجوباً)</option>
     </select>
-    <label>الصوت المستخدم (لصوت الجهاز)</label>
+    <small class="eng-note">🧠 Edge: نطق بشري واقعي وواضح جداً للتشكيل — يحتاج إنترنت.<br>📱 صوت الجهاز: يعمل بدون إنترنت لكن جودته تعتمد على الجهاز.</small>
+    <label>الصوت</label>
     <select id="voiceSel"></select>
     <label>سرعة القراءة: <span id="rateVal">0.70</span></label>
     <input type="range" id="rateSel" min="0.4" max="1.1" step="0.05" value="0.7">
@@ -298,27 +301,33 @@ function arVoices(){ return allVoices().filter(v=>/^ar/i.test(v.lang)||/arab/i.t
 let chosenVoice=null, rate=0.7, stripTash=false, warned=false;
 function fillVoices(){
   const sel=$('voiceSel'); if(!sel) return;
+  sel.innerHTML='';
+  if(engine==='edge'){
+    for(const k in EDGE_VOICES){ const o=document.createElement('option');
+      o.value=k; o.textContent='🧠 '+EDGE_VOICES[k]; sel.appendChild(o); }
+    sel.value=edgeVoice; checkVoice(); return;
+  }
   const ar=arVoices(), all=allVoices();
   const list = ar.length ? ar : all;
-  sel.innerHTML='';
   list.forEach(v=>{ const o=document.createElement('option');
     o.value=v.name; o.textContent=v.name+' ('+v.lang+')'; sel.appendChild(o); });
   if(!chosenVoice && list.length) chosenVoice=list[0];
+  if(!chosenVoice && savedVoiceName){ const v=list.find(x=>x.name===savedVoiceName); if(v) chosenVoice=v; }
   if(chosenVoice) sel.value=chosenVoice.name;
   checkVoice();
 }
 function checkVoice(){
   const bn=$('banner'); if(!bn) return;
-  if(engine!=='google' && arVoices().length===0 && allVoices().length>0){
+  if(engine==='device' && arVoices().length===0 && allVoices().length>0){
     bn.classList.remove('hide');
-    bn.innerHTML='⚠️ <b>ما في صوت عربي على هذا الجهاز</b> — القراءة الصوتية رح يطلع لفظها غلط.<br>'+
+    bn.innerHTML='⚠️ <b>ما في صوت عربي على هذا الجهاز</b> — جرّبي محرك «🧠 Edge» من زر 🎚 (نطق واقعي وواضح للتشكيل).<br>'+
       '📱 آيفون/آيباد: الإعدادات ‹ إمكانية الوصول ‹ المحتوى المنطوق ‹ الأصوات ‹ العربية.<br>'+
       '🤖 أندرويد: الإعدادات ‹ اللغة والإدخال ‹ تحويل النص إلى كلام ‹ تثبيت بيانات صوتية ‹ العربية.<br>'+
       '💻 ويندوز: الإعدادات ‹ الوقت واللغة ‹ اللغة ‹ إضافة لغة ‹ العربية مع خيار الكلام (Speech).<br>'+
       'باقي الأزرار شغّالة عادي بدون صوت 👍';
   } else bn.classList.add('hide');
 }
-let engine='device', sentenceMode=true;
+let engine='edge', sentenceMode=true;
 const gAudio = new Audio(); gAudio.preload='auto';
 function gUrl(t){
   return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&total=1&idx=0&prev=input&textlen=' + t.length + '&q=' + encodeURIComponent(t);
@@ -353,6 +362,140 @@ function gSpeak(t, cb){
     gAudio.onplaying=()=>clearTimeout(guard);
     gAudio.play().catch(()=>{ clearTimeout(guard); engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); });
   }catch(e){ cb && cb(); }
+}
+/* ===== Edge neural TTS (Microsoft) — صوت بشري واقعي ونطق واضح للتشكيل ===== */
+const EDGE_TOKEN='6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+const EDGE_VOICES={
+  'ar-SA-HamedNeural':'حامد — سعودي (رجالي)',
+  'ar-SA-ZariyahNeural':'زارية — سعودي (نسائي)',
+  'ar-EG-ShakirNeural':'شاكر — مصري (رجالي)',
+  'ar-EG-SalmaNeural':'سلمى — مصري (نسائي)'
+};
+let edgeVoice='ar-SA-HamedNeural';
+function hex(n){
+  let s='';
+  if(window.crypto && crypto.getRandomValues){ const a=crypto.getRandomValues(new Uint8Array(n));
+    for(const b of a) s+=b.toString(16).padStart(2,'0');
+  } else { for(let i=0;i<n*2;i++) s+=Math.floor(Math.random()*16).toString(16); }
+  return s;
+}
+function xesc(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function edgeRatePct(r){ return Math.round((r-1)*100)+'%'; }
+let edgeState=null;
+function stopEdge(){
+  const s=edgeState; edgeState=null;
+  if(s){ try{s.ws && s.ws.close();}catch(e){} try{s.audio && s.audio.pause();}catch(e){} try{s.url && URL.revokeObjectURL(s.url);}catch(e){} }
+}
+/* handlers: {word:{off,text}, playing:fn(audio)} — يرجع Promise<true> عند النجاح */
+function edgeSpeak(text, handlers){
+  handlers=handlers||{};
+  return new Promise(resolve=>{
+    let settled=false, turnEnded=false;
+    let ws=null, ms=null, sb=null, sbQ=[], streamEnd=false;
+    let blobMode=!window.MediaSource, blobChunks=[], audio=null, url=null, tag={};
+    const finish=(ok)=>{
+      if(settled) return; settled=true;
+      if(edgeState && edgeState.tag===tag) edgeState=null;
+      try{ ws && ws.close(); }catch(e){}
+      resolve(ok);
+    };
+    const fail=()=>{
+      try{ audio && audio.pause(); }catch(e){}
+      try{ url && URL.revokeObjectURL(url); }catch(e){}
+      finish(false);
+    };
+    const pump=()=>{ if(!sb) return; while(sbQ.length && !sb.updating){ try{ sb.appendBuffer(sbQ.shift()); }catch(e){} }
+      if(streamEnd && !sb.updating && !sbQ.length){ try{ ms.endOfStream(); }catch(e){} } };
+    const push=(d)=>{
+      if(blobMode){ blobChunks.push(d); return; }
+      if(!sb || sb.updating){ sbQ.push(d); pump(); }
+      else { try{ sb.appendBuffer(d); }catch(e){ sbQ.push(d); } }
+      if(audio && audio.paused && audio.readyState>=2){ audio.play().catch(()=>{}); }
+    };
+    try{
+      if(!blobMode){
+        try{
+          ms=new MediaSource();
+          url=URL.createObjectURL(ms);
+          audio=new Audio(url);
+          ms.onsourceopen=()=>{ try{ sb=ms.addSourceBuffer('audio/mpeg'); sb.mode='segments';
+            sb.onupdateend=pump; pump(); }catch(e){ blobMode=true; } };
+        }catch(e){ blobMode=true; }
+      }
+      if(blobMode){ audio=new Audio(); }
+      edgeState={tag:tag, ws:null, audio:audio, url:url};
+      audio.onended=()=>finish(true);
+      audio.onerror=()=>{ if(!settled) fail(); };
+      let played=false;
+      audio.addEventListener('playing', ()=>{ if(!played){ played=true; if(handlers.playing) handlers.playing(audio); } });
+      const conn=hex(16);
+      ws=new WebSocket('wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken='+EDGE_TOKEN+'&ConnectionId='+conn);
+      edgeState.ws=ws;
+      ws.binaryType='arraybuffer';
+      const req=hex(16), ts=new Date().toISOString();
+      const cfg='X-Timestamp:'+ts+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"true"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}';
+      const ssml="<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='ar'><voice name='"+edgeVoice+"'><prosody pitch='+0Hz' rate='"+edgeRatePct(rate)+"' volume='+0%'>"+xesc(text)+"</prosody></voice></speak>";
+      const to=setTimeout(fail, 15000);
+      ws.onopen=()=>{
+        try{
+          ws.send(cfg);
+          ws.send('X-RequestId:'+req+'\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:'+new Date().toISOString()+'\r\nPath:ssml\r\n\r\n'+ssml);
+        }catch(e){ clearTimeout(to); fail(); }
+      };
+      ws.onmessage=ev=>{
+        if(typeof ev.data==='string'){
+          if(ev.data.indexOf('Path:turn.end')>-1){
+            turnEnded=true; clearTimeout(to);
+            if(blobMode){
+              const blob=new Blob(blobChunks,{type:'audio/mpeg'});
+              const u=URL.createObjectURL(blob); url=u;
+              if(edgeState) edgeState.url=u;
+              audio.src=u; audio.play().catch(()=>fail());
+            } else { streamEnd=true; pump(); }
+          }
+          else if(ev.data.indexOf('Path:audio.metadata')>-1){
+            try{
+              const meta=JSON.parse(ev.data.split('\r\n\r\n')[1]);
+              const arr=meta.metadata||meta.Metadata||[];
+              arr.forEach(raw=>{
+                const type=raw.type||raw.Type;
+                if(type!=='WordBoundary'||!handlers.word) return;
+                const data=raw.data||raw.Data||{};
+                const off=(data.offset!==undefined?data.offset:(data.Offset||0))/10000000;
+                const txt=data.text!==undefined?data.text:(data.Text||'');
+                handlers.word({off:off, text:txt});
+              });
+            }catch(e){}
+          }
+        } else {
+          const buf=new Uint8Array(ev.data);
+          const hlen=(buf[0]<<8)|buf[1];
+          const payload=buf.slice(2+hlen);
+          if(payload.length) push(payload);
+        }
+      };
+      ws.onerror=()=>{ clearTimeout(to); fail(); };
+      ws.onclose=()=>{ clearTimeout(to); if(!settled && !turnEnded) fail(); };
+    }catch(e){ finish(false); }
+  });
+}
+function edgeTest(cb){
+  let done=false;
+  const to=setTimeout(()=>{ if(!done){ done=true; try{ws.close();}catch(e){} cb(false,'timeout'); } },7000);
+  let ws;
+  try{
+    const conn=hex(16);
+    ws=new WebSocket('wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken='+EDGE_TOKEN+'&ConnectionId='+conn);
+    ws.binaryType='arraybuffer';
+    const req=hex(16), ts=new Date().toISOString();
+    const cfg='X-Timestamp:'+ts+'\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}';
+    const ssml="<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='ar'><voice name='ar-SA-HamedNeural'>مرحبا</voice></speak>";
+    ws.onopen=()=>{ try{ ws.send(cfg);
+      ws.send('X-RequestId:'+req+'\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:'+new Date().toISOString()+'\r\nPath:ssml\r\n\r\n'+ssml); }catch(e){} };
+    ws.onmessage=ev=>{ if(ev.data instanceof ArrayBuffer && !done){ done=true; clearTimeout(to); try{ws.close();}catch(e){} cb(true,''); } };
+    ws.onerror=()=>{ if(!done){ done=true; clearTimeout(to); cb(false,'خطأ اتصال'); } };
+    ws.onclose=()=>{ if(!done){ done=true; clearTimeout(to); cb(false,'اتصال مرفوض'); } };
+  }catch(e){ if(!done){ done=true; clearTimeout(to); cb(false,'غير مدعوم'); } }
 }
 const recAudio = new Audio();
 let recSet = new Set(), recIdx = 0, mr=null, mrChunks=[], mrStream=null;
@@ -405,13 +548,20 @@ async function speak(t, r, cb){
       }catch(e){}
     }
   }
+  if(engine==='edge'){
+    stopEdge();
+    const ok = await edgeSpeak(stripTash ? stripT(t) : t);
+    if(ok){ cb && cb(); return; }
+    engine='device'; saveSettings(); fillVoices();
+    say('⚠️ صوت Edge ما اشتغل — رجعنا لصوت الجهاز 📱');
+  }
   if(engine==='google') return gSpeak(t, cb);
   return speakDevice(t, r, cb);
 }
 function speakDevice(t, r, cb){
   try{
     if(arVoices().length===0){
-      if(!warned){ warned=true; checkVoice(); say('⚠️ ما في صوت عربي على الجهاز — نزّليه عشان النطق يطلع صح.'); }
+      if(!warned){ warned=true; checkVoice(); say('⚠️ ما في صوت عربي على الجهاز — فعّلي محرك Edge من 🎚 أو نزّليه عشان النطق يطلع صح.'); }
       cb&&cb(); return;
     }
     const txt = stripTash ? t.replace(/[\u064B-\u0652\u0670]/g,'') : t;
@@ -490,21 +640,42 @@ function readSentence(start){
   if(cur.length) chunks.push({from:ci, ws:cur});
   let k=0, timers=[];
   const clearT = ()=>{ timers.forEach(t=>clearTimeout(t)); timers=[]; };
-  const schedule = (c, dur)=>{
-    const total = c.ws.reduce((x,w)=>x+w.length+1, 0);
-    let t=0;
-    c.ws.forEach((w,j)=>{
-      const at=t;
-      timers.push(setTimeout(()=>{ if(reading) hi(c.from+j); }, at*1000));
-      t += dur * ((w.length+1)/total);
-    });
-  };
   const play = ()=>{
     clearT();
     if(!reading || k>=chunks.length){ stopRead(); return; }
     const c = chunks[k], text = c.ws.join(' ');
     const chars = c.ws.reduce((x,w)=>x+w.length+1, 0);
     hi(c.from);
+    if(engine==='edge'){
+      (async()=>{
+        stopEdge();
+        const cws=c.ws;
+        const bounds=[]; let mark=0, hlTimer=null;
+        const ok = await edgeSpeak(stripTash ? stripT(text) : text, {
+          word:(m)=>bounds.push(m),
+          playing:(a)=>{
+            hlTimer=setInterval(()=>{
+              if(!reading){ clearInterval(hlTimer); return; }
+              while(mark<bounds.length && bounds[mark].off <= a.currentTime + 0.08){
+                const m=bounds[mark]; mark++;
+                const nw=norm(m.text); if(!nw) continue;
+                for(let j=mark-1;j<Math.min(mark+3,cws.length);j++){
+                  if(norm(cws[j])===nw){ hi(c.from+j); break; }
+                }
+              }
+            },120);
+          }
+        });
+        if(hlTimer) clearInterval(hlTimer);
+        if(!reading){ stopRead(); return; }
+        if(!ok){
+          say('⚠️ صوت Edge ما اشتغل — رجعنا لصوت الجهاز 📱');
+          engine='device'; saveSettings(); fillVoices();
+        }
+        k++; play();
+      })();
+      return;
+    }
     if(engine==='google'){
       gAudio.pause();
       gAudio.src = gUrl(stripTash ? stripT(text) : text);
@@ -516,6 +687,15 @@ function readSentence(start){
       gAudio.onplaying=()=>clearTimeout(guard);
       gAudio.play().catch(()=>{ clearTimeout(guard); engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); play(); });
     } else {
+      const schedule = (c2, dur)=>{
+        const total = c2.ws.reduce((x,w)=>x+w.length+1, 0);
+        let t=0;
+        c2.ws.forEach((w,j)=>{
+          const at=t;
+          timers.push(setTimeout(()=>{ if(reading) hi(c2.from+j); }, at*1000));
+          t += dur * ((w.length+1)/total);
+        });
+      };
       const u = new SpeechSynthesisUtterance(stripTash ? stripT(text) : text);
       const v = chosenVoice || arVoices()[0];
       if(v){ u.voice=v; u.lang=v.lang; } else u.lang='ar-SA';
@@ -536,6 +716,7 @@ function readSentence(start){
 function stopRead(){
   reading=false; try{speechSynthesis.cancel();}catch(e){}
   try{ gAudio.pause(); }catch(e){}
+  stopEdge();
   document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
   $('readBtn').textContent='📖 اقرأ لي النص';
   paint(); say('خلصت القراءة ✨ جرّبي تقرئي إنتِ هلأ.');
@@ -632,7 +813,7 @@ function stopMic(){
 }
 function stopAll(){ stopMic(); reading=false; echo=false;
   $('echoBtn').textContent='🔁 رددي ورايي'; $('readBtn').textContent='📖 اقرأ لي النص';
-  try{speechSynthesis.cancel();}catch(e){} }
+  try{speechSynthesis.cancel();}catch(e){} stopEdge(); }
 async function holdStart(ev){
   ev.preventDefault();
   if(!SR){ say('المتصفح ما بيدعم المايك.'); return; }
@@ -654,8 +835,8 @@ async function runDiag(){
   add('التعرّف على الصوت', SR?'مدعوم ✓':'غير مدعوم ✗', !!SR);
   add('اتصال آمن https', window.isSecureContext?'نعم ✓':'لا ✗', window.isSecureContext);
   const v=arVoice();
-  add('صوت عربي للقراءة', v? v.name : 'ما في صوت عربي ✗', !!v);
-  add('عدد الأصوات', speechSynthesis.getVoices().length, true);
+  add('صوت عربي للقراءة (جهاز)', v? v.name : 'ما في ✗', !!v);
+  add('عدد أصوات الجهاز', speechSynthesis.getVoices().length, true);
   let perm='غير معروف', good=true;
   try{ const p=await navigator.permissions.query({name:'microphone'}); perm=p.state; good=p.state!=='denied'; }catch(e){}
   add('إذن المايك', perm, good);
@@ -663,11 +844,13 @@ async function runDiag(){
     st.getTracks().forEach(t=>t.stop()); add('فتح المايك','نجح ✓',true);
   }catch(e){ add('فتح المايك','فشل: '+e.name,false); }
   add('اللغة', LANGS[langI], true);
-  add('المحرك الحالي', engine==='google'?'🌐 Google':'📱 الجهاز', true);
+  add('المحرك الحالي', engine==='edge'?'🧠 Edge':(engine==='google'?'🌐 Google':'📱 الجهاز'), true);
+  const eok = await new Promise(r=>edgeTest((ok,why)=>r({ok:ok,why:why})));
+  add('🧠 صوت Edge العصبي', eok.ok?'يعمل ✓ (نطق واقعي واضح)':('فشل ✗ — '+eok.why+' — يحتاج إنترنت'), eok.ok);
   const g = await new Promise(r=>gTest(r));
   add('اختبار صوت Google', g.ok ? ('يعمل ✓ ('+Math.round(g.dur*10)/10+'ث)') : ('فشل: '+g.why), g.ok);
   $('diag').innerHTML = rows.join('') +
-   '<p style="margin:10px 0 0;color:#7b8085">إذا «صوت عربي» أحمر: نزّلي صوت عربي من إعدادات الجهاز (Android: إعدادات ثم اللغة ثم تحويل النص لكلام ثم تنزيل العربية — iPhone: الإعدادات ثم إمكانية الوصول ثم المحتوى المنطوق ثم الأصوات ثم العربية).</p>';
+   '<p style="margin:10px 0 0;color:#7b8085">إذا «صوت Edge» أخضر: النطق بيكون واقعي وواضح للتشكيل 🎉. إذا أحمر: محرك «📱 الجهاز» يحتاج صوت عربي (Android: إعدادات ثم اللغة ثم تحويل النص لكلام ثم تنزيل العربية — iPhone: الإعدادات ثم إمكانية الوصول ثم المحتوى المنطوق ثم الأصوات ثم العربية).</p>';
 }
 $('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView').classList.add('hide');
   $('tabCard').classList.add('act'); $('tabFull').classList.remove('act'); };
@@ -814,12 +997,49 @@ $('rImp').onclick = ()=> $('rFile').click();
 $('rFile').onchange = e=>{ if(e.target.files[0]) importRecs(e.target.files[0]); };
 
 function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
+
+/* ===== حفظ/استرجاع الإعدادات ===== */
+let savedVoiceName=null;
+function saveSettings(){
+  try{
+    localStorage.setItem('ttsSettings', JSON.stringify({
+      engine:engine, edgeVoice:edgeVoice, rate:rate,
+      stripTash:stripTash, sentenceMode:sentenceMode,
+      voice: chosenVoice ? chosenVoice.name : null
+    }));
+  }catch(e){}
+}
+function loadSettings(){
+  try{
+    const s=JSON.parse(localStorage.getItem('ttsSettings')||'{}');
+    if(s.engine) engine=s.engine;
+    if(s.edgeVoice && EDGE_VOICES[s.edgeVoice]) edgeVoice=s.edgeVoice;
+    if(typeof s.rate==='number' && s.rate>=0.4 && s.rate<=1.1) rate=s.rate;
+    if(typeof s.stripTash==='boolean') stripTash=s.stripTash;
+    if(typeof s.sentenceMode==='boolean') sentenceMode=s.sentenceMode;
+    savedVoiceName=s.voice||null;
+  }catch(e){}
+}
+loadSettings();
+$('engineSel').value=engine;
+$('rateSel').value=rate; $('rateVal').textContent=rate.toFixed(2);
+$('noTash').checked=stripTash; $('sentMode').checked=sentenceMode;
+fillVoices();
+
 $('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
-$('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
-$('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); };
-$('noTash').onchange=e=>{ stripTash=e.target.checked; };
-$('engineSel').onchange=e=>{ engine=e.target.value; checkVoice(); say(engine==='google'?'صوت Google مفعّل 🌐':'صوت الجهاز مفعّل 📱'); };
-$('sentMode').onchange=e=>{ sentenceMode=e.target.checked; };
+$('voiceSel').onchange=e=>{
+  if(engine==='edge'){ edgeVoice=e.target.value; }
+  else { chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; }
+  saveSettings();
+};
+$('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); saveSettings(); };
+$('noTash').onchange=e=>{ stripTash=e.target.checked; saveSettings(); };
+$('engineSel').onchange=e=>{
+  engine=e.target.value; fillVoices(); checkVoice(); saveSettings();
+  say(engine==='edge'?'🧠 صوت Edge العصبي مفعّل — نطق واقعي واضح (يحتاج إنترنت)':
+     engine==='google'?'صوت Google مفعّل 🌐':'صوت الجهاز مفعّل 📱');
+};
+$('sentMode').onchange=e=>{ sentenceMode=e.target.checked; saveSettings(); };
 if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); }; setTimeout(fillVoices,600); }
 build(DEFAULT_TEXT);
 </script>
