@@ -164,7 +164,18 @@
   <h3 style="margin-top:0">🎙 سجّلي الكلمات بصوتك</h3>
   <p style="margin:0 0 8px;font-size:.85rem;color:#7b8085">
     اضغطي مطوّلاً على الزر الأحمر واقرأي الكلمة، وارفعي إصبعك. بتنحفظ على هذا الجهاز.</p>
+  <div style="background:#fff3cf;border:2px solid #f0b429;border-radius:14px;padding:10px;margin-bottom:10px;text-align:center">
+    <div style="font-size:.85rem;font-weight:800">🎙 سجّلي النص كامل بمرة وحدة</div>
+    <div style="font-size:.78rem;color:#8b7a3a;margin:2px 0 8px">اقرئي النص كله بصوتك الطبيعي — أفضل من كلمة كلمة</div>
+    <div id="fState" style="font-size:.8rem;color:#8b9096;min-height:1.2em">— مش مسجّل</div>
+    <div class="row" style="margin-top:6px">
+      <button id="fRec" style="background:#e2725b;color:#fff;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;flex:2">⏺ اضغطي واقرئي النص كامل</button>
+      <button id="fPlay">▶ اسمعي</button>
+      <button class="ghost" id="fDel">🗑</button>
+    </div>
+  </div>
   <div style="text-align:center;background:#fbf6e9;border-radius:14px;padding:10px;border:1px solid #e6dcc6">
+    <div style="font-size:.78rem;color:#8b9096;font-weight:700">تسجيل كلمة كلمة (اختياري)</div>
     <div style="font-size:.8rem;color:#8b9096;font-weight:700">
       <span id="rNow">1</span> / <span id="rTot">1</span> — مسجّلة: <span id="rDone">0</span></div>
     <div id="rWord" style="font-family:var(--font-read);font-size:2.4rem;font-weight:700;padding:6px"></div>
@@ -225,10 +236,10 @@ let reading=false, echo=false, holdRec=null;
 const $ = id => document.getElementById(id);
 const say = h => $('heard').innerHTML = h;
 function norm(s){
-  return (s||"").replace(/[ً-ْٰـ]/g,"")
+  return (s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
     .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
     .replace(/ؤ/g,"و").replace(/ئ/g,"ي")
-    .replace(/[^ء-ي0-9a-zA-Z]/g,"").trim();
+    .replace(/[^\u0621-\u064A0-9a-zA-Z]/g,"").trim();
 }
 function sim(a,b){
   if(a===b) return 1;
@@ -358,6 +369,7 @@ async function recGet(w){
     const q=d.transaction('recs').objectStore('recs').get(norm(w));
     q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; }
 }
+const FULL_KEY='__FULL_TEXT__';
 async function recPut(w,blob){
   try{ const d=await idb(); await new Promise(res=>{
     const q=d.transaction('recs','readwrite').objectStore('recs').put(blob,norm(w));
@@ -447,12 +459,16 @@ function hi(i){
     $('prevw').textContent=i>0?words[i-1]:''; $('nextw').textContent=i<words.length-1?words[i+1]:'';
   }
 }
-function readAloud(from){
+async function readAloud(from){
   if(reading){ stopRead(); return; }
   stopMic(); echo=false;
-  reading=true; $('readBtn').textContent='⏹ وقّف القراءة';
   const start = (from!==undefined?from:idx);
   say('🎧 بقرا…');
+  if(start===0 || from===undefined){
+    const hadFull = await recGet(FULL_KEY);
+    if(hadFull){ await readFullWithHighlight(); return; }
+  }
+  reading=true; $('readBtn').textContent='⏹ وقّف القراءة';
   const allRec = words.slice(start).every(w=>hasRec(w));
   if(sentenceMode && !allRec) readSentence(start); else readWords(start);
 }
@@ -672,6 +688,63 @@ hb.addEventListener('pointerdown',holdStart);
 hb.addEventListener('pointerup',holdEnd);
 hb.addEventListener('pointercancel',holdEnd);
 hb.addEventListener('pointerleave',holdEnd);
+let fmr=null, fmrChunks=[], fmrStream=null;
+async function refreshFull(){
+  const b = await recGet(FULL_KEY);
+  $('fState').textContent = b ? '✅ مسجّل — النص كامل جاهز' : '— مش مسجّل بعد';
+}
+async function fmrStart(ev){
+  ev.preventDefault();
+  if(!navigator.mediaDevices || !window.MediaRecorder){ $('fState').textContent='المتصفح ما بيدعم التسجيل'; return; }
+  try{
+    fmrStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    fmrChunks = [];
+    fmr = new MediaRecorder(fmrStream);
+    fmr.ondataavailable = e=>{ if(e.data && e.data.size) fmrChunks.push(e.data); };
+    fmr.onstop = async ()=>{
+      const blob = new Blob(fmrChunks, {type: (fmr && fmr.mimeType) || 'audio/webm'});
+      if(blob.size > 800) await recPut(FULL_KEY, blob);
+      try{ fmrStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+      $('fRec').textContent='⏺ اضغطي واقرئي النص كامل';
+      await refreshFull();
+    };
+    fmr.start();
+    $('fRec').textContent='🔴 بسجّل… اقرئي النص، ارفعي إصبعك لما تخلّصي';
+    $('fState').textContent='بسجّل الآن 🎙';
+  }catch(e){ $('fState').textContent='المايك مرفوض ⛔'; }
+}
+function fmrStop(){ try{ if(fmr && fmr.state!=='inactive') fmr.stop(); }catch(e){} }
+async function playFull(){
+  const b = await recGet(FULL_KEY);
+  if(!b){ $('fState').textContent='ما في تسجيل بعد'; return; }
+  const u = URL.createObjectURL(b);
+  recAudio.src = u; recAudio.onended = ()=> URL.revokeObjectURL(u);
+  try{ await recAudio.play(); }catch(e){}
+}
+async function readFullWithHighlight(){
+  const b = await recGet(FULL_KEY);
+  if(!b) return false;
+  reading = true; $('readBtn').textContent='⏹ وقّف القراءة';
+  const u = URL.createObjectURL(b);
+  recAudio.src = u;
+  await new Promise(res=>{
+    recAudio.onloadedmetadata = res;
+    recAudio.load();
+  });
+  const total = recAudio.duration || (words.join(' ').length * .09);
+  const totalChars = words.reduce((a,w)=>a+w.length+1,0);
+  const timers = [];
+  let t = 0;
+  words.forEach((w,i)=>{
+    const at = t;
+    timers.push(setTimeout(()=>{ if(reading) hi(i); }, at*1000));
+    t += total * ((w.length+1)/totalChars);
+  });
+  recAudio.onended = ()=>{ timers.forEach(x=>clearTimeout(x)); URL.revokeObjectURL(u); stopRead(); };
+  try{ await recAudio.play(); }
+  catch(e){ timers.forEach(x=>clearTimeout(x)); stopRead(); return true; }
+  return true;
+}
 function renderRec(){
   $('rWord').textContent = words[recIdx] || '';
   $('rNow').textContent = Math.min(recIdx+1, words.length);
@@ -720,7 +793,13 @@ async function importRecs(file){
     await refreshRecSet(); renderRec(); $('rState').textContent='✅ تم الاسترجاع';
   }catch(e){ $('rState').textContent='الملف مش مظبوط'; }
 }
-$('recBtn').onclick = async ()=>{ recIdx = idx; await refreshRecSet(); renderRec(); $('recDlg').showModal(); };
+$('recBtn').onclick = async ()=>{ recIdx = idx; await refreshRecSet(); renderRec(); await refreshFull(); $('recDlg').showModal(); };
+$('fRec').addEventListener('pointerdown', fmrStart);
+$('fRec').addEventListener('pointerup', fmrStop);
+$('fRec').addEventListener('pointercancel', fmrStop);
+$('fRec').addEventListener('pointerleave', fmrStop);
+$('fPlay').onclick = playFull;
+$('fDel').onclick = async ()=>{ await recDelete(FULL_KEY); await refreshFull(); };
 const rr = $('rRec');
 rr.addEventListener('pointerdown', mrStart);
 rr.addEventListener('pointerup', mrStop);
