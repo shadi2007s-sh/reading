@@ -1,248 +1,827 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مدير القوالب والنصوص</title>
-    <style>
-        :root {
-            --bg-color: #f8fafc;
-            --card-bg: #ffffff;
-            --primary: #2563eb;
-            --primary-hover: #1d4ed8;
-            --text-dark: #1e293b;
-            --text-muted: #64748b;
-            --border: #e2e8f0;
-            --success: #10b981;
-            --danger: #ef4444;
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
-        body { background-color: var(--bg-color); color: var(--text-dark); padding: 20px; max-width: 1100px; margin: 0 auto; }
-
-        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
-        h1 { font-size: 1.5rem; color: var(--text-dark); }
-        
-        .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
-        .btn-primary { background: var(--primary); color: white; }
-        .btn-primary:hover { background: var(--primary-hover); }
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dark); }
-        .btn-outline:hover { background: #f1f5f9; }
-        .btn-copy { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-        .btn-copy:hover { background: #d1fae5; }
-        .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
-
-        .controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
-        .search-box { flex: 1; min-width: 250px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
-        .category-filter { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
-        .chip { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 0.85rem; white-space: nowrap; }
-        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
-
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
-        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
-        .card-title { font-weight: 700; font-size: 1.1rem; }
-        .badge { background: #eff6ff; color: var(--primary); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
-        .card-body { font-size: 0.92rem; color: #334155; line-height: 1.5; white-space: pre-wrap; margin-bottom: 16px; max-height: 120px; overflow-y: auto; background: #f8fafc; padding: 10px; border-radius: 6px; }
-        .card-actions { display: flex; justify-content: space-between; gap: 8px; }
-
-        /* Modal styling */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 16px; }
-        .modal.active { display: flex; }
-        .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 12px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; }
-        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
-        textarea.form-control { resize: vertical; min-height: 100px; }
-
-        /* Toast notification */
-        .toast { position: fixed; bottom: 20px; left: 20px; background: #1e293b; color: white; padding: 12px 20px; border-radius: 8px; opacity: 0; transition: 0.3s; pointer-events: none; }
-        .toast.show { opacity: 1; }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>تدرّب على القراءة</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --paper:#fbf6e9;--ink:#2f3437;--rule:#cfe0e8;--margin:#e2725b;
+    --ok:#2f8f5b;--ok-soft:#dff0e3;--live:#e0a11b;
+    --shadow:0 18px 40px -18px rgba(47,52,55,.45);
+    --font-read:"Noto Naskh Arabic",serif;
+    --font-ui:"Baloo Bhaijaan 2","Noto Naskh Arabic",sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{font-family:var(--font-ui);
+    background:radial-gradient(circle at 15% 10%,#fff7e2 0%,transparent 55%),
+               radial-gradient(circle at 85% 90%,#eaf3f6 0%,transparent 55%),#efe7d4;
+    color:var(--ink);min-height:100vh;padding:12px 12px 210px}
+  .wrap{max-width:760px;margin:0 auto}
+  header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
+  h1{font-size:1.05rem;margin:0;font-weight:800}
+  h1 span{color:var(--margin)}
+  .stats{display:flex;gap:6px}
+  .pill{background:#fff;border:2px solid #e6dcc6;border-radius:999px;padding:4px 10px;
+    font-size:.8rem;font-weight:700;box-shadow:0 2px 0 #e6dcc6;white-space:nowrap}
+  .tabs{display:flex;gap:6px;margin-bottom:10px}
+  .tabs button{flex:1;padding:9px;font-size:.9rem;border-radius:12px;border:2px solid #d9cdb2;
+    background:#fff;box-shadow:none;font-weight:700}
+  .tabs button.act{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .card{background:var(--paper);border-radius:22px;border:1px solid #e6dcc6;box-shadow:var(--shadow);
+    padding:18px;text-align:center;position:relative;overflow:hidden}
+  .counter{font-size:.85rem;color:#8b9096;font-weight:700}
+  .ghostw{font-family:var(--font-read);font-size:1.25rem;color:#bfb69f;min-height:1.6em;
+    display:flex;justify-content:center;gap:14px;align-items:center}
+  .bigword{font-family:var(--font-read);font-size:clamp(3rem,17vw,6rem);font-weight:700;
+    line-height:1.5;padding:6px 4px 10px;letter-spacing:.02em;transition:transform .2s}
+  .bigword.ok{color:var(--ok)}
+  .bigword.pop{animation:pop .45s}
+  @keyframes pop{40%{transform:scale(1.18) rotate(-2deg)}}
+  .bigword.miss{animation:shake .35s}
+  @keyframes shake{25%{transform:translateX(10px)}75%{transform:translateX(-10px)}}
+  .sheet{position:relative;background:var(--paper);border-radius:18px;padding:24px 20px;
+    box-shadow:var(--shadow);border:1px solid #e6dcc6;
+    background-image:repeating-linear-gradient(to bottom,transparent 0 61px,var(--rule) 61px 62px);overflow:hidden}
+  .sheet::before{content:"";position:absolute;top:0;bottom:0;right:46px;width:2px;background:var(--margin);opacity:.5}
+  #text{font-family:var(--font-read);font-size:1.9rem;line-height:1.95;text-align:justify}
+  .w{display:inline-block;padding:2px 6px;margin:0 1px;border-radius:10px;transition:all .18s;position:relative;cursor:pointer}
+  .w.done{color:var(--ok);background:var(--ok-soft)}
+  .w.now{background:#fff3cf;box-shadow:0 0 0 3px #f6d97a inset}
+  .w.rec{border-bottom:3px solid #5aa9d6}
+  .w.spk{background:#d7ecfa;box-shadow:0 0 0 3px #7cc0e8 inset}
+  .bar{height:12px;background:#e6dcc6;border-radius:999px;margin:14px 0 4px;overflow:hidden}
+  .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#f0b429,#2f8f5b);transition:width .3s}
+  .heard{margin-top:8px;min-height:24px;font-size:.88rem;color:#7b8085;text-align:center}
+  .heard b{color:var(--live)}
+  small.note{display:block;text-align:center;color:#8b9096;font-size:.72rem;margin-top:6px}
+  .controls{position:fixed;bottom:0;right:0;left:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
+    background:linear-gradient(to top,#efe7d4 74%,rgba(239,231,212,0))}
+  .row{display:flex;gap:7px;max-width:760px;margin:0 auto}
+  .row+.row{margin-top:7px}
+  button{font-family:var(--font-ui);font-weight:700;font-size:.98rem;border:2px solid var(--ink);
+    border-radius:14px;background:#fff;color:var(--ink);padding:11px 8px;cursor:pointer;flex:1;
+    box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s;touch-action:manipulation}
+  button:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
+  button.mic{background:#2f8f5b;color:#fff;border-color:#1e5c3b;box-shadow:0 4px 0 #1e5c3b;flex:2}
+  button.mic.on{background:#e2725b;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;animation:glow 1.2s infinite}
+  button.hold{background:#5aa9d6;color:#fff;border-color:#2d6a8f;box-shadow:0 4px 0 #2d6a8f;flex:2}
+  button.read{background:#f0b429;border-color:#9a7413;box-shadow:0 4px 0 #9a7413;flex:2}
+  @keyframes glow{50%{filter:brightness(1.15)}}
+  button.ghost{background:transparent;border-style:dashed;box-shadow:none;font-size:.8rem;padding:7px}
+  button.ghost:active{transform:none}
+  dialog{border:none;border-radius:18px;padding:18px;max-width:92vw;width:560px;
+    box-shadow:var(--shadow);background:var(--paper);font-family:var(--font-ui)}
+  dialog::backdrop{background:rgba(47,52,55,.5)}
+  textarea{width:100%;height:170px;font-family:var(--font-read);font-size:1.15rem;
+    border:2px solid #d9cdb2;border-radius:12px;padding:10px;background:#fff}
+  #diag{font-size:.8rem;line-height:1.7;background:#fff;border-radius:12px;padding:10px;border:2px solid #e6dcc6}
+  #diag div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #eee;padding:3px 0}
+  .win{position:fixed;inset:0;display:none;place-items:center;background:rgba(47,52,55,.75);z-index:9;text-align:center;color:#fff;padding:20px}
+  .win.show{display:grid}
+  .win h2{font-size:2rem;margin:.2em 0}
+  .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
+  .hide{display:none}
+  .banner{background:#ffe9e2;border:2px solid #e2725b;color:#8c3a26;border-radius:14px;
+    padding:10px 12px;font-size:.85rem;line-height:1.6;margin-bottom:10px}
+  .set label{display:block;font-size:.85rem;font-weight:700;margin:12px 0 4px}
+  .set select,.set input[type=range]{width:100%;font-family:var(--font-ui);font-size:1rem;
+    padding:8px;border:2px solid #d9cdb2;border-radius:10px;background:#fff}
+  .set .chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700;font-size:.9rem}
+</style>
 </head>
 <body>
-
-    <header>
-        <h1>مدير القوالب والنصوص</h1>
-        <button class="btn btn-primary" onclick="openModal()">+ إضافة قالب جديد</button>
-    </header>
-
-    <div class="controls">
-        <input type="text" id="searchInput" class="search-box" placeholder="بحث في العنوان أو النص..." oninput="filterSnippets()">
-        <div class="category-filter" id="categoryFilter">
-            <button class="chip active" onclick="setCategory('الكل')">الكل</button>
-        </div>
+<div class="wrap">
+  <header>
+    <h1>اقرئي <span>كلمة كلمة</span> 📖</h1>
+    <div class="stats">
+      <div class="pill">⭐ <span id="score">0</span></div>
+      <div class="pill">📊 <span id="prog">0</span>%</div>
     </div>
-
-    <div class="grid" id="snippetsGrid"></div>
-
-    <!-- Modal Form -->
-    <div class="modal" id="templateModal">
-        <div class="modal-content">
-            <h2 id="modalTitle" style="margin-bottom: 16px;">إضافة قالب جديد</h2>
-            <form id="snippetForm" onsubmit="saveSnippet(event)">
-                <input type="hidden" id="snippetId">
-                <div class="form-group">
-                    <label>عنوان القالب</label>
-                    <input type="text" id="snippetTitle" class="form-control" required placeholder="مثال: رد استفسار السعر">
-                </div>
-                <div class="form-group">
-                    <label>الفئة</label>
-                    <input type="text" id="snippetCategory" class="form-control" placeholder="مثال: عمل، شخصي، ردود سريعة">
-                </div>
-                <div class="form-group">
-                    <label>محتوى النص</label>
-                    <textarea id="snippetContent" class="form-control" required placeholder="اكتب القالب هنا..."></textarea>
-                </div>
-                <div style="display: flex; justify-content: flex-end; gap: 8px;">
-                    <button type="button" class="btn btn-outline" onclick="closeModal()">إلغاء</button>
-                    <button type="submit" class="btn btn-primary">حفظ</button>
-                </div>
-            </form>
-        </div>
+  </header>
+  <div id="banner" class="banner hide"></div>
+  <div class="tabs">
+    <button id="tabCard" class="act">🔠 كلمة وحدة</button>
+    <button id="tabFull">📄 النص كامل</button>
+  </div>
+  <div class="card" id="cardView">
+    <div class="counter">الكلمة <span id="cnow">1</span> من <span id="ctot">1</span></div>
+    <div class="ghostw"><span id="prevw"></span></div>
+    <div class="bigword" id="bigword">…</div>
+    <div class="ghostw"><span id="nextw"></span></div>
+  </div>
+  <div class="sheet hide" id="fullView">
+    <div id="text"></div>
+  </div>
+  <div class="bar"><i id="fill"></i></div>
+  <div class="heard" id="heard">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
+  <small class="note">🎧 «اقرأ لي» بيقرا النص كامل — و«رددي ورايي» بيقرا كلمة وبستنّاكِ تعيديها</small>
+</div>
+<div class="controls">
+  <div class="row">
+    <button class="mic" id="micBtn">🎤 ابدئي القراءة</button>
+    <button id="sayBtn">🔊 اسمعي</button>
+    <button id="okBtn">✓ صح</button>
+  </div>
+  <div class="row">
+    <button class="hold" id="holdBtn">🎙 اضغطي واحكِ</button>
+    <button id="prevBtn">⏮ السابقة</button>
+    <button id="nextBtn">⏭ التالية</button>
+  </div>
+  <div class="row">
+    <button class="read" id="readBtn">📖 اقرأ لي النص</button>
+    <button id="echoBtn">🔁 رددي ورايي</button>
+  </div>
+  <div class="row">
+    <button class="ghost" id="recBtn">🎙 سجّل بصوتك</button>
+    <button class="ghost" id="voiceBtn">🎚 الصوت</button>
+    <button class="ghost" id="diagBtn">🩺 فحص</button>
+    <button class="ghost" id="editBtn">✎ غيّري النص</button>
+    <button class="ghost" id="resetBtn">↺ من البداية</button>
+  </div>
+</div>
+<div class="win" id="win">
+  <div>
+    <div style="font-size:4rem">🏆</div>
+    <h2>أحسنتِ! خلّصتِ النص</h2>
+    <p id="winMsg"></p>
+    <button style="max-width:220px;margin:auto;background:#fff" onclick="restart()">↺ مرة ثانية</button>
+  </div>
+</div>
+<dialog id="dlg">
+  <h3 style="margin-top:0">غيّري النص</h3>
+  <textarea id="ta"></textarea>
+  <div class="row" style="margin-top:10px">
+    <button onclick="applyText()">حفظ وابدأ</button>
+    <button class="ghost" onclick="document.getElementById('dlg').close()">إلغاء</button>
+  </div>
+</dialog>
+<dialog id="recDlg">
+  <h3 style="margin-top:0">🎙 سجّلي الكلمات بصوتك</h3>
+  <p style="margin:0 0 8px;font-size:.85rem;color:#7b8085">
+    اضغطي مطوّلاً على الزر الأحمر واقرأي الكلمة، وارفعي إصبعك. بتنحفظ على هذا الجهاز.</p>
+  <div style="background:#fff3cf;border:2px solid #f0b429;border-radius:14px;padding:10px;margin-bottom:10px;text-align:center">
+    <div style="font-size:.85rem;font-weight:800">🎙 سجّلي النص كامل بمرة وحدة</div>
+    <div style="font-size:.78rem;color:#8b7a3a;margin:2px 0 8px">اقرئي النص كله بصوتك الطبيعي — أفضل من كلمة كلمة</div>
+    <div id="fState" style="font-size:.8rem;color:#8b9096;min-height:1.2em">— مش مسجّل</div>
+    <div class="row" style="margin-top:6px">
+      <button id="fRec" style="background:#e2725b;color:#fff;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;flex:2">⏺ اضغطي واقرئي النص كامل</button>
+      <button id="fPlay">▶ اسمعي</button>
+      <button class="ghost" id="fDel">🗑</button>
     </div>
+  </div>
+  <div style="text-align:center;background:#fbf6e9;border-radius:14px;padding:10px;border:1px solid #e6dcc6">
+    <div style="font-size:.78rem;color:#8b9096;font-weight:700">تسجيل كلمة كلمة (اختياري)</div>
+    <div style="font-size:.8rem;color:#8b9096;font-weight:700">
+      <span id="rNow">1</span> / <span id="rTot">1</span> — مسجّلة: <span id="rDone">0</span></div>
+    <div id="rWord" style="font-family:var(--font-read);font-size:2.4rem;font-weight:700;padding:6px"></div>
+    <div id="rState" style="font-size:.8rem;color:#8b9096;min-height:1.2em"></div>
+  </div>
+  <div class="row" style="margin-top:10px">
+    <button id="rRec" style="background:#e2725b;color:#fff;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;flex:2">⏺ اضغطي واقرأي</button>
+    <button id="rPlay">▶ اسمعي</button>
+  </div>
+  <div class="row" style="margin-top:7px">
+    <button class="ghost" id="rPrev">⏮ السابقة</button>
+    <button class="ghost" id="rNext">⏭ التالية</button>
+    <button class="ghost" id="rDel">🗑 امسحي</button>
+  </div>
+  <div class="row" style="margin-top:7px">
+    <button class="ghost" id="rExp">⬇ نسخة احتياطية</button>
+    <button class="ghost" id="rImp">⬆ استرجاع</button>
+    <button class="ghost" onclick="document.getElementById('recDlg').close()">تمام</button>
+  </div>
+  <input type="file" id="rFile" accept="application/json" style="display:none">
+</dialog>
 
-    <div class="toast" id="toast">تم نسخ النص للحافظة!</div>
+<dialog id="voiceDlg">
+  <h3 style="margin-top:0">🎚 إعدادات الصوت</h3>
+  <div class="set">
+    <label>محرك النطق</label>
+    <select id="engineSel">
+      <option value="device">📱 صوت الجهاز (الافتراضي)</option>
+      <option value="google">🌐 Google (محجوب حالياً)</option>
+    </select>
+    <label>الصوت المستخدم (لصوت الجهاز)</label>
+    <select id="voiceSel"></select>
+    <label>سرعة القراءة: <span id="rateVal">0.70</span></label>
+    <input type="range" id="rateSel" min="0.4" max="1.1" step="0.05" value="0.7">
+    <div class="chk"><input type="checkbox" id="sentMode" checked> <span>اقرأ الجملة كاملة (نطق أصح من الكلمة لحالها)</span></div>
+    <div class="chk"><input type="checkbox" id="noTash"> <span>انطق بدون تشكيل (جرّبيها إذا اللفظ غريب)</span></div>
+    <div class="row" style="margin-top:12px">
+      <button onclick="testVoice()">🔊 جرّبي الصوت</button>
+      <button class="ghost" onclick="document.getElementById('voiceDlg').close()">تمام</button>
+    </div>
+  </div>
+</dialog>
 
-    <script>
-        let snippets = JSON.parse(localStorage.getItem('snippets_db')) || [
-            { id: 1, title: 'ترحيب بالعملاء', category: 'ردود سريعة', content: 'أهلاً بك! نسعد بتواصلك معنا. كيف يمكننا مساعدتك اليوم؟' },
-            { id: 2, title: 'البريد الإلكتروني الشخصي', category: 'شخصي', content: 'example@domain.com' }
-        ];
+<dialog id="diagDlg">
+  <h3 style="margin-top:0">🩺 فحص الصوت والمايك</h3>
+  <div id="diag">جارٍ الفحص…</div>
+  <div class="row" style="margin-top:10px">
+    <button onclick="document.getElementById('diagDlg').close()">تمام</button>
+  </div>
+</dialog>
+<script>
+const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟";
+const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+const LANGS = ['ar-JO','ar-SA','ar-EG','ar'];
+let langI=0, words=[], idx=0, score=0, listening=false, rec=null, micOK=false;
+let reading=false, echo=false, holdRec=null;
+const $ = id => document.getElementById(id);
+const say = h => $('heard').innerHTML = h;
+function norm(s){
+  return (s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
+    .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
+    .replace(/ؤ/g,"و").replace(/ئ/g,"ي")
+    .replace(/[^\u0621-\u064A0-9a-zA-Z]/g,"").trim();
+}
+function sim(a,b){
+  if(a===b) return 1;
+  if(!a||!b) return 0;
+  const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
+  for(let j=0;j<=n;j++) d[0][j]=j;
+  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
+    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
+  return 1-d[m][n]/Math.max(m,n);
+}
+function accept(said,target){
+  const t=norm(target), s=norm(said);
+  if(!t) return true; if(!s) return false; if(s===t) return true;
+  if(t.length>3 && (s.includes(t)||t.includes(s))) return true;
+  const th = t.length<=3 ? .95 : (t.length<=5 ? .75 : .68);
+  return sim(s,t) >= th;
+}
+function build(txt){
+  const box=$('text'); box.innerHTML="";
+  words = txt.trim().split(/\s+/).filter(Boolean);
+  words.forEach((w,i)=>{
+    const el=document.createElement('span');
+    el.className='w'; el.textContent=w; el.onclick=()=>{idx=i;paint();};
+    box.appendChild(el); box.appendChild(document.createTextNode(' '));
+  });
+  idx=0; score=0; paint(); refreshRecSet();
+}
+function paint(){
+  document.querySelectorAll('.w').forEach((el,i)=>{
+    el.classList.toggle('done',i<idx);
+    el.classList.toggle('now',i===idx && !reading);
+  });
+  $('bigword').textContent = words[idx] || '🎉';
+  $('bigword').className = 'bigword';
+  $('prevw').textContent = idx>0 ? words[idx-1] : '';
+  $('nextw').textContent = idx<words.length-1 ? words[idx+1] : '';
+  $('cnow').textContent = Math.min(idx+1, words.length);
+  $('ctot').textContent = words.length;
+  const pct = words.length ? Math.round(idx/words.length*100) : 0;
+  $('fill').style.width=pct+'%'; $('prog').textContent=pct; $('score').textContent=score;
+  const cur=document.querySelector('.w.now');
+  if(cur && !$('fullView').classList.contains('hide')) cur.scrollIntoView({block:'center',behavior:'smooth'});
+}
+let ac;
+function beep(f,d){
+  try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)();
+    const o=ac.createOscillator(),g=ac.createGain(); o.frequency.value=f;
+    g.gain.setValueAtTime(.001,ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.22,ac.currentTime+.02);
+    g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);
+    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+d);
+  }catch(e){}
+}
+function allVoices(){ return speechSynthesis.getVoices(); }
+function arVoices(){ return allVoices().filter(v=>/^ar/i.test(v.lang)||/arab/i.test(v.name)); }
+let chosenVoice=null, rate=0.7, stripTash=false, warned=false;
+function fillVoices(){
+  const sel=$('voiceSel'); if(!sel) return;
+  const ar=arVoices(), all=allVoices();
+  const list = ar.length ? ar : all;
+  sel.innerHTML='';
+  list.forEach(v=>{ const o=document.createElement('option');
+    o.value=v.name; o.textContent=v.name+' ('+v.lang+')'; sel.appendChild(o); });
+  if(!chosenVoice && list.length) chosenVoice=list[0];
+  if(chosenVoice) sel.value=chosenVoice.name;
+  checkVoice();
+}
+function checkVoice(){
+  const bn=$('banner'); if(!bn) return;
+  if(engine!=='google' && arVoices().length===0 && allVoices().length>0){
+    bn.classList.remove('hide');
+    bn.innerHTML='⚠️ <b>ما في صوت عربي على هذا الجهاز</b> — القراءة الصوتية رح يطلع لفظها غلط.<br>'+
+      '📱 آيفون/آيباد: الإعدادات ‹ إمكانية الوصول ‹ المحتوى المنطوق ‹ الأصوات ‹ العربية.<br>'+
+      '🤖 أندرويد: الإعدادات ‹ اللغة والإدخال ‹ تحويل النص إلى كلام ‹ تثبيت بيانات صوتية ‹ العربية.<br>'+
+      '💻 ويندوز: الإعدادات ‹ الوقت واللغة ‹ اللغة ‹ إضافة لغة ‹ العربية مع خيار الكلام (Speech).<br>'+
+      'باقي الأزرار شغّالة عادي بدون صوت 👍';
+  } else bn.classList.add('hide');
+}
+let engine='device', sentenceMode=true;
+const gAudio = new Audio(); gAudio.preload='auto';
+function gUrl(t){
+  return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&total=1&idx=0&prev=input&textlen=' + t.length + '&q=' + encodeURIComponent(t);
+}
+let audioUnlocked=false;
+function unlockAudio(){
+  if(audioUnlocked) return;
+  audioUnlocked=true;
+  try{
+    gAudio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
+    gAudio.play().then(()=>{ gAudio.pause(); }).catch(()=>{});
+  }catch(e){}
+}
+document.addEventListener('pointerdown', unlockAudio, {once:true});
+function gTest(cb){
+  const a=new Audio();
+  const to=setTimeout(()=>cb({ok:false,why:'timeout'}),5000);
+  a.onloadedmetadata=()=>{clearTimeout(to); cb({ok:true,dur:a.duration});};
+  a.onerror=()=>{clearTimeout(to); cb({ok:false,why:(a.error&&a.error.message)||'error'});};
+  a.src=gUrl('مرحبا'); a.load();
+}
+function gRate(){ return Math.min(1, Math.max(.55, rate + .2)); }
+function stripT(t){ return t.replace(/[\u064B-\u0652\u0670]/g,''); }
+function gSpeak(t, cb){
+  try{
+    gAudio.pause();
+    gAudio.src = gUrl(stripTash ? stripT(t) : t);
+    gAudio.playbackRate = gRate();
+    gAudio.onended = ()=> cb && cb();
+    gAudio.onerror = ()=>{ say('⚠️ صوت Google ما اشتغل — رجعنا لصوت الجهاز.'); engine='device'; speakDevice(t, rate, cb); };
+    const guard=setTimeout(()=>{ if(gAudio.paused){ engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); } }, 3500);
+    gAudio.onplaying=()=>clearTimeout(guard);
+    gAudio.play().catch(()=>{ clearTimeout(guard); engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); });
+  }catch(e){ cb && cb(); }
+}
+const recAudio = new Audio();
+let recSet = new Set(), recIdx = 0, mr=null, mrChunks=[], mrStream=null;
+function idb(){
+  return new Promise((res,rej)=>{
+    const r = indexedDB.open('readingRecs',1);
+    r.onupgradeneeded = ()=> r.result.createObjectStore('recs');
+    r.onsuccess = ()=> res(r.result);
+    r.onerror = ()=> rej(r.error);
+  });
+}
+async function recGet(w){
+  try{ const d=await idb(); return await new Promise(res=>{
+    const q=d.transaction('recs').objectStore('recs').get(norm(w));
+    q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; }
+}
+const FULL_KEY='__FULL_TEXT__';
+async function recPut(w,blob){
+  try{ const d=await idb(); await new Promise(res=>{
+    const q=d.transaction('recs','readwrite').objectStore('recs').put(blob,norm(w));
+    q.onsuccess=res; q.onerror=res; }); }catch(e){}
+}
+async function recDelete(w){
+  try{ const d=await idb(); await new Promise(res=>{
+    const q=d.transaction('recs','readwrite').objectStore('recs').delete(norm(w));
+    q.onsuccess=res; q.onerror=res; }); }catch(e){}
+}
+async function recKeys(){
+  try{ const d=await idb(); return await new Promise(res=>{
+    const q=d.transaction('recs').objectStore('recs').getAllKeys();
+    q.onsuccess=()=>res(q.result||[]); q.onerror=()=>res([]); }); }catch(e){ return []; }
+}
+async function refreshRecSet(){
+  recSet = new Set(await recKeys());
+  document.querySelectorAll('.w').forEach((el,i)=>el.classList.toggle('rec', recSet.has(norm(words[i]))));
+  const d=$('rDone'); if(d) d.textContent = words.filter(w=>recSet.has(norm(w))).length;
+}
+function hasRec(w){ return recSet.has(norm(w)); }
+async function speak(t, r, cb){
+  if(hasRec(t)){
+    const b = await recGet(t);
+    if(b){
+      try{
+        const u = URL.createObjectURL(b);
+        recAudio.src = u;
+        recAudio.onended = ()=>{ URL.revokeObjectURL(u); cb && cb(); };
+        recAudio.onerror = ()=>{ cb && cb(); };
+        await recAudio.play();
+        return;
+      }catch(e){}
+    }
+  }
+  if(engine==='google') return gSpeak(t, cb);
+  return speakDevice(t, r, cb);
+}
+function speakDevice(t, r, cb){
+  try{
+    if(arVoices().length===0){
+      if(!warned){ warned=true; checkVoice(); say('⚠️ ما في صوت عربي على الجهاز — نزّليه عشان النطق يطلع صح.'); }
+      cb&&cb(); return;
+    }
+    const txt = stripTash ? t.replace(/[\u064B-\u0652\u0670]/g,'') : t;
+    const u=new SpeechSynthesisUtterance(txt);
+    const v=chosenVoice||arVoices()[0];
+    if(v){ u.voice=v; u.lang=v.lang; } else u.lang='ar-SA';
+    u.rate = r || rate; u.pitch=1;
+    u.onend=()=>cb&&cb(); u.onerror=()=>cb&&cb();
+    speechSynthesis.speak(u);
+  }catch(e){ cb&&cb(); }
+}
+function testVoice(){ speak('مَرحَبًا، أنا رح أقرا معكِ', rate); }
+function arVoice(){ return chosenVoice || arVoices()[0] || null; }
 
-        let activeCategory = 'الكل';
+function correct(){
+  const b=$('bigword'); b.classList.add('ok','pop'); setTimeout(()=>b.classList.remove('pop'),450);
+  beep(880,.12); setTimeout(()=>beep(1320,.14),90);
+  score++; idx++;
+  if(idx>=words.length){ paint(); finish(); return; }
+  setTimeout(paint,180);
+}
+function wrong(){
+  const b=$('bigword'); b.classList.add('miss'); setTimeout(()=>b.classList.remove('miss'),350);
+}
+function finish(){
+  stopAll();
+  $('winMsg').textContent='قرأتِ '+words.length+' كلمة وجمعتِ '+score+' نجمة ⭐';
+  $('win').classList.add('show');
+  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
+  for(let i=0;i<60;i++) confetti();
+}
+function confetti(){
+  const c=document.createElement('div'); c.className='confetti';
+  c.style.left=Math.random()*100+'vw';
+  c.style.background=['#e2725b','#f0b429','#2f8f5b','#5aa9d6','#fff'][Math.floor(Math.random()*5)];
+  document.body.appendChild(c);
+  c.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(105vh) rotate(720deg)'}],
+    {duration:2200+Math.random()*1600,easing:'ease-in'}).onfinish=()=>c.remove();
+}
+function restart(){ $('win').classList.remove('show'); idx=0; score=0; paint(); }
+function hi(i){
+  document.querySelectorAll('.w').forEach((el,k)=>el.classList.toggle('spk',k===i));
+  if(words[i]!==undefined){
+    $('bigword').textContent=words[i]; $('cnow').textContent=i+1;
+    $('prevw').textContent=i>0?words[i-1]:''; $('nextw').textContent=i<words.length-1?words[i+1]:'';
+  }
+}
+async function readAloud(from){
+  if(reading){ stopRead(); return; }
+  stopMic(); echo=false;
+  const start = (from!==undefined?from:idx);
+  say('🎧 بقرا…');
+  if(start===0 || from===undefined){
+    const hadFull = await recGet(FULL_KEY);
+    if(hadFull){ await readFullWithHighlight(); return; }
+  }
+  reading=true; $('readBtn').textContent='⏹ وقّف القراءة';
+  const allRec = words.slice(start).every(w=>hasRec(w));
+  if(sentenceMode && !allRec) readSentence(start); else readWords(start);
+}
+function readWords(i){
+  const step = ()=>{
+    if(!reading || i>=words.length){ stopRead(); return; }
+    hi(i);
+    speak(words[i], rate, ()=>{ i++; setTimeout(step, 240); });
+  };
+  step();
+}
+function readSentence(start){
+  const slice = words.slice(start);
+  const chunks=[]; let cur=[], len=0, ci=start;
+  slice.forEach((w,i)=>{
+    if(len + w.length + 1 > 170 && cur.length){ chunks.push({from:ci, ws:cur}); ci=start+i; cur=[]; len=0; }
+    cur.push(w); len += w.length+1;
+  });
+  if(cur.length) chunks.push({from:ci, ws:cur});
+  let k=0, timers=[];
+  const clearT = ()=>{ timers.forEach(t=>clearTimeout(t)); timers=[]; };
+  const schedule = (c, dur)=>{
+    const total = c.ws.reduce((x,w)=>x+w.length+1, 0);
+    let t=0;
+    c.ws.forEach((w,j)=>{
+      const at=t;
+      timers.push(setTimeout(()=>{ if(reading) hi(c.from+j); }, at*1000));
+      t += dur * ((w.length+1)/total);
+    });
+  };
+  const play = ()=>{
+    clearT();
+    if(!reading || k>=chunks.length){ stopRead(); return; }
+    const c = chunks[k], text = c.ws.join(' ');
+    const chars = c.ws.reduce((x,w)=>x+w.length+1, 0);
+    hi(c.from);
+    if(engine==='google'){
+      gAudio.pause();
+      gAudio.src = gUrl(stripTash ? stripT(text) : text);
+      gAudio.playbackRate = gRate();
+      gAudio.onloadedmetadata = ()=> schedule(c, (gAudio.duration || chars*.085) / gAudio.playbackRate);
+      gAudio.onended = ()=>{ k++; play(); };
+      gAudio.onerror = ()=>{ say('⚠️ صوت Google ما اشتغل — رجعنا لصوت الجهاز.'); engine='device'; play(); };
+      const guard=setTimeout(()=>{ if(gAudio.paused && reading){ engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); play(); } }, 3500);
+      gAudio.onplaying=()=>clearTimeout(guard);
+      gAudio.play().catch(()=>{ clearTimeout(guard); engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); play(); });
+    } else {
+      const u = new SpeechSynthesisUtterance(stripTash ? stripT(text) : text);
+      const v = chosenVoice || arVoices()[0];
+      if(v){ u.voice=v; u.lang=v.lang; } else u.lang='ar-SA';
+      u.rate = rate;
+      let got=false;
+      u.onboundary = e=>{ got=true; clearT();
+        let j=0, p=0;
+        for(let n=0;n<c.ws.length;n++){ if(e.charIndex>=p) j=n; p += c.ws[n].length+1; }
+        hi(c.from+j); };
+      u.onstart = ()=>{ setTimeout(()=>{ if(!got) schedule(c, chars*.085/rate); }, 120); };
+      u.onend = ()=>{ k++; play(); };
+      u.onerror = ()=>{ k++; play(); };
+      speechSynthesis.speak(u);
+    }
+  };
+  play();
+}
+function stopRead(){
+  reading=false; try{speechSynthesis.cancel();}catch(e){}
+  try{ gAudio.pause(); }catch(e){}
+  document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
+  $('readBtn').textContent='📖 اقرأ لي النص';
+  paint(); say('خلصت القراءة ✨ جرّبي تقرئي إنتِ هلأ.');
+}
+function echoMode(){
+  if(echo){ echo=false; $('echoBtn').textContent='🔁 رددي ورايي'; stopMic(); try{speechSynthesis.cancel();}catch(e){} say('وقّفنا وضع الترديد.'); return; }
+  if(!SR){ say('المتصفح ما بيدعم المايك — بس بقدر أقرالك 📖'); return; }
+  echo=true; $('echoBtn').textContent='⏹ وقّف الترديد';
+  echoStep();
+}
+async function echoStep(){
+  if(!echo || idx>=words.length) return;
+  if(!(await primeMic())){ echo=false; $('echoBtn').textContent='🔁 رددي ورايي'; return; }
+  paint(); say('🎧 اسمعي: <b>'+words[idx]+'</b>');
+  speak(words[idx], rate, ()=>{
+    if(!echo) return;
+    say('🎤 دورك… رددي الكلمة');
+    listenOnce(ok=>{
+      if(!echo) return;
+      if(ok){ correct(); setTimeout(echoStep, 500); }
+      else { wrong(); say('مش مضبوط، بعيدها 🔁'); setTimeout(echoStep, 500); }
+    });
+  });
+}
+function listenOnce(cb){
+  let done=false;
+  const r = makeRec(false);
+  r.onresult = e=>{
+    let h="";
+    for(let i=e.resultIndex;i<e.results.length;i++)
+      for(let a=0;a<e.results[i].length;a++) h += " " + e.results[i][a].transcript;
+    say('سمعت: <b>'+h.trim()+'</b>');
+    if(done) return;
+    const hit = h.trim().split(/\s+/).some(t=>accept(t, words[idx]));
+    if(hit){ done=true; try{r.stop();}catch(e){} cb(true); }
+  };
+  r.onend = ()=>{ if(!done){ done=true; cb(false); } };
+  try{ r.start(); }catch(e){ cb(false); }
+  setTimeout(()=>{ try{ r.stop(); }catch(e){} }, 6000);
+}
+async function primeMic(){
+  if(micOK) return true;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ micOK=true; return true; }
+  try{
+    const st = await navigator.mediaDevices.getUserMedia({audio:true});
+    st.getTracks().forEach(t=>t.stop()); micOK=true; return true;
+  }catch(e){
+    say('⛔ المايك مرفوض ('+e.name+'). اسمحي للموقع بالمايك أو استخدمي <b>✓ صح</b>.');
+    return false;
+  }
+}
+function makeRec(continuous){
+  const r=new SR();
+  r.lang=LANGS[langI]; r.continuous=continuous && !IOS; r.interimResults=!IOS; r.maxAlternatives=3;
+  r.onerror = ev=>{
+    if(ev.error==='language-not-supported' && langI<LANGS.length-1){ langI++; say('بجرّب لغة ثانية: '+LANGS[langI]); return; }
+    if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){ say('⛔ المتصفح رافض المايك.'); stopMic(); return; }
+    if(ev.error==='network'){ say('🌐 التعرّف على الصوت محتاج إنترنت.'); return; }
+    if(ev.error!=='no-speech'&&ev.error!=='aborted') say('خطأ: <b>'+ev.error+'</b>');
+  };
+  return r;
+}
+function handleT(h){
+  say('سمعت: <b>'+h.trim()+'</b>');
+  let guard=0;
+  for(const tk of h.trim().split(/\s+/)){
+    if(idx>=words.length) break;
+    if(accept(tk,words[idx])){ correct(); guard++; }
+    else if(idx+1<words.length && accept(tk,words[idx+1])){ correct(); correct(); guard++; }
+    if(guard>25) break;
+  }
+}
+async function startMic(){
+  if(!SR){ say('😕 المتصفح ما بيدعم التعرّف على الصوت. استخدمي <b>✓ صح</b>.'); return; }
+  if(!window.isSecureContext){ say('🔒 لازم https.'); return; }
+  if(!(await primeMic())) return;
+  reading=false; echo=false;
+  try{
+    rec=makeRec(true);
+    rec.onresult=e=>{ let h="";
+      for(let i=e.resultIndex;i<e.results.length;i++)
+        for(let a=0;a<e.results[i].length;a++) h+=" "+e.results[i][a].transcript;
+      handleT(h); };
+    rec.onend=()=>{ if(listening){ try{rec.start();}catch(e){} } };
+    rec.start(); listening=true;
+    $('micBtn').classList.add('on'); $('micBtn').textContent='⏹ إيقاف';
+    say('🎧 أنا أسمعك… اقرئي الكلمة الكبيرة.');
+  }catch(e){ say('ما قدرت أشغّل المايك.'); }
+}
+function stopMic(){
+  listening=false;
+  try{ rec && (rec.onend=null, rec.stop()); }catch(e){}
+  $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
+}
+function stopAll(){ stopMic(); reading=false; echo=false;
+  $('echoBtn').textContent='🔁 رددي ورايي'; $('readBtn').textContent='📖 اقرأ لي النص';
+  try{speechSynthesis.cancel();}catch(e){} }
+async function holdStart(ev){
+  ev.preventDefault();
+  if(!SR){ say('المتصفح ما بيدعم المايك.'); return; }
+  if(!(await primeMic())) return;
+  stopMic();
+  try{
+    holdRec=makeRec(false);
+    holdRec.onresult=e=>{ let h="";
+      for(let i=e.resultIndex;i<e.results.length;i++)
+        for(let a=0;a<e.results[i].length;a++) h+=" "+e.results[i][a].transcript;
+      handleT(h); };
+    holdRec.onend=()=>{ $('holdBtn').textContent='🎙 اضغطي واحكِ'; };
+    holdRec.start(); $('holdBtn').textContent='🔴 احكِ الآن…';
+  }catch(e){}
+}
+function holdEnd(){ try{ holdRec && holdRec.stop(); }catch(e){} }
+async function runDiag(){
+  const rows=[]; const add=(k,v,g)=>rows.push('<div><span>'+k+'</span><b style="color:'+(g?'#2f8f5b':'#e2725b')+'">'+v+'</b></div>');
+  add('التعرّف على الصوت', SR?'مدعوم ✓':'غير مدعوم ✗', !!SR);
+  add('اتصال آمن https', window.isSecureContext?'نعم ✓':'لا ✗', window.isSecureContext);
+  const v=arVoice();
+  add('صوت عربي للقراءة', v? v.name : 'ما في صوت عربي ✗', !!v);
+  add('عدد الأصوات', speechSynthesis.getVoices().length, true);
+  let perm='غير معروف', good=true;
+  try{ const p=await navigator.permissions.query({name:'microphone'}); perm=p.state; good=p.state!=='denied'; }catch(e){}
+  add('إذن المايك', perm, good);
+  try{ const st=await navigator.mediaDevices.getUserMedia({audio:true});
+    st.getTracks().forEach(t=>t.stop()); add('فتح المايك','نجح ✓',true);
+  }catch(e){ add('فتح المايك','فشل: '+e.name,false); }
+  add('اللغة', LANGS[langI], true);
+  add('المحرك الحالي', engine==='google'?'🌐 Google':'📱 الجهاز', true);
+  const g = await new Promise(r=>gTest(r));
+  add('اختبار صوت Google', g.ok ? ('يعمل ✓ ('+Math.round(g.dur*10)/10+'ث)') : ('فشل: '+g.why), g.ok);
+  $('diag').innerHTML = rows.join('') +
+   '<p style="margin:10px 0 0;color:#7b8085">إذا «صوت عربي» أحمر: نزّلي صوت عربي من إعدادات الجهاز (Android: إعدادات ثم اللغة ثم تحويل النص لكلام ثم تنزيل العربية — iPhone: الإعدادات ثم إمكانية الوصول ثم المحتوى المنطوق ثم الأصوات ثم العربية).</p>';
+}
+$('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView').classList.add('hide');
+  $('tabCard').classList.add('act'); $('tabFull').classList.remove('act'); };
+$('tabFull').onclick=()=>{ $('fullView').classList.remove('hide'); $('cardView').classList.add('hide');
+  $('tabFull').classList.add('act'); $('tabCard').classList.remove('act'); paint(); };
+$('micBtn').onclick=()=> listening?stopMic():startMic();
+$('sayBtn').onclick=()=> words[idx] && speak(words[idx], rate);
+$('okBtn').onclick=()=> idx<words.length && correct();
+$('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
+$('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
+$('readBtn').onclick=()=> readAloud();
+$('echoBtn').onclick=()=> echoMode();
+$('resetBtn').onclick=()=>{ stopAll(); restart(); };
+$('editBtn').onclick=()=>{ $('ta').value=words.join(' '); $('dlg').showModal(); };
+$('diagBtn').onclick=()=>{ $('diag').innerHTML='جارٍ الفحص…'; $('diagDlg').showModal(); runDiag(); };
+const hb=$('holdBtn');
+hb.addEventListener('pointerdown',holdStart);
+hb.addEventListener('pointerup',holdEnd);
+hb.addEventListener('pointercancel',holdEnd);
+hb.addEventListener('pointerleave',holdEnd);
+let fmr=null, fmrChunks=[], fmrStream=null;
+async function refreshFull(){
+  const b = await recGet(FULL_KEY);
+  $('fState').textContent = b ? '✅ مسجّل — النص كامل جاهز' : '— مش مسجّل بعد';
+}
+async function fmrStart(ev){
+  ev.preventDefault();
+  if(!navigator.mediaDevices || !window.MediaRecorder){ $('fState').textContent='المتصفح ما بيدعم التسجيل'; return; }
+  try{
+    fmrStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    fmrChunks = [];
+    fmr = new MediaRecorder(fmrStream);
+    fmr.ondataavailable = e=>{ if(e.data && e.data.size) fmrChunks.push(e.data); };
+    fmr.onstop = async ()=>{
+      const blob = new Blob(fmrChunks, {type: (fmr && fmr.mimeType) || 'audio/webm'});
+      if(blob.size > 800) await recPut(FULL_KEY, blob);
+      try{ fmrStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+      $('fRec').textContent='⏺ اضغطي واقرئي النص كامل';
+      await refreshFull();
+    };
+    fmr.start();
+    $('fRec').textContent='🔴 بسجّل… اقرئي النص، ارفعي إصبعك لما تخلّصي';
+    $('fState').textContent='بسجّل الآن 🎙';
+  }catch(e){ $('fState').textContent='المايك مرفوض ⛔'; }
+}
+function fmrStop(){ try{ if(fmr && fmr.state!=='inactive') fmr.stop(); }catch(e){} }
+async function playFull(){
+  const b = await recGet(FULL_KEY);
+  if(!b){ $('fState').textContent='ما في تسجيل بعد'; return; }
+  const u = URL.createObjectURL(b);
+  recAudio.src = u; recAudio.onended = ()=> URL.revokeObjectURL(u);
+  try{ await recAudio.play(); }catch(e){}
+}
+async function readFullWithHighlight(){
+  const b = await recGet(FULL_KEY);
+  if(!b) return false;
+  reading = true; $('readBtn').textContent='⏹ وقّف القراءة';
+  const u = URL.createObjectURL(b);
+  recAudio.src = u;
+  await new Promise(res=>{
+    recAudio.onloadedmetadata = res;
+    recAudio.load();
+  });
+  const total = recAudio.duration || (words.join(' ').length * .09);
+  const totalChars = words.reduce((a,w)=>a+w.length+1,0);
+  const timers = [];
+  let t = 0;
+  words.forEach((w,i)=>{
+    const at = t;
+    timers.push(setTimeout(()=>{ if(reading) hi(i); }, at*1000));
+    t += total * ((w.length+1)/totalChars);
+  });
+  recAudio.onended = ()=>{ timers.forEach(x=>clearTimeout(x)); URL.revokeObjectURL(u); stopRead(); };
+  try{ await recAudio.play(); }
+  catch(e){ timers.forEach(x=>clearTimeout(x)); stopRead(); return true; }
+  return true;
+}
+function renderRec(){
+  $('rWord').textContent = words[recIdx] || '';
+  $('rNow').textContent = Math.min(recIdx+1, words.length);
+  $('rTot').textContent = words.length;
+  $('rDone').textContent = words.filter(w=>recSet.has(norm(w))).length;
+  $('rState').textContent = hasRec(words[recIdx]) ? '✅ مسجّلة' : '— مش مسجّلة';
+}
+async function mrStart(ev){
+  ev.preventDefault();
+  if(!navigator.mediaDevices || !window.MediaRecorder){ $('rState').textContent='المتصفح ما بيدعم التسجيل'; return; }
+  try{
+    mrStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    mrChunks = [];
+    mr = new MediaRecorder(mrStream);
+    mr.ondataavailable = e=>{ if(e.data && e.data.size) mrChunks.push(e.data); };
+    mr.onstop = async ()=>{
+      const blob = new Blob(mrChunks, {type: (mr && mr.mimeType) || 'audio/webm'});
+      if(blob.size > 500){ await recPut(words[recIdx], blob); await refreshRecSet(); }
+      try{ mrStream.getTracks().forEach(t=>t.stop()); }catch(e){}
+      $('rRec').textContent='⏺ اضغطي واقرأي';
+      renderRec();
+      if(recIdx < words.length-1){ recIdx++; setTimeout(renderRec, 350); }
+    };
+    mr.start();
+    $('rRec').textContent='🔴 بسجّل… ارفعي إصبعك';
+    $('rState').textContent='اقرأي الكلمة الآن';
+  }catch(e){ $('rState').textContent='المايك مرفوض ⛔'; }
+}
+function mrStop(){ try{ if(mr && mr.state!=='inactive') mr.stop(); }catch(e){} }
+function b64(blob){ return new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); }); }
+async function exportRecs(){
+  const keys = await recKeys(); const out={};
+  for(const k of keys){ const b=await recGet(k); if(b) out[k]= await b64(b); }
+  const blob = new Blob([JSON.stringify(out)], {type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob); a.download='my-recordings.json'; a.click();
+}
+async function importRecs(file){
+  try{
+    const obj = JSON.parse(await file.text());
+    for(const k in obj){
+      const r = await fetch(obj[k]); const b = await r.blob();
+      const d = await idb();
+      await new Promise(res=>{ const q=d.transaction('recs','readwrite').objectStore('recs').put(b,k); q.onsuccess=res; q.onerror=res; });
+    }
+    await refreshRecSet(); renderRec(); $('rState').textContent='✅ تم الاسترجاع';
+  }catch(e){ $('rState').textContent='الملف مش مظبوط'; }
+}
+$('recBtn').onclick = async ()=>{ recIdx = idx; await refreshRecSet(); renderRec(); await refreshFull(); $('recDlg').showModal(); };
+$('fRec').addEventListener('pointerdown', fmrStart);
+$('fRec').addEventListener('pointerup', fmrStop);
+$('fRec').addEventListener('pointercancel', fmrStop);
+$('fRec').addEventListener('pointerleave', fmrStop);
+$('fPlay').onclick = playFull;
+$('fDel').onclick = async ()=>{ await recDelete(FULL_KEY); await refreshFull(); };
+const rr = $('rRec');
+rr.addEventListener('pointerdown', mrStart);
+rr.addEventListener('pointerup', mrStop);
+rr.addEventListener('pointercancel', mrStop);
+rr.addEventListener('pointerleave', mrStop);
+$('rPlay').onclick = ()=> speak(words[recIdx], rate);
+$('rPrev').onclick = ()=>{ if(recIdx>0){ recIdx--; renderRec(); } };
+$('rNext').onclick = ()=>{ if(recIdx<words.length-1){ recIdx++; renderRec(); } };
+$('rDel').onclick = async ()=>{ await recDelete(words[recIdx]); await refreshRecSet(); renderRec(); };
+$('rExp').onclick = exportRecs;
+$('rImp').onclick = ()=> $('rFile').click();
+$('rFile').onchange = e=>{ if(e.target.files[0]) importRecs(e.target.files[0]); };
 
-        function init() {
-            renderCategories();
-            renderSnippets();
-        }
-
-        function saveToStorage() {
-            localStorage.setItem('snippets_db', JSON.stringify(snippets));
-            renderCategories();
-            renderSnippets();
-        }
-
-        function renderCategories() {
-            const categories = ['الكل', ...new Set(snippets.map(s => s.category || 'عام'))];
-            const filterContainer = document.getElementById('categoryFilter');
-            filterContainer.innerHTML = categories.map(cat => 
-                `<button class="chip ${cat === activeCategory ? 'active' : ''}" onclick="setCategory('${cat}')">${cat}</button>`
-            ).join('');
-        }
-
-        function setCategory(cat) {
-            activeCategory = cat;
-            renderCategories();
-            renderSnippets();
-        }
-
-        function renderSnippets() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
-            const grid = document.getElementById('snippetsGrid');
-            
-            const filtered = snippets.filter(s => {
-                const matchesCat = activeCategory === 'الكل' || (s.category || 'عام') === activeCategory;
-                const matchesSearch = s.title.toLowerCase().includes(search) || s.content.toLowerCase().includes(search);
-                return matchesCat && matchesSearch;
-            });
-
-            if (filtered.length === 0) {
-                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">لا توجد قوالب مطابقة.</div>`;
-                return;
-            }
-
-            grid.innerHTML = filtered.map(s => `
-                <div class="card">
-                    <div>
-                        <div class="card-header">
-                            <span class="card-title">${escapeHtml(s.title)}</span>
-                            <span class="badge">${escapeHtml(s.category || 'عام')}</span>
-                        </div>
-                        <div class="card-body">${escapeHtml(s.content)}</div>
-                    </div>
-                    <div class="card-actions">
-                        <button class="btn btn-copy" onclick="copyText('${s.id}')">نسخ النص</button>
-                        <div>
-                            <button class="btn btn-outline" onclick="editSnippet(${s.id})">تعديل</button>
-                            <button class="btn btn-danger" onclick="deleteSnippet(${s.id})">حذف</button>
-                        </div>
-                    </div>
-                </div>
-            `).join('');
-        }
-
-        function copyText(id) {
-            const item = snippets.find(s => s.id == id);
-            if (!item) return;
-            navigator.clipboard.writeText(item.content).then(() => {
-                showToast();
-            });
-        }
-
-        function showToast() {
-            const toast = document.getElementById('toast');
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 2000);
-        }
-
-        function openModal(editId = null) {
-            document.getElementById('snippetForm').reset();
-            document.getElementById('snippetId').value = '';
-            document.getElementById('modalTitle').innerText = editId ? 'تعديل القالب' : 'إضافة قالب جديد';
-            
-            if (editId) {
-                const item = snippets.find(s => s.id === editId);
-                if (item) {
-                    document.getElementById('snippetId').value = item.id;
-                    document.getElementById('snippetTitle').value = item.title;
-                    document.getElementById('snippetCategory').value = item.category || '';
-                    document.getElementById('snippetContent').value = item.content;
-                }
-            }
-            document.getElementById('templateModal').classList.add('active');
-        }
-
-        function closeModal() {
-            document.getElementById('templateModal').classList.remove('active');
-        }
-
-        function saveSnippet(e) {
-            e.preventDefault();
-            const id = document.getElementById('snippetId').value;
-            const title = document.getElementById('snippetTitle').value.trim();
-            const category = document.getElementById('snippetCategory').value.trim() || 'عام';
-            const content = document.getElementById('snippetContent').value.trim();
-
-            if (id) {
-                const index = snippets.findIndex(s => s.id == id);
-                if (index !== -1) snippets[index] = { id: Number(id), title, category, content };
-            } else {
-                snippets.push({ id: Date.now(), title, category, content });
-            }
-
-            saveToStorage();
-            closeModal();
-        }
-
-        function editSnippet(id) {
-            openModal(id);
-        }
-
-        function deleteSnippet(id) {
-            if (confirm('هل أنت تأكد من حذف هذا القالب؟')) {
-                snippets = snippets.filter(s => s.id !== id);
-                saveToStorage();
-            }
-        }
-
-        function filterSnippets() { renderSnippets(); }
-
-        function escapeHtml(str) {
-            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
-        }
-
-        init();
-    </script>
+function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
+$('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
+$('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
+$('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); };
+$('noTash').onchange=e=>{ stripTash=e.target.checked; };
+$('engineSel').onchange=e=>{ engine=e.target.value; checkVoice(); say(engine==='google'?'صوت Google مفعّل 🌐':'صوت الجهاز مفعّل 📱'); };
+$('sentMode').onchange=e=>{ sentenceMode=e.target.checked; };
+if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); }; setTimeout(fillVoices,600); }
+build(DEFAULT_TEXT);
+</script>
 </body>
 </html>
