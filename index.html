@@ -111,26 +111,7 @@
 
 </style>
 
-<script>
-window.READING_APP_CONFIG = {
-  TOKEN_ENDPOINT: "https://YOUR-FUNCTION-APP.azurewebsites.net/api/speech-token",
-  VOICE: "ar-JO-SanaNeural",
-  REGION: "uaenorth"
-};
-let __speechToken = null, __speechTokenExpires = 0;
-async function getSpeechToken(){
-  const endpoint = window.READING_APP_CONFIG?.TOKEN_ENDPOINT || '';
-  if(!endpoint || endpoint.includes('YOUR-FUNCTION-APP')) throw new Error('TOKEN_ENDPOINT_NOT_CONFIGURED');
-  const now = Date.now();
-  if(__speechToken && now < __speechTokenExpires - 60000) return __speechToken;
-  const r = await fetch(endpoint,{method:'GET',cache:'no-store'});
-  if(!r.ok) throw new Error('TOKEN_HTTP_'+r.status);
-  const d = await r.json();
-  if(!d.token) throw new Error('TOKEN_MISSING');
-  __speechToken=d.token; __speechTokenExpires=now+9*60*1000;
-  return __speechToken;
-}
-</script>
+<script src="https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@latest/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js"></script>
 </head>
 <body>
 <div class="wrap">
@@ -174,6 +155,8 @@ async function getSpeechToken(){
   <div class="bar"><i id="fill"></i></div>
   <div class="heard" id="heard">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
   <small class="note">🎧 «اقرأ لي» بيقرا النص كامل — و«رددي ورايي» بيقرا كلمة وبستنّاكِ تعيديها</small>
+<div id="azureSecureStatus" style="margin-top:8px;font-size:.78rem;color:#2f8f5b;font-weight:700;text-align:center">☁️ Azure Neural: Sana — اتصال آمن عبر Token</div>
+
 </div>
 
 <div class="mistakes" id="mistakesBox">
@@ -278,7 +261,8 @@ async function getSpeechToken(){
       <option value="ar-JO-TaimNeural">🇯🇴 Taim — ذكر أردني</option>
     </select>
     <label>منطقة Azure (Region)</label>
-    <input id="azureRegion" placeholder="مثل: westeurope" autocomplete="off">
+    <input id="azureRegion" value="eastus" readonly>
+    <div style="font-size:.78rem;color:#7b8085;background:#fff3cf;border:1px solid #f0b429;border-radius:10px;padding:8px;margin-top:8px">🔐 مفتاح Azure محفوظ داخل الخادم ولا يتم وضعه داخل GitHub.</div>
     <small style="display:block;color:#8b9096;margin-top:5px;line-height:1.5">🔐 للاستخدام المحلي فقط. لتطبيق منشور، ضع الاستدعاء في خادم وسيط ولا تضع المفتاح داخل الموقع.</small>
     <label>الصوت المستخدم (عند اختيار صوت الجهاز)</label>
     <select id="voiceSel"></select>
@@ -448,44 +432,82 @@ function checkVoice(){
   } else bn.classList.add('hide');
 }
 let engine='azure', sentenceMode=true;
-const gAudio = new Audio(); gAudio.preload='auto';
 const azureAudio = new Audio(); azureAudio.preload='auto';
+const AZURE_TOKEN_ENDPOINT = 'https://reading-speech-api-e9hbc8fcsfacaxgv.israelcentral-01.azurewebsites.net/api/speech-token';
 let azureVoice='ar-JO-SanaNeural';
-let azureRegion='uaenorth';
-let azureAbort=null;
+let azureRegion='eastus';
+let azureSpeechToken='';
+let azureTokenExpires=0;
+let azureSynth=null;
+let azureSpeaking=false;
+
 function loadAzureConfig(){
-  try{azureVoice=localStorage.getItem('azureVoice')||window.READING_APP_CONFIG.VOICE||'ar-JO-SanaNeural'; azureRegion=localStorage.getItem('azureRegion')||window.READING_APP_CONFIG.REGION||'uaenorth';}catch(e){azureVoice=window.READING_APP_CONFIG.VOICE||'ar-JO-SanaNeural'; azureRegion=window.READING_APP_CONFIG.REGION||'uaenorth';}
-  if($('azureVoiceSel')) $('azureVoiceSel').value=azureVoice; if($('azureRegion')) $('azureRegion').value=azureRegion;
+  try{ azureVoice=localStorage.getItem('azureVoice')||'ar-JO-SanaNeural'; }catch(e){}
+  if($('azureVoiceSel')) $('azureVoiceSel').value=azureVoice;
+  if($('azureRegion')) $('azureRegion').value=azureRegion;
 }
 function saveAzureConfig(){
-  azureVoice=$('azureVoiceSel')?.value||azureVoice; azureRegion=($('azureRegion')?.value||'').trim();
-  try{localStorage.setItem('azureVoice',azureVoice); localStorage.setItem('azureRegion',azureRegion);}catch(e){}
+  azureVoice=$('azureVoiceSel')?.value || azureVoice || 'ar-JO-SanaNeural';
+  azureRegion='eastus';
+  try{localStorage.setItem('azureVoice',azureVoice);}catch(e){}
 }
-function xmlEscape(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&apos;');}
-function azureRate(r){ const n=Math.max(.5,Math.min(1.5,r||rate||.7)); return n.toFixed(2); }
+async function getAzureToken(force=false){
+  const now=Date.now();
+  if(!force && azureSpeechToken && now < azureTokenExpires-60000) return azureSpeechToken;
+  const res=await fetch(AZURE_TOKEN_ENDPOINT,{method:'GET',cache:'no-store'});
+  if(!res.ok) throw new Error('Token endpoint HTTP '+res.status);
+  const data=await res.json();
+  if(!data.token) throw new Error('No Speech token returned');
+  azureSpeechToken=data.token;
+  azureRegion=data.region||'eastus';
+  azureVoice=data.voice||azureVoice||'ar-JO-SanaNeural';
+  azureTokenExpires=now+9*60*1000;
+  return azureSpeechToken;
+}
+function azureRate(r){ return Math.max(.5,Math.min(1.5,r||rate||.7)); }
+function escapeXml(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function buildAzureSSML(text){
-  const clean=xmlEscape(stripTash ? stripT(text) : text);
-  const rr=azureRate(rate);
-  return `<?xml version="1.0" encoding="utf-8"?><speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="ar-JO"><voice name="${azureVoice}"><prosody rate="${rr}">${clean}</prosody></voice></speak>`;
+  const clean=escapeXml(stripTash ? stripTashFn(text) : text);
+  const pct=Math.round((azureRate(rate)-1)*100);
+  const rateStr=(pct>=0?'+':'')+pct+'%';
+  return `<?xml version="1.0" encoding="utf-8"?><speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="ar-JO"><voice name="${azureVoice}"><prosody rate="${rateStr}">${clean}</prosody></voice></speak>`;
+}
+function stripTashFn(t){ return String(t||'').replace(/[\u064B-\u0652\u0670]/g,''); }
+async function ensureAzureSynth(){
+  if(typeof SpeechSDK==='undefined') throw new Error('Speech SDK not loaded');
+  const token=await getAzureToken();
+  if(!azureSynth){
+    const cfg=SpeechSDK.SpeechConfig.fromAuthorizationToken(token,azureRegion);
+    cfg.speechSynthesisVoiceName=azureVoice;
+    cfg.speechSynthesisLanguage='ar-JO';
+    azureSynth=new SpeechSDK.SpeechSynthesizer(cfg,null);
+  }else{
+    azureSynth.authorizationToken=token;
+    try{azureSynth.speechConfig.speechSynthesisVoiceName=azureVoice;}catch(e){}
+  }
+  return azureSynth;
 }
 async function azureSpeak(t, cb){
   try{
-    if(!azureRegion) throw new Error('REGION_MISSING');
-    if(azureAbort) azureAbort.abort(); azureAbort=new AbortController();
-    const token=await getSpeechToken();
-    const endpoint=`https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`;
-    const res=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'audio-24khz-48kbitrate-mono-mp3'},body:buildAzureSSML(t),signal:azureAbort.signal});
-    if(!res.ok) throw new Error('Azure HTTP '+res.status);
-    const blob=await res.blob(), u=URL.createObjectURL(blob); azureAudio.pause(); azureAudio.src=u;
-    azureAudio.onended=()=>{URL.revokeObjectURL(u);cb&&cb();}; azureAudio.onerror=()=>{URL.revokeObjectURL(u);cb&&cb();};
-    await azureAudio.play();
+    const synth=await ensureAzureSynth();
+    const ssml=buildAzureSSML(t);
+    azureSpeaking=true;
+    synth.speakSsmlAsync(ssml,
+      result=>{
+        azureSpeaking=false;
+        try{ if(result.reason!==SpeechSDK.ResultReason.SynthesizingAudioCompleted) throw new Error(result.errorDetails||'Synthesis failed'); }catch(e){ speakDevice(t,rate,cb); return; }
+        cb&&cb();
+        try{result.close();}catch(e){}
+      },
+      err=>{ azureSpeaking=false; say('⚠️ Azure لم يعمل — رجعنا لصوت الجهاز 📱'); speakDevice(t,rate,cb); }
+    );
   }catch(e){
-    if(e.name==='AbortError') return;
-    if(e.message==='TOKEN_ENDPOINT_NOT_CONFIGURED') say('⚙️ ثبّت رابط Azure Function في إعدادات التطبيق أولًا.');
-    else {say('⚠️ Azure لم يعمل — رجعنا لصوت الجهاز 📱'); engine='device'; speakDevice(t,rate,cb);}
+    azureSpeaking=false;
+    say('⚠️ تعذر الاتصال بصوت Azure — رجعنا لصوت الجهاز 📱');
+    speakDevice(t,rate,cb);
   }
 }
-function azureConfigured(){return !!(azureRegion && window.READING_APP_CONFIG?.TOKEN_ENDPOINT && !window.READING_APP_CONFIG.TOKEN_ENDPOINT.includes('YOUR-FUNCTION-APP'));}
+function azureConfigured(){return !!AZURE_TOKEN_ENDPOINT;}
 
 function gUrl(t){
   return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&total=1&idx=0&prev=input&textlen=' + t.length + '&q=' + encodeURIComponent(t);
@@ -660,52 +682,50 @@ function readSentence(start){
   });
   if(cur.length) chunks.push({from:ci, ws:cur});
   let k=0, timers=[];
-  const clearT = ()=>{ timers.forEach(t=>clearTimeout(t)); timers=[]; };
-  const schedule = (c, dur)=>{
-    const total = c.ws.reduce((x,w)=>x+w.length+1, 0);
-    let t=0;
-    c.ws.forEach((w,j)=>{
-      const at=t;
-      timers.push(setTimeout(()=>{ if(reading) hi(c.from+j); }, at*1000));
-      t += dur * ((w.length+1)/total);
-    });
+  const clearT=()=>{timers.forEach(t=>clearTimeout(t));timers=[];};
+  const schedule=(c,dur)=>{
+    const total=c.ws.reduce((x,w)=>x+w.length+1,0); let t=0;
+    c.ws.forEach((w,j)=>{const at=t;timers.push(setTimeout(()=>{if(reading) hi(c.from+j);},at*1000));t+=dur*((w.length+1)/total);});
   };
-  const play = ()=>{
+  const play=async()=>{
     clearT();
-    if(!reading || k>=chunks.length){ stopRead(); return; }
-    const c = chunks[k], text = c.ws.join(' ');
-    const chars = c.ws.reduce((x,w)=>x+w.length+1, 0);
+    if(!reading || k>=chunks.length){stopRead();return;}
+    const c=chunks[k], text=c.ws.join(' ');
     hi(c.from);
-    if(engine==='google'){
+    if(engine==='azure'){
+      try{
+        const synth=await ensureAzureSynth();
+        const done=()=>{ if(!reading)return; k++; setTimeout(play,140); };
+        // Approximate timing for word highlighting while Azure speaks.
+        const approxDur=Math.max(1.0, c.ws.reduce((x,w)=>x+w.length+1,0)*0.085/azureRate(rate));
+        schedule(c,approxDur);
+        synth.speakSsmlAsync(buildAzureSSML(text),
+          result=>{clearT(); if(result.reason===SpeechSDK.ResultReason.SynthesizingAudioCompleted) done(); else {engine='device'; speakDevice(text,rate,()=>{k++;play();});} try{result.close();}catch(e){}},
+          err=>{clearT(); engine='device'; speakDevice(text,rate,()=>{k++;play();});}
+        );
+      }catch(e){engine='device'; speakDevice(text,rate,()=>{k++;play();});}
+    }else if(engine==='google'){
       gAudio.pause();
-      gAudio.src = gUrl(stripTash ? stripT(text) : text);
-      gAudio.playbackRate = gRate();
-      gAudio.onloadedmetadata = ()=> schedule(c, (gAudio.duration || chars*.085) / gAudio.playbackRate);
-      gAudio.onended = ()=>{ k++; play(); };
-      gAudio.onerror = ()=>{ say('⚠️ صوت Google ما اشتغل — رجعنا لصوت الجهاز.'); engine='device'; play(); };
-      const guard=setTimeout(()=>{ if(gAudio.paused && reading){ engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); play(); } }, 3500);
-      gAudio.onplaying=()=>clearTimeout(guard);
-      gAudio.play().catch(()=>{ clearTimeout(guard); engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); play(); });
-    } else {
-      const u = new SpeechSynthesisUtterance(stripTash ? stripT(text) : text);
-      const v = chosenVoice || arVoices()[0];
-      if(v){ u.voice=v; u.lang=v.lang; } else u.lang='ar-SA';
-      u.rate = rate;
-      let got=false;
-      u.onboundary = e=>{ got=true; clearT();
-        let j=0, p=0;
-        for(let n=0;n<c.ws.length;n++){ if(e.charIndex>=p) j=n; p += c.ws[n].length+1; }
-        hi(c.from+j); };
-      u.onstart = ()=>{ setTimeout(()=>{ if(!got) schedule(c, chars*.085/rate); }, 120); };
-      u.onend = ()=>{ k++; play(); };
-      u.onerror = ()=>{ k++; play(); };
-      speechSynthesis.speak(u);
+      gAudio.src=gUrl(stripTash ? stripTashFn(text) : text);
+      gAudio.playbackRate=gRate();
+      gAudio.onloadedmetadata=()=>schedule(c,(gAudio.duration||c.ws.join(' ').length*.085)/gAudio.playbackRate);
+      gAudio.onended=()=>{k++;play();};
+      gAudio.onerror=()=>{engine='device';play();};
+      gAudio.play().catch(()=>{engine='device';play();});
+    }else{
+      const u=new SpeechSynthesisUtterance(stripTash ? stripTashFn(text):text);
+      const v=chosenVoice||arVoices()[0]; if(v){u.voice=v;u.lang=v.lang;}else u.lang='ar-SA';
+      u.rate=rate; let got=false;
+      u.onboundary=e=>{got=true;clearT();let j=0,p=0;for(let n=0;n<c.ws.length;n++){if(e.charIndex>=p)j=n;p+=c.ws[n].length+1;}hi(c.from+j);};
+      u.onstart=()=>{setTimeout(()=>{if(!got)schedule(c,c.ws.join(' ').length*.085/rate);},120);};
+      u.onend=()=>{k++;play();}; u.onerror=()=>{k++;play();}; speechSynthesis.speak(u);
     }
   };
   play();
 }
+
 function stopRead(){
-  reading=false; try{speechSynthesis.cancel();}catch(e){}
+  reading=false; try{ if(azureSynth) azureSynth.stopSpeakingAsync(()=>{},()=>{}); }catch(e){} try{speechSynthesis.cancel();}catch(e){}
   try{ gAudio.pause(); }catch(e){}
   document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
   $('readBtn').textContent='📖 اقرأ لي النص';
@@ -804,7 +824,7 @@ function stopMic(){
   try{ rec && (rec.onend=null, rec.stop()); }catch(e){}
   $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
 }
-function stopAll(){ stopMic(); reading=false; echo=false;
+function stopAll(){ stopMic(); reading=false; echo=false; try{ if(azureSynth) azureSynth.stopSpeakingAsync(()=>{},()=>{}); }catch(e){}
   $('echoBtn').textContent='🔁 رددي ورايي'; $('readBtn').textContent='📖 اقرأ لي النص';
   try{speechSynthesis.cancel();}catch(e){} }
 async function holdStart(ev){
@@ -840,7 +860,7 @@ async function runDiag(){
   }catch(e){ add('فتح المايك','فشل: '+e.name,false); }
   add('اللغة', LANGS[langI], true);
   add('المحرك الحالي', engine==='azure'?'☁️ Azure Neural':(engine==='google'?'🌐 Google':'📱 الجهاز'), true);
-  add('إعداد Azure', azureConfigured()?'جاهز ✓':'يحتاج رابط Function', azureConfigured());
+  add('Azure Neural', azureConfigured()?'Token endpoint ✓':'غير مُعد', azureConfigured());
   const g = await new Promise(r=>gTest(r));
   add('اختبار صوت Google', g.ok ? ('يعمل ✓ ('+Math.round(g.dur*10)/10+'ث)') : ('فشل: '+g.why), g.ok);
   $('diag').innerHTML = rows.join('') +
@@ -1006,7 +1026,7 @@ $('engineSel').onchange=e=>{
   else {checkVoice(); say('صوت الجهاز الاحتياطي مفعّل 📱');}
 };
 $('azureVoiceSel').onchange=e=>{azureVoice=e.target.value;saveAzureConfig();};
-$('azureRegion').oninput=saveAzureConfig;
+
 $('sentMode').onchange=e=>{ sentenceMode=e.target.checked; };
 loadAzureConfig();
 if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); }; setTimeout(fillVoices,600); }
