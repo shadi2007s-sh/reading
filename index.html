@@ -110,6 +110,27 @@
   @media(max-width:560px){.student-grid{grid-template-columns:1fr 1fr}.mini-stats{grid-template-columns:repeat(2,1fr)}}
 
 </style>
+
+<script>
+window.READING_APP_CONFIG = {
+  TOKEN_ENDPOINT: "https://YOUR-FUNCTION-APP.azurewebsites.net/api/speech-token",
+  VOICE: "ar-JO-SanaNeural",
+  REGION: "uaenorth"
+};
+let __speechToken = null, __speechTokenExpires = 0;
+async function getSpeechToken(){
+  const endpoint = window.READING_APP_CONFIG?.TOKEN_ENDPOINT || '';
+  if(!endpoint || endpoint.includes('YOUR-FUNCTION-APP')) throw new Error('TOKEN_ENDPOINT_NOT_CONFIGURED');
+  const now = Date.now();
+  if(__speechToken && now < __speechTokenExpires - 60000) return __speechToken;
+  const r = await fetch(endpoint,{method:'GET',cache:'no-store'});
+  if(!r.ok) throw new Error('TOKEN_HTTP_'+r.status);
+  const d = await r.json();
+  if(!d.token) throw new Error('TOKEN_MISSING');
+  __speechToken=d.token; __speechTokenExpires=now+9*60*1000;
+  return __speechToken;
+}
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -258,8 +279,6 @@
     </select>
     <label>منطقة Azure (Region)</label>
     <input id="azureRegion" placeholder="مثل: westeurope" autocomplete="off">
-    <label>مفتاح Azure Speech</label>
-    <input id="azureKey" type="password" placeholder="ضع المفتاح هنا — لا تشاركه مع أحد" autocomplete="off">
     <small style="display:block;color:#8b9096;margin-top:5px;line-height:1.5">🔐 للاستخدام المحلي فقط. لتطبيق منشور، ضع الاستدعاء في خادم وسيط ولا تضع المفتاح داخل الموقع.</small>
     <label>الصوت المستخدم (عند اختيار صوت الجهاز)</label>
     <select id="voiceSel"></select>
@@ -432,20 +451,15 @@ let engine='azure', sentenceMode=true;
 const gAudio = new Audio(); gAudio.preload='auto';
 const azureAudio = new Audio(); azureAudio.preload='auto';
 let azureVoice='ar-JO-SanaNeural';
-let azureRegion='';
-let azureKey='';
+let azureRegion='uaenorth';
 let azureAbort=null;
 function loadAzureConfig(){
-  try{azureVoice=localStorage.getItem('azureVoice')||'ar-JO-SanaNeural'; azureRegion=localStorage.getItem('azureRegion')||''; azureKey=localStorage.getItem('azureKey')||'';}catch(e){}
-  if($('azureVoiceSel')) $('azureVoiceSel').value=azureVoice;
-  if($('azureRegion')) $('azureRegion').value=azureRegion;
-  if($('azureKey')) $('azureKey').value=azureKey;
+  try{azureVoice=localStorage.getItem('azureVoice')||window.READING_APP_CONFIG.VOICE||'ar-JO-SanaNeural'; azureRegion=localStorage.getItem('azureRegion')||window.READING_APP_CONFIG.REGION||'uaenorth';}catch(e){azureVoice=window.READING_APP_CONFIG.VOICE||'ar-JO-SanaNeural'; azureRegion=window.READING_APP_CONFIG.REGION||'uaenorth';}
+  if($('azureVoiceSel')) $('azureVoiceSel').value=azureVoice; if($('azureRegion')) $('azureRegion').value=azureRegion;
 }
 function saveAzureConfig(){
-  azureVoice=$('azureVoiceSel')?.value || azureVoice;
-  azureRegion=($('azureRegion')?.value||'').trim();
-  azureKey=($('azureKey')?.value||'').trim();
-  try{localStorage.setItem('azureVoice',azureVoice); localStorage.setItem('azureRegion',azureRegion); localStorage.setItem('azureKey',azureKey);}catch(e){}
+  azureVoice=$('azureVoiceSel')?.value||azureVoice; azureRegion=($('azureRegion')?.value||'').trim();
+  try{localStorage.setItem('azureVoice',azureVoice); localStorage.setItem('azureRegion',azureRegion);}catch(e){}
 }
 function xmlEscape(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&apos;');}
 function azureRate(r){ const n=Math.max(.5,Math.min(1.5,r||rate||.7)); return n.toFixed(2); }
@@ -455,28 +469,23 @@ function buildAzureSSML(text){
   return `<?xml version="1.0" encoding="utf-8"?><speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="ar-JO"><voice name="${azureVoice}"><prosody rate="${rr}">${clean}</prosody></voice></speak>`;
 }
 async function azureSpeak(t, cb){
-  if(!azureRegion || !azureKey){
-    say('⚙️ يحتاج Azure إلى Region وSpeech Key — رجعنا لصوت الجهاز.'); engine='device'; speakDevice(t,rate,cb); return;
-  }
   try{
-    if(azureAbort) azureAbort.abort();
-    azureAbort=new AbortController();
+    if(!azureRegion) throw new Error('REGION_MISSING');
+    if(azureAbort) azureAbort.abort(); azureAbort=new AbortController();
+    const token=await getSpeechToken();
     const endpoint=`https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`;
-    const res=await fetch(endpoint,{method:'POST',headers:{'Ocp-Apim-Subscription-Key':azureKey,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'audio-24khz-48kbitrate-mono-mp3'},body:buildAzureSSML(t),signal:azureAbort.signal});
+    const res=await fetch(endpoint,{method:'POST',headers:{'Authorization':`Bearer ${token}`,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'audio-24khz-48kbitrate-mono-mp3'},body:buildAzureSSML(t),signal:azureAbort.signal});
     if(!res.ok) throw new Error('Azure HTTP '+res.status);
-    const blob=await res.blob();
-    const u=URL.createObjectURL(blob);
-    azureAudio.pause(); azureAudio.src=u;
-    azureAudio.onended=()=>{URL.revokeObjectURL(u);cb&&cb();};
-    azureAudio.onerror=()=>{URL.revokeObjectURL(u);throw new Error('audio');};
+    const blob=await res.blob(), u=URL.createObjectURL(blob); azureAudio.pause(); azureAudio.src=u;
+    azureAudio.onended=()=>{URL.revokeObjectURL(u);cb&&cb();}; azureAudio.onerror=()=>{URL.revokeObjectURL(u);cb&&cb();};
     await azureAudio.play();
   }catch(e){
-    if(e && e.name==='AbortError') return;
-    say('⚠️ Azure لم يعمل — رجعنا لصوت الجهاز 📱');
-    engine='device'; speakDevice(t,rate,cb);
+    if(e.name==='AbortError') return;
+    if(e.message==='TOKEN_ENDPOINT_NOT_CONFIGURED') say('⚙️ ثبّت رابط Azure Function في إعدادات التطبيق أولًا.');
+    else {say('⚠️ Azure لم يعمل — رجعنا لصوت الجهاز 📱'); engine='device'; speakDevice(t,rate,cb);}
   }
 }
-function azureConfigured(){return !!(azureRegion && azureKey);}
+function azureConfigured(){return !!(azureRegion && window.READING_APP_CONFIG?.TOKEN_ENDPOINT && !window.READING_APP_CONFIG.TOKEN_ENDPOINT.includes('YOUR-FUNCTION-APP'));}
 
 function gUrl(t){
   return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&total=1&idx=0&prev=input&textlen=' + t.length + '&q=' + encodeURIComponent(t);
@@ -831,7 +840,7 @@ async function runDiag(){
   }catch(e){ add('فتح المايك','فشل: '+e.name,false); }
   add('اللغة', LANGS[langI], true);
   add('المحرك الحالي', engine==='azure'?'☁️ Azure Neural':(engine==='google'?'🌐 Google':'📱 الجهاز'), true);
-  add('إعداد Azure', azureConfigured()?'جاهز ✓':'غير مكتمل', azureConfigured());
+  add('إعداد Azure', azureConfigured()?'جاهز ✓':'يحتاج رابط Function', azureConfigured());
   const g = await new Promise(r=>gTest(r));
   add('اختبار صوت Google', g.ok ? ('يعمل ✓ ('+Math.round(g.dur*10)/10+'ث)') : ('فشل: '+g.why), g.ok);
   $('diag').innerHTML = rows.join('') +
@@ -998,7 +1007,6 @@ $('engineSel').onchange=e=>{
 };
 $('azureVoiceSel').onchange=e=>{azureVoice=e.target.value;saveAzureConfig();};
 $('azureRegion').oninput=saveAzureConfig;
-$('azureKey').oninput=saveAzureConfig;
 $('sentMode').onchange=e=>{ sentenceMode=e.target.checked; };
 loadAzureConfig();
 if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); }; setTimeout(fillVoices,600); }
