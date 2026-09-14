@@ -109,6 +109,10 @@
   .text-manager .inline{display:flex;gap:8px;flex-wrap:wrap}
   .text-manager select,.text-manager input{flex:1;min-width:180px}
   .saved-count{font-size:.76rem;color:#7b8085;text-align:center}
+
+
+  .top-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 10px}
+  .top-actions button{box-shadow:none;padding:8px;font-size:.82rem;border-color:#d9cdb2}
   .text-meta{background:#fff;border:1px solid #e6dcc6;border-radius:12px;padding:8px 10px;font-size:.75rem;color:#7b8085;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:7px}
   .progress-card{background:#fff;border:1px solid #e6dcc6;border-radius:14px;padding:10px;margin-top:10px}
   .progress-card h4{margin:0 0 8px;font-size:.9rem}
@@ -124,7 +128,7 @@
   .pause-bar{display:flex;gap:6px;justify-content:center;margin:7px 0}.pause-bar button{box-shadow:none;font-size:.78rem;padding:7px 9px;border-color:#d9cdb2}
   .smart-tip{background:#eef7fb;border:1px solid #b7dce9;border-radius:12px;padding:8px;font-size:.76rem;color:#4d6872;margin-top:8px;line-height:1.6}
   .danger-note{background:#fff1ed;border:1px solid #efb1a3;color:#8c3a26;border-radius:10px;padding:7px;font-size:.75rem}
-  @media(max-width:560px){.progress-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.top-actions{grid-template-columns:1fr 1fr 1fr}.progress-grid{grid-template-columns:repeat(2,1fr)}}
 
 </style>
 <script>
@@ -177,7 +181,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 {background:#fff;border:2px solid var(--kid-line);border-radius:24px;padding:12px;box-shadow:0 10px 24px rgba(40,75,95,.08)}{grid-template-columns:repeat(3,1fr);gap:9px}{border-color:#cfe4ee;box-shadow:0 4px 0 #cfe4ee;border-radius:17px;padding:11px}.act{background:#4f9fcb;border-color:#3f81a5;box-shadow:0 4px 0 #3f81a5}
 .v10-voice-card{border-color:#d9eaf1;border-radius:20px;background:#fafdff}.v10-voice-btn{border-color:#cfe4ee;border-radius:15px}.v10-voice-btn.primary{background:#4f9fcb;border-color:#3f81a5}
 #v8ReadSection .wrap{max-width:860px}.card{background:#fffdf8;border:3px solid #e7e0cf;border-radius:30px;box-shadow:0 18px 36px rgba(40,75,95,.12);padding:24px}.bigword{font-size:clamp(3.2rem,10vw,6rem);line-height:1.15;margin:.1em 0}.counter{font-size:1rem;color:#71838d}.heard{background:#eef8ff;border:2px solid #cfe7f5;border-radius:16px;padding:10px}.note{display:block;color:#73848d;line-height:1.6}
-.text-manager{background:#fff;border:2px solid var(--kid-line);border-radius:22px;padding:10px}.top-actions{gap:8px}.text-manager button{border-color:#cfe4ee;border-radius:15px;box-shadow:0 3px 0 #cfe4ee}.mode-strip button{border-color:#cfe4ee!important;border-radius:15px!important}.mode-strip button.active{background:#4f9fcb!important;border-color:#3f81a5!important}
+.text-manager{background:#fff;border:2px solid var(--kid-line);border-radius:22px;padding:10px}.top-actions{gap:8px}.top-actions button,.text-manager button{border-color:#cfe4ee;border-radius:15px;box-shadow:0 3px 0 #cfe4ee}.mode-strip button{border-color:#cfe4ee!important;border-radius:15px!important}.mode-strip button.active{background:#4f9fcb!important;border-color:#3f81a5!important}
 .controls{padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(237,248,255,.98) 76%,rgba(237,248,255,0));backdrop-filter:blur(6px)}.row{gap:8px}.controls button{border-radius:16px;box-shadow:0 4px 0 #bcd7e5;border-color:#bcd7e5}.controls button.main{background:#61c391;border-color:#3c9368;box-shadow:0 4px 0 #3c9368}.controls button.hear{background:#67b8e9;border-color:#3f88b4;box-shadow:0 4px 0 #3f88b4}.controls button.ghost{box-shadow:none}
 .win>div{max-width:620px;background:rgba(255,255,255,.12);border-radius:28px;padding:26px}.result-box{border-radius:18px}
 @media(max-width:700px){{display:block}{margin-top:9px}{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.controls .row:first-child button{font-size:1rem}.controls{padding-left:8px;padding-right:8px}}
@@ -204,6 +208,11 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <button class="ghost" id="manageTextsBtn">📚 نصوصي</button>
 </div>
 <div class="saved-count" id="savedCount">لا توجد نصوص محفوظة</div>
+</div>
+<div class="top-actions">
+<button id="progressBtn">📊 تقدّمي</button>
+<button id="backupTextsBtn">⬇ نصوصي</button>
+<button id="shareBtn">📤 مشاركة</button>
 </div>
 <div class="text-meta" id="textMeta">—</div>
 <div class="card" id="cardView">
@@ -236,6 +245,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 </div>
 <div id="v8ReadControlsWrap">
 <div class="controls">
+<div class="settings-hint" style="text-align:center;color:#6b7b83;font-size:.82rem;margin:0 0 8px">⚙️ إعدادات الصوت موجودة داخل «إعدادات الصوت» فقط</div>
 <div class="row">
 <button class="mic" id="micBtn">🎤 ابدئي القراءة</button>
 <button id="sayBtn">🔊 اسمعي</button>
@@ -249,6 +259,14 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <div class="row">
 <button class="read" id="readBtn">📖 اقرأ لي النص</button>
 <button id="echoBtn">🔁 رددي ورايي</button>
+</div>
+<div class="row">
+<button class="ghost" id="recBtn">🎙 سجّل بصوتك</button>
+<button class="ghost" id="voiceBtn">⚙️ إعدادات الصوت</button>
+<button class="ghost" id="diagBtn">🩺 فحص</button>
+<button class="ghost" id="editBtn">✎ غيّري النص</button>
+<button class="ghost" id="resetBtn">↺ من البداية</button>
+</div>
 </div>
 </div>
 
@@ -1118,6 +1136,8 @@ $('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
 $('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
 $('readBtn').onclick=()=> readAloud();
 $('echoBtn').onclick=()=> echoMode();
+$('resetBtn').onclick=()=>{ stopAll(); restart(); };
+$('editBtn').onclick=openTextManager;
 $('manageTextsBtn').onclick=openTextManager;
 $('savedTextSel').onchange=e=>selectSavedText(e.target.value);
 $('saveNewTextBtn').onclick=createSavedText;
@@ -1134,6 +1154,7 @@ $('exportTextsBtn2').onclick=exportTexts;
 $('importTextsBtn').onclick=()=>$('textsFile').click();
 $('textsFile').onchange=e=>{if(e.target.files[0])importTexts(e.target.files[0]);};
 document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{readingMode=btn.dataset.mode;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===btn));say('وضع القراءة: '+(readingMode==='word'?'كلمة كلمة':readingMode==='sentence'?'جملة': 'النص كامل'));}));
+$('diagBtn').onclick=()=>{ $('diag').innerHTML='جارٍ الفحص…'; $('diagDlg').showModal(); runDiag(); };
 const hb=$('holdBtn');
 hb.addEventListener('pointerdown',holdStart);
 hb.addEventListener('pointerup',holdEnd);
@@ -1248,6 +1269,7 @@ async function importRecs(file){
     await refreshRecSet(); renderRec(); $('rState').textContent='✅ تم الاسترجاع';
   }catch(e){ $('rState').textContent='الملف مش مظبوط'; }
 }
+$('recBtn').onclick = async ()=>{ recIdx = idx; await refreshRecSet(); renderRec(); await refreshFull(); $('recDlg').showModal(); };
 $('fRec').addEventListener('pointerdown', fmrStart);
 $('fRec').addEventListener('pointerup', fmrStop);
 $('fRec').addEventListener('pointercancel', fmrStop);
@@ -1267,6 +1289,7 @@ $('rExp').onclick = exportRecs;
 $('rImp').onclick = ()=> $('rFile').click();
 $('rFile').onchange = e=>{ if(e.target.files[0]) importRecs(e.target.files[0]); };
 
+$('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
 $('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
 $('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); };
 document.querySelectorAll('[data-speed]').forEach(btn=>btn.addEventListener('click',()=>{const v=parseFloat(btn.dataset.speed);rate=v;$('rateSel').value=v;$('rateVal').textContent=v.toFixed(2);}));
