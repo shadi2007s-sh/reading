@@ -1601,6 +1601,8 @@ let azureTokenExpires=0;
 let azureSpeaking=false;
 let azureSpeakGeneration=0;
 let azureSdkPromise=null;
+let azureSynth=null;
+let azureSynthTokenKey="";
 azureAudio.preload='auto';
 let azureAudioUrl='';
 let azureQueueBusy=false;
@@ -1694,52 +1696,62 @@ function unlockAzureAudio(){
 }
 document.addEventListener('pointerdown',unlockAzureAudio,{once:false,passive:true});
 document.addEventListener('touchstart',unlockAzureAudio,{once:false,passive:true});
+async function ensureAzureSynth(force=false){
+  const SDK=await loadAzureSdk();
+  const token=await getAzureToken(force);
+  const key=token+'|'+azureRegion+'|'+azureVoice;
+  if(!force && azureSynth && azureSynthTokenKey===key) return azureSynth;
+  try{ if(azureSynth) azureSynth.close(); }catch(e){}
+  const cfg=SDK.SpeechConfig.fromAuthorizationToken(token, azureRegion);
+  cfg.speechSynthesisVoiceName=azureVoice;
+  cfg.speechSynthesisLanguage='ar-JO';
+  const audio=SDK.AudioConfig.fromDefaultSpeakerOutput();
+  azureSynth=new SDK.SpeechSynthesizer(cfg,audio);
+  azureSynthTokenKey=key;
+  return azureSynth;
+}
 async function azureSpeak(t,cb,options={}){
   const generation=++azureSpeakGeneration;
   const text=String(t||'').trim();
   if(!text){cb&&cb();return;}
   try{
     saveAzureConfig();
-    unlockAzureAudio();
     setAzureStatus('جارٍ تشغيل Sana…');
-    const token=await getAzureToken(false);
+    const synth=await ensureAzureSynth(false);
+    if(generation!==azureSpeakGeneration) return;
     const ssml=buildAzureSSML(text);
-    const endpoint='https://'+azureRegion+'.tts.speech.microsoft.com/cognitiveservices/v1';
-    let res;
-    try{
-      res=await fetch(endpoint,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'audio-24khz-48kbitrate-mono-mp3','User-Agent':'ReadingCoach/10.2'},body:ssml,cache:'no-store'});
-    }catch(e){throw new Error('TTS_NETWORK_OR_CORS');}
-    if(!res.ok){
-      const errText = await res.text().catch(()=> '');
-      console.error('Azure TTS HTTP error', res.status, errText);
-      if(res.status===401){azureSpeechToken='';azureTokenExpires=0;throw new Error('TTS_HTTP_401 '+errText.slice(0,300));}
-      if(res.status===400) throw new Error('TTS_HTTP_400 '+errText.slice(0,500));
-      throw new Error('TTS_HTTP_'+res.status+' '+errText.slice(0,300));
-    }
-    const blob=await res.blob();
-    if(!blob || !blob.size) throw new Error('TTS_EMPTY_AUDIO');
-    if(generation!==azureSpeakGeneration){return;}
-    if(azureAudioUrl){try{URL.revokeObjectURL(azureAudioUrl);}catch(e){}}
-    azureAudio.pause();
-    azureAudioUrl=URL.createObjectURL(blob);
-    azureAudio.src=azureAudioUrl;
-    azureAudio.playbackRate=azureRate(rate);
     await new Promise((resolve,reject)=>{
-      const done=()=>{cleanup();setAzureStatus('✓ تم تشغيل Sana');cb&&cb();resolve();};
-      const fail=()=>{cleanup();setAzureStatus('✕ تعذر تشغيل ملف الصوت على الجهاز');cb&&cb();reject(new Error('AUDIO_PLAY_FAILED'));};
-      const cleanup=()=>{azureAudio.onended=null;azureAudio.onerror=null;};
-      azureAudio.onended=done;
-      azureAudio.onerror=fail;
-      const p=azureAudio.play();
-      if(p&&p.catch) p.catch(fail);
+      let settled=false;
+      const done=(fn,arg)=>{ if(settled)return; settled=true; try{fn&&fn(arg);}catch(e){} };
+      synth.speakSsmlAsync(ssml,
+        result=>{
+          if(generation!==azureSpeakGeneration){ done(resolve); return; }
+          const reason=String(result?.reason||'');
+          if(window.SpeechSDK && result.reason===window.SpeechSDK.ResultReason.SynthesizingAudioCompleted){
+            setAzureStatus('✓ تم تشغيل Sana');
+            cb&&cb(); done(resolve);
+          }else{
+            const details=String(result?.errorDetails||'');
+            console.error('Azure synth result',reason,details,result);
+            setAzureStatus('✕ '+(details||'تعذر تشغيل Azure'));
+            cb&&cb(); done(reject,new Error('TTS_SYNTH_'+(reason||'FAILED')));
+          }
+        },
+        err=>{
+          console.error('Azure synth error',err);
+          if(generation===azureSpeakGeneration) setAzureStatus('✕ تعذر تشغيل Azure');
+          cb&&cb(); done(reject,err instanceof Error?err:new Error(String(err||'TTS_SYNTH_FAILED')));
+        }
+      );
     });
   }catch(e){
     if(generation!==azureSpeakGeneration)return;
+    console.error('azureSpeak failed',e);
     setAzureStatus('✕ '+azureUserError(e));
     cb&&cb();
   }
 }
-function cancelAzure(){azureSpeakGeneration++;try{azureAudio.pause();if(azureAudioUrl){URL.revokeObjectURL(azureAudioUrl);azureAudioUrl='';}}catch(e){}}
+function cancelAzure(){azureSpeakGeneration++;try{if(azureSynth)azureSynth.stopSpeakingAsync(()=>{},()=>{});}catch(e){} try{azureAudio.pause();if(azureAudioUrl){URL.revokeObjectURL(azureAudioUrl);azureAudioUrl='';}}catch(e){}}
 async function testAzureSana(){
   setAzureStatus('🔎 فحص Sana…');
   try{
@@ -1866,11 +1878,13 @@ function pauseReading(){
   if(!reading){say('لا توجد قراءة جارية الآن.');return;}
   if(pausedReading){
     pausedReading=false; $('pauseBtn').textContent='⏸ إيقاف مؤقت'; say('▶️ استكملنا القراءة.');
-    if(azureSynth){ try{azureSynth.resumeSpeakingAsync?.();}catch(e){} }
-    continueReadingFrom(activeReadIndex); return;
+    try{ if(azureSynth?.resumeSpeakingAsync) { azureSynth.resumeSpeakingAsync(()=>{},()=>{}); } }catch(e){}
+    try{ if(azureAudio && !azureAudio.paused){} }catch(e){}
+    return;
   }
   pausedReading=true; $('pauseBtn').textContent='▶️ استئناف';
-  try{ if(azureSynth)azureSynth.pauseSpeakingAsync?.(); }catch(e){}
+  try{ if(azureSynth?.pauseSpeakingAsync) { azureSynth.pauseSpeakingAsync(()=>{},()=>{}); } }catch(e){}
+  try{ if(recAudio && !recAudio.paused) recAudio.pause(); }catch(e){}
   try{ speechSynthesis.pause(); }catch(e){}
   say('⏸ القراءة متوقفة مؤقتًا.');
 }
