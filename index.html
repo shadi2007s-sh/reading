@@ -133,7 +133,7 @@
 
 <script>
 window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
-  TOKEN_ENDPOINT: 'https://reading-speech-api-e9hbc8fcsfacaxgv.israelcentral-01.azurewebsites.net/api/speech-token',
+  TOKEN_ENDPOINT: 'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token',
   REGION: 'eastus',
   VOICE: 'ar-JO-SanaNeural',
   SDK_URL: 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'
@@ -1592,7 +1592,7 @@ function checkVoice(){
 }
 let engine='azure', sentenceMode=true;
 const azureAudio = new Audio(); azureAudio.preload='auto';
-const AZURE_TOKEN_ENDPOINT = (window.READING_APP_CONFIG||{}).TOKEN_ENDPOINT || 'https://reading-speech-api-e9hbc8fcsfacaxgv.israelcentral-01.azurewebsites.net/api/speech-token';
+const AZURE_TOKEN_ENDPOINT = (window.READING_APP_CONFIG||{}).TOKEN_ENDPOINT || 'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token';
 const AZURE_SDK_URL = (window.READING_APP_CONFIG||{}).SDK_URL || 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js';
 let azureVoice='ar-JO-SanaNeural';
 let azureRegion=(window.READING_APP_CONFIG||{}).REGION || 'eastus';
