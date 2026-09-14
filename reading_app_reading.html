@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+Review the code for bugs or improvements<!DOCTYPE html>
 
 <html dir="rtl" lang="ar">
 <head>
@@ -55,6 +55,8 @@
   .w.now{background:#fff3cf;box-shadow:0 0 0 3px #f6d97a inset}
   .w.rec{border-bottom:3px solid #5aa9d6}
   .w.spk{background:#d7ecfa;box-shadow:0 0 0 3px #7cc0e8 inset}
+  .w.read-good{background:#dff4e5!important;box-shadow:0 0 0 3px #69bd86 inset!important;color:#24784a!important}
+  .w.read-bad{background:#ffe4dc!important;box-shadow:0 0 0 3px #e98f7b inset!important;color:#a8442f!important}
   .bar{height:12px;background:#e6dcc6;border-radius:999px;margin:14px 0 4px;overflow:hidden}
   .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#f0b429,#2f8f5b);transition:width .3s}
   .heard{margin-top:8px;min-height:24px;font-size:.88rem;color:#7b8085;text-align:center}
@@ -956,6 +958,8 @@ function accept(said,target){
   return sim(s,t) >= th;
 }
 function build(txt){
+  ++micStartToken;
+  try{ if(rec){ rec.onend=null; rec.stop(); } }catch(e){}
   const box=$('text'); box.innerHTML="";
   words = txt.trim().split(/\s+/).filter(Boolean);
   words.forEach((w,i)=>{
@@ -1480,62 +1484,161 @@ function handleT(h){
   if(!heard || idx>=words.length) return;
   say('سمعت: '+heard);
   const tokens=heard.split(/\s+/).filter(Boolean);
-  let matched=0;
-  let firstBad=false;
+  let matched=0, wrongAt=-1;
+
   for(const tk of tokens){
     if(idx>=words.length) break;
-    if(accept(tk,words[idx])){
-      correct(); matched++;
-    }else if(idx+1<words.length && accept(tk,words[idx+1])){
-      wrong(); firstBad=true;
-      idx++;
-      paint();
-      correct(); matched++;
+    if(accept(tk, words[idx])){
+      correct();
+      matched++;
     }else{
-      firstBad=true;
-      readFeedback('❌ لم تتطابق الكلمة. حاولي قراءتها مرة أخرى.', 'bad');
-      const b=$('bigword'); if(b){b.classList.remove('speaking-bad'); void b.offsetWidth; b.classList.add('speaking-bad');}
-      wrong();
-      break;
+      // محاولة مطابقة الكلمة التالية إذا بدأ التعرف بكلمة متأخرة.
+      if(idx+1<words.length && accept(tk, words[idx+1])){
+        recordWrong(words[idx]);
+        const badWord=words[idx];
+        wrongAt=idx;
+        const b=$('bigword');
+        if(b){ b.classList.remove('speaking-bad'); void b.offsetWidth; b.classList.add('speaking-bad'); }
+        idx++;
+        paint();
+        correct();
+        matched++;
+      }else{
+        wrongAt=idx;
+        readFeedback('❌ لم تتطابق الكلمة مع النص الحالي. حاولي مرة أخرى.', 'bad');
+        const b=$('bigword');
+        if(b){ b.classList.remove('speaking-bad'); void b.offsetWidth; b.classList.add('speaking-bad'); }
+        recordWrong(words[idx]);
+        break;
+      }
     }
   }
-  if(matched && !firstBad){
-    readFeedback('✅ ممتاز! قرأتِ الكلمة بشكل صحيح.', 'good');
-    const b=$('bigword'); if(b){b.classList.remove('speaking-good'); void b.offsetWidth; b.classList.add('speaking-good');}
-  }else if(matched && firstBad){
-    readFeedback('🟡 بعض الكلمات صحيحة، وهناك كلمة تحتاج إعادة.', 'wait');
+
+  if(idx>=words.length){
+    readFeedback('🏆 ممتاز! تمت قراءة النص الجديد كاملًا بنجاح.', 'good');
+    return;
+  }
+  if(matched>0 && wrongAt<0){
+    readFeedback('✅ ممتاز! الكلمة صحيحة، تابعي القراءة.', 'good');
+  }else if(matched>0 && wrongAt>=0){
+    readFeedback('🟡 تم التحقق من جزء من النص، وهناك كلمة تحتاج إعادة.', 'wait');
   }
 }
 async function startMic(){
   const token=++micStartToken;
-  if(!SR){ say('😕 المتصفح ما بيدعم التعرّف على الصوت. استخدمي ✓ صح.'); return; }
-  if(!window.isSecureContext){ say('🔒 لازم https.'); return; }
+  if(!window.isSecureContext){ say('🔒 لازم فتح الموقع عبر https.'); return; }
   if(!(await primeMic()) || token!==micStartToken) return;
-  reading=false; echo=false;
+
+  stopRead();
+  listening=true;
+  $('micBtn').classList.add('on');
+  $('micBtn').textContent='⏳ جاري التحقق…';
+  say('🎤 اقرئي بصوت واضح… سأقارن قراءتك بالنص الحالي.');
+  readFeedback('🎧 أستمع الآن… لا تتعجلي.', 'wait');
+
   try{
-    rec=makeRec(true);
-    rec.onresult=e=>{ let h="";
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        if(!e.results[i].isFinal) continue;
-        for(let a=0;a<e.results[i].length;a++) h+=" "+e.results[i][a].transcript;
-      }
-      if(h.trim()) handleT(h); };
-    rec.onend=()=>{ if(listening){ try{rec.start();}catch(e){} } };
-    rec.start(); listening=true;
-    $('micBtn').classList.add('on'); $('micBtn').textContent='⏹ إيقاف';
-    say('🎧 أنا أسمعك… اقرئي الكلمة الكبيرة.');
-    readFeedback('🎤 الآن دورك — اقرئي الكلمة الكبيرة.', 'wait');
-  }catch(e){ say('ما قدرت أشغّل المايك.'); }
+    const SDK=await loadAzureSdk();
+    if(token!==micStartToken) return;
+    const speechToken=await getAzureToken(false);
+    if(token!==micStartToken) return;
+
+    let reference='';
+    if(readingMode==='full'){
+      reference=currentText.text;
+    }else if(readingMode==='sentence'){
+      let end=-1;
+      for(let i=idx;i<words.length;i++){ if(/[.!؟]$/.test(words[i])){ end=i; break; } }
+      reference=words.slice(idx,end>=idx?end+1:words.length).join(' ');
+    }else{
+      reference=words[idx]||'';
+    }
+    reference=reference.trim();
+    if(!reference) throw new Error('لا يوجد نص حالي للتقييم.');
+
+    const cfg=SDK.SpeechConfig.fromAuthorizationToken(
+      speechToken,
+      azureRegion || (window.READING_APP_CONFIG||{}).REGION || 'eastus'
+    );
+    cfg.speechRecognitionLanguage='ar-JO';
+    const audio=SDK.AudioConfig.fromDefaultMicrophoneInput();
+    const recognizer=new SDK.SpeechRecognizer(cfg,audio);
+    const pac=new SDK.PronunciationAssessmentConfig(
+      reference,
+      SDK.PronunciationAssessmentGradingSystem.HundredMark,
+      SDK.PronunciationAssessmentGranularity.Word,
+      true
+    );
+    pac.applyTo(recognizer);
+
+    const result=await new Promise((resolve,reject)=>{
+      recognizer.recognizeOnceAsync(
+        r=>{ try{resolve(r);} finally{try{recognizer.close();}catch(e){}} },
+        e=>{try{recognizer.close();}catch(x){} reject(new Error(String(e||'فشل تقييم القراءة')));}
+      );
+    });
+    if(token!==micStartToken) return;
+
+    const json=result?.properties?.getProperty(
+      SDK.PropertyId.SpeechServiceResponse_JsonResult
+    ) || '{}';
+    const data=JSON.parse(json);
+    const nb=data.NBest?.[0] || {};
+    const pa=nb.PronunciationAssessment || {};
+    const overall=Math.round(Number(pa.PronScore ?? pa.AccuracyScore ?? 0));
+    const heardText=(nb.Display||nb.Lexical||'').trim();
+    const spokenWords=Array.isArray(nb.Words)?nb.Words:[];
+
+    document.querySelectorAll('.w').forEach(el=>el.classList.remove('read-good','read-bad','read-now'));
+    let goodWords=0, evaluatedWords=0;
+    spokenWords.forEach(sw=>{
+      const sc=Number(sw.PronunciationAssessment?.AccuracyScore ?? sw.PronunciationAssessment?.PronScore ?? 0);
+      const refWord=norm(sw.Word||'');
+      if(!refWord || !Number.isFinite(sc) || sc<=0) return;
+      const wi=words.findIndex((w,j)=>j>=idx && norm(w)===refWord);
+      if(wi<0) return;
+      const el=document.querySelectorAll('.w')[wi];
+      if(el){ el.classList.add(sc>=80?'read-good':'read-bad'); }
+      evaluatedWords++;
+      if(sc>=80) goodWords++;
+    });
+
+    if(overall>=85){
+      readFeedback(`✅ ممتاز! نتيجة قراءتك ${overall}%`, 'good');
+      say(heardText?`سمعت: ${heardText}`:'✅ قراءتك ممتازة.');
+      if(readingMode==='word' && idx<words.length){ recordCorrect(words[idx]); idx++; paint(); }
+    }else if(overall>=65){
+      readFeedback(`🟡 جيد! نتيجتك ${overall}%. راجعي الكلمات المظللة بالأحمر.`, 'wait');
+      say(heardText?`سمعت: ${heardText}`:'حاولي مرة أخرى بهدوء.');
+      if(readingMode==='word') recordWrong(words[idx]);
+    }else{
+      readFeedback(`❌ تحتاجين تدريبًا أكثر. نتيجتك ${overall}%.`, 'bad');
+      say(heardText?`سمعت: ${heardText}`:'حاولي قراءة الكلمة أو الجملة مرة أخرى.');
+      if(readingMode==='word') recordWrong(words[idx]);
+    }
+    if((readingMode==='sentence'||readingMode==='full') && evaluatedWords){
+      const label=`تم فحص ${evaluatedWords} كلمة — ${goodWords} جيدة.`;
+      $('heard').textContent += ' '+label;
+    }
+  }catch(e){
+    console.error('Pronunciation assessment failed',e);
+    readFeedback('⚠️ تعذر تقييم القراءة الآن. تأكدي من المايك والإنترنت.', 'bad');
+    say('⚠️ تعذر تقييم القراءة الآن.');
+  }finally{
+    if(token===micStartToken){
+      listening=false;
+      $('micBtn').classList.remove('on');
+      $('micBtn').textContent='🎤 ابدئي القراءة';
+    }
+  }
 }
 function stopMic(){
   ++micStartToken;
   listening=false;
-  try{ rec && (rec.onend=null, rec.stop()); }catch(e){}
-  $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
+  try{ if(rec){ rec.onend=null; rec.stop(); } }catch(e){}
+  rec=null;
+  $('micBtn').classList.remove('on');
+  $('micBtn').textContent='🎤 ابدئي القراءة';
 }
-function stopAll(){ stopMic(); reading=false; echo=false; try{ if(azureSynth) azureSynth.stopSpeakingAsync(()=>{},()=>{}); }catch(e){}
-  $('echoBtn').textContent='🔁 رددي ورايي'; $('readBtn').textContent='📖 اقرأ لي النص';
-  try{speechSynthesis.cancel();}catch(e){} }
 async function holdStart(ev){
   ev.preventDefault();
   const token=++holdStartToken;
