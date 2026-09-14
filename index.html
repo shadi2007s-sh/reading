@@ -1603,6 +1603,8 @@ let azureSpeakGeneration=0;
 let azureSdkPromise=null;
 azureAudio.preload='auto';
 let azureAudioUrl='';
+let azureQueueBusy=false;
+
 
 function loadAzureConfig(){
   try{ azureVoice=localStorage.getItem('azureVoice')||'ar-JO-SanaNeural'; }catch(e){}
@@ -1722,9 +1724,15 @@ async function azureSpeak(t,cb,options={}){
     azureAudioUrl=URL.createObjectURL(blob);
     azureAudio.src=azureAudioUrl;
     azureAudio.playbackRate=azureRate(rate);
-    await azureAudio.play();
-    azureAudio.onended=()=>{setAzureStatus('✓ تم تشغيل Sana'); cb&&cb();};
-    azureAudio.onerror=()=>{setAzureStatus('✕ تعذر تشغيل ملف الصوت على الجهاز');cb&&cb();};
+    await new Promise((resolve,reject)=>{
+      const done=()=>{cleanup();setAzureStatus('✓ تم تشغيل Sana');cb&&cb();resolve();};
+      const fail=()=>{cleanup();setAzureStatus('✕ تعذر تشغيل ملف الصوت على الجهاز');cb&&cb();reject(new Error('AUDIO_PLAY_FAILED'));};
+      const cleanup=()=>{azureAudio.onended=null;azureAudio.onerror=null;};
+      azureAudio.onended=done;
+      azureAudio.onerror=fail;
+      const p=azureAudio.play();
+      if(p&&p.catch) p.catch(fail);
+    });
   }catch(e){
     if(generation!==azureSpeakGeneration)return;
     setAzureStatus('✕ '+azureUserError(e));
@@ -1934,9 +1942,17 @@ function readSentence(start){
     if(k>=chunks.length){stopRead();return;}
     const c=chunks[k]; activeReadIndex=c.from; hi(c.from); const text=c.ws.join(' ');
     if(engine==='azure'){
-      ensureAzureSynth().then(synth=>{ if(!reading||pausedReading)return; azureSpeaking=true; synth.speakSsmlAsync(buildAzureSSML(text),result=>{azureSpeaking=false; if(result?.reason===SpeechSDK.ResultReason.SynthesizingAudioCompleted){k++;setTimeout(play,pausePreset==='long'?520:pausePreset==='short'?180:320);}else if(reading&&!pausedReading){k++;play();} try{result?.close();}catch(e){} },err=>{azureSpeaking=false;if(reading&&!pausedReading){k++;play();}});}).catch(()=>{ if(reading&&!pausedReading){speak(text,rate,()=>{k++;play();});} });
+      speak(text,rate,()=>{
+        if(!reading||pausedReading)return;
+        k++;
+        setTimeout(play,pausePreset==='long'?520:pausePreset==='short'?180:320);
+      });
     }else{
-      speak(text,rate,()=>{k++;setTimeout(play,pausePreset==='long'?520:pausePreset==='short'?180:320);});
+      speak(text,rate,()=>{
+        if(!reading||pausedReading)return;
+        k++;
+        setTimeout(play,pausePreset==='long'?520:pausePreset==='short'?180:320);
+      });
     }
   };
   play();
