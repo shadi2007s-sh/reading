@@ -1,722 +1,248 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>تدرّب على القراءة - النسخة الشاملة (دعم iPad)</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
-<style>
-  :root{
-    --bg-grad-1: #fff7e2; --bg-grad-2: #eaf3f6; --bg-main: #efe7d4;
-    --paper:#fbf6e9; --ink:#2f3437; --rule:#cfe0e8; --margin:#e2725b;
-    --ok:#2f8f5b; --ok-soft:#dff0e3; --live:#e0a11b;
-    --card-border: #e6dcc6; --btn-bg: #ffffff;
-    --shadow:0 18px 40px -18px rgba(47,52,55,.45);
-    --font-read:"Noto Naskh Arabic",serif;
-    --font-ui:"Baloo Bhaijaan 2","Noto Naskh Arabic",sans-serif;
-  }
-  body.dark {
-    --bg-grad-1: #1a1c1e; --bg-grad-2: #111315; --bg-main: #141618;
-    --paper: #222629; --ink: #e8eaed; --rule: #343a40; --margin: #e2725b;
-    --ok: #4caf50; --ok-soft: #1b3823; --live: #ffd54f;
-    --card-border: #33383c; --btn-bg: #2c3035;
-    --shadow: 0 18px 40px -18px rgba(0,0,0,.7);
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
-  body{font-family:var(--font-ui);
-    background:radial-gradient(circle at 15% 10%,var(--bg-grad-1) 0%,transparent 55%),
-               radial-gradient(circle at 85% 90%,var(--bg-grad-2) 0%,transparent 55%),var(--bg-main);
-    color:var(--ink);min-height:100vh;padding:12px 12px 210px; transition: background .3s, color .3s}
-  .wrap{max-width:760px;margin:0 auto}
-  header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
-  h1{font-size:1.05rem;margin:0;font-weight:800}
-  h1 span{color:var(--margin)}
-  .stats{display:flex;gap:6px;align-items:center}
-  .pill{background:var(--paper);border:2px solid var(--card-border);border-radius:999px;padding:4px 10px;
-    font-size:.8rem;font-weight:700;box-shadow:0 2px 0 var(--card-border);white-space:nowrap;color:var(--ink)}
-  .tabs{display:flex;gap:6px;margin-bottom:10px}
-  .tabs button{flex:1;padding:9px;font-size:.9rem;border-radius:12px;border:2px solid var(--card-border);
-    background:var(--btn-bg);color:var(--ink);box-shadow:none;font-weight:700}
-  .tabs button.act{background:var(--ink);color:var(--paper);border-color:var(--ink)}
-  .card{background:var(--paper);border-radius:22px;border:1px solid var(--card-border);box-shadow:var(--shadow);
-    padding:18px;text-align:center;position:relative;overflow:hidden}
-  .counter{font-size:.85rem;color:#8b9096;font-weight:700}
-  .ghostw{font-family:var(--font-read);font-size:1.25rem;color:#bfb69f;min-height:1.6em;
-    display:flex;justify-content:center;gap:14px;align-items:center}
-  .bigword{font-family:var(--font-read);font-size:clamp(3rem,17vw,6rem);font-weight:700;
-    line-height:1.5;padding:6px 4px 10px;letter-spacing:.02em;transition:transform .2s;color:var(--ink);cursor:pointer}
-  .bigword.ok{color:var(--ok)}
-  .bigword.pop{animation:pop .45s}
-  @keyframes pop{40%{transform:scale(1.18) rotate(-2deg)}}
-  .bigword.miss{animation:shake .35s}
-  @keyframes shake{25%{transform:translateX(10px)}75%{transform:translateX(-10px)}}
-  .sheet{position:relative;background:var(--paper);border-radius:18px;padding:24px 20px;
-    box-shadow:var(--shadow);border:1px solid var(--card-border);overflow:hidden}
-  #text{font-family:var(--font-read);font-size:1.8rem;line-height:62px;text-align:justify;
-    max-height:56vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
-    padding:18px 20px 26px;margin-right:22px;border-right:2px solid var(--margin);
-    background-image:repeating-linear-gradient(to bottom,transparent 0 61px,var(--rule) 61px 62px);
-    background-attachment:local;background-origin:content-box}
-  .w{display:inline-block;padding:2px 6px;margin:0 1px;border-radius:10px;transition:all .18s;position:relative;cursor:pointer}
-  .w.done{color:var(--ok);background:var(--ok-soft)}
-  .w.now{background:#fff3cf;color:#2f3437;box-shadow:0 0 0 3px #f6d97a inset}
-  body.dark .w.now{background:#4d3d00;color:#fff;box-shadow:0 0 0 3px #f0b429 inset}
-  .bar{height:12px;background:var(--card-border);border-radius:999px;margin:14px 0 4px;overflow:hidden}
-  .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#f0b429,#2f8f5b);transition:width .3s}
-  .heard{margin-top:8px;min-height:24px;font-size:.88rem;color:#8b9096;text-align:center}
-  .heard b{color:var(--live)}
-  .controls{position:fixed;bottom:0;right:0;left:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
-    background:linear-gradient(to top,var(--bg-main) 74%,rgba(0,0,0,0))}
-  .row{display:flex;gap:7px;max-width:760px;margin:0 auto}
-  .row+.row{margin-top:7px}
-  button{font-family:var(--font-ui);font-weight:700;font-size:.98rem;border:2px solid var(--ink);
-    border-radius:14px;background:var(--btn-bg);color:var(--ink);padding:11px 8px;cursor:pointer;flex:1;
-    box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s;touch-action:manipulation}
-  button:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
-  button.mic{background:#2f8f5b;color:#fff;border-color:#1e5c3b;box-shadow:0 4px 0 #1e5c3b;flex:2}
-  button.mic.on{background:#e2725b;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;animation:glow 1.2s infinite}
-  button.say{background:#f0b429;border-color:#9a7413;box-shadow:0 4px 0 #9a7413;color:#2f3437;flex:2}
-  button.read{background:#5aa9d6;color:#fff;border-color:#2d6a8f;box-shadow:0 4px 0 #2d6a8f;flex:2}
-  @keyframes glow{50%{filter:brightness(1.15)}}
-  button.ghost{background:transparent;border-style:dashed;box-shadow:none;font-size:.8rem;padding:7px;color:var(--ink);border-color:var(--card-border)}
-  button.ghost:active{transform:none}
-  dialog{border:none;border-radius:18px;padding:18px;max-width:92vw;width:560px;
-    box-shadow:var(--shadow);background:var(--paper);color:var(--ink);font-family:var(--font-ui)}
-  dialog[open]{display:block}
-  dialog::backdrop{background:rgba(0,0,0,.6)}
-  textarea, select{width:100%;font-family:var(--font-ui);font-size:1rem;
-    border:2px solid var(--card-border);border-radius:12px;padding:10px;background:var(--paper);color:var(--ink)}
-  textarea{height:120px;font-family:var(--font-read);font-size:1.15rem}
-  .win{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.8);z-index:9;text-align:center;color:#fff;padding:20px}
-  .win.show{display:grid}
-  .win h2{font-size:2rem;margin:.2em 0}
-  .missed-box{background:rgba(255,255,255,.1);border-radius:12px;padding:12px;margin:12px 0;max-height:140px;overflow-y:auto}
-  .missed-tag{display:inline-block;background:#e2725b;color:#fff;padding:3px 8px;border-radius:6px;margin:3px;font-size:.9rem}
-  .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
-  .hide{display:none}
-  .tip-box{background:#fff3cf; color:#2f3437; padding:12px; border-radius:10px; font-size:.9rem; margin:12px 0; text-align:right;}
-</style>
-<base target="_blank">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدير القوالب والنصوص</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --text-dark: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-dark); padding: 20px; max-width: 1100px; margin: 0 auto; }
+
+        header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        h1 { font-size: 1.5rem; color: var(--text-dark); }
+        
+        .btn { padding: 10px 18px; border-radius: 8px; border: none; font-weight: 600; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn-primary { background: var(--primary); color: white; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-dark); }
+        .btn-outline:hover { background: #f1f5f9; }
+        .btn-copy { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .btn-copy:hover { background: #d1fae5; }
+        .btn-danger { background: #fef2f2; color: var(--danger); border: 1px solid #fecaca; }
+
+        .controls { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+        .search-box { flex: 1; min-width: 250px; padding: 10px 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
+        .category-filter { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+        .chip { padding: 8px 16px; border-radius: 20px; border: 1px solid var(--border); background: white; cursor: pointer; font-size: 0.85rem; white-space: nowrap; }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; justify-content: space-between; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+        .card-title { font-weight: 700; font-size: 1.1rem; }
+        .badge { background: #eff6ff; color: var(--primary); padding: 4px 8px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; }
+        .card-body { font-size: 0.92rem; color: #334155; line-height: 1.5; white-space: pre-wrap; margin-bottom: 16px; max-height: 120px; overflow-y: auto; background: #f8fafc; padding: 10px; border-radius: 6px; }
+        .card-actions { display: flex; justify-content: space-between; gap: 8px; }
+
+        /* Modal styling */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); align-items: center; justify-content: center; padding: 16px; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; width: 100%; max-width: 500px; border-radius: 12px; padding: 24px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 0.9rem; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; font-size: 0.95rem; }
+        textarea.form-control { resize: vertical; min-height: 100px; }
+
+        /* Toast notification */
+        .toast { position: fixed; bottom: 20px; left: 20px; background: #1e293b; color: white; padding: 12px 20px; border-radius: 8px; opacity: 0; transition: 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+    </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>اقرئي <span>كلمة كلمة</span> 📖</h1>
-    <div class="stats">
-      <div class="pill">🔥 <span id="streak">0</span></div>
-      <div class="pill">⭐ <span id="score">0</span></div>
-      <div class="pill">📊 <span id="prog">0</span>%</div>
-      <button id="themeBtn" class="ghost" style="padding:4px 8px;font-size:1rem;flex:0 0 auto" title="الوضع الداكن" aria-label="تبديل الوضع الداكن">🌙</button>
+
+    <header>
+        <h1>مدير القوالب والنصوص</h1>
+        <button class="btn btn-primary" onclick="openModal()">+ إضافة قالب جديد</button>
+    </header>
+
+    <div class="controls">
+        <input type="text" id="searchInput" class="search-box" placeholder="بحث في العنوان أو النص..." oninput="filterSnippets()">
+        <div class="category-filter" id="categoryFilter">
+            <button class="chip active" onclick="setCategory('الكل')">الكل</button>
+        </div>
     </div>
-  </header>
 
-  <div class="tabs">
-    <button id="tabCard" class="act">🔠 كلمة وحدة</button>
-    <button id="tabFull">📄 النص كامل</button>
-  </div>
+    <div class="grid" id="snippetsGrid"></div>
 
-  <div class="card" id="cardView">
-    <div class="counter">الكلمة <span id="cnow">1</span> من <span id="ctot">1</span></div>
-    <div class="ghostw"><span id="prevw"></span></div>
-    <div class="bigword" id="bigword" title="اضغطي للاستماع">…</div>
-    <div class="ghostw"><span id="nextw"></span></div>
-  </div>
-
-  <div class="sheet hide" id="fullView">
-    <div id="text"></div>
-  </div>
-
-  <div class="bar"><i id="fill"></i></div>
-  <div class="heard" id="heard" aria-live="polite">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
-</div>
-
-<div class="controls">
-  <div class="row">
-    <button class="mic" id="micBtn" aria-label="تشغيل الميكروفون للبدء بالقراءة">🎤 ابدئي القراءة</button>
-    <button class="say" id="sayBtn" aria-label="استمع للكلمة الحالية">🔊 اسمعي الكلمة</button>
-    <button id="okBtn" aria-label="تقييم إجابة صحيحة">✓ صح</button>
-  </div>
-  <div class="row">
-    <button class="read" id="readBtn" aria-label="اقرأ لي النص كامل">📖 اقرأ لي النص كامل</button>
-    <button id="prevBtn" aria-label="الانتقال للكلمة السابقة">⏮ السابقة</button>
-    <button id="nextBtn" aria-label="الانتقال للكلمة التالية">⏭ التالية</button>
-  </div>
-  <div class="row">
-    <button class="ghost" id="editBtn">📚 المكتبة والنص</button>
-    <button class="ghost" id="resetBtn">↺ من البداية</button>
-  </div>
-</div>
-
-<!-- نافذة الفوز والإنجاز -->
-<div class="win" id="win">
-  <div>
-    <div style="font-size:4rem">🏆</div>
-    <h2>أحسنتِ! اكتمل النص</h2>
-    <p id="winMsg"></p>
-    <div id="missedReport"></div>
-    <div class="row" style="margin-top:14px">
-      <button id="retryMissedBtn" style="background:#f0b429;display:none" onclick="retryMissed()">🎯 إعادة الكلمات الصعبة</button>
-      <button style="background:#fff;color:#2f3437" onclick="restart()">↺ النص كامل</button>
+    <!-- Modal Form -->
+    <div class="modal" id="templateModal">
+        <div class="modal-content">
+            <h2 id="modalTitle" style="margin-bottom: 16px;">إضافة قالب جديد</h2>
+            <form id="snippetForm" onsubmit="saveSnippet(event)">
+                <input type="hidden" id="snippetId">
+                <div class="form-group">
+                    <label>عنوان القالب</label>
+                    <input type="text" id="snippetTitle" class="form-control" required placeholder="مثال: رد استفسار السعر">
+                </div>
+                <div class="form-group">
+                    <label>الفئة</label>
+                    <input type="text" id="snippetCategory" class="form-control" placeholder="مثال: عمل، شخصي، ردود سريعة">
+                </div>
+                <div class="form-group">
+                    <label>محتوى النص</label>
+                    <textarea id="snippetContent" class="form-control" required placeholder="اكتب القالب هنا..."></textarea>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 8px;">
+                    <button type="button" class="btn btn-outline" onclick="closeModal()">إلغاء</button>
+                    <button type="submit" class="btn btn-primary">حفظ</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
-</div>
 
-<!-- نافذة تنبيه توافق iPad / iOS -->
-<div class="win" id="fixModal">
-  <div style="max-width:480px; text-align:right; background:var(--paper); color:var(--ink); padding:24px; border-radius:20px;">
-    <h3 style="color:var(--margin); margin-top:0;">تنبيه توافق الجهاز 📱</h3>
-    <div id="modalBody"></div>
-    <button style="width:100%; margin-top:15px; background:var(--ink); color:var(--paper);" onclick="closeFixModal()">حسناً، استمرار</button>
-  </div>
-</div>
+    <div class="toast" id="toast">تم نسخ النص للحافظة!</div>
 
-<dialog id="dlg">
-  <h3 style="margin-top:0">اختر نصاً من المكتبة أو أدخل نصك</h3>
-  <label style="font-size:.85rem;font-weight:700">مكتبة النصوص الجاهزة:</label>
-  <select id="presetSel" style="margin:4px 0 12px">
-    <option value="">-- اختر نصاً جاهزاً --</option>
-    <option value="p1">🌱 المستوى الأول (سهل): الشمس طالعة</option>
-    <option value="p2">🌿 المستوى الثاني (متوسط): العلم نور</option>
-    <option value="p3">🌳 المستوى الثالث (متقدم): تدوين رؤوس الأقلام</option>
-  </select>
-  <label style="font-size:.85rem;font-weight:700">أو اكتب النص هنا:</label>
-  <textarea id="ta"></textarea>
-  <div class="row" style="margin-top:10px">
-    <button onclick="applyText()">حفظ وابدأ</button>
-    <button class="ghost" onclick="closeDlg()">إلغاء</button>
-  </div>
-</dialog>
+    <script>
+        let snippets = JSON.parse(localStorage.getItem('snippets_db')) || [
+            { id: 1, title: 'ترحيب بالعملاء', category: 'ردود سريعة', content: 'أهلاً بك! نسعد بتواصلك معنا. كيف يمكننا مساعدتك اليوم؟' },
+            { id: 2, title: 'البريد الإلكتروني الشخصي', category: 'شخصي', content: 'example@domain.com' }
+        ];
 
-<script>
-const PRESETS = {
-  p1: "الشَّمْسُ طَالِعَةٌ، وَالسَّمَاءُ صَافِيَةٌ، وَالْحَيَاةُ جَمِيلَةٌ.",
-  p2: "الْعِلْمُ نُورٌ يَهْدِي الْإِنْسَانَ فِي حَيَاتِهِ، وَبِالْقِرَاءَةِ نَرْتَقِي وَنَبْنِي الْمُسْتَقْبَلَ.",
-  p3: "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟"
-};
-const DEFAULT_TEXT = PRESETS.p3;
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        let activeCategory = 'الكل';
 
-/* ===== 0. أدوات مساعدة ===== */
-const isIOSDevice = () => /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const MAX_RESTARTS = isIOSDevice() ? 3 : 5;
-const AUTO_READ = false;
+        function init() {
+            renderCategories();
+            renderSnippets();
+        }
 
-let words = [], idx = 0, score = 0, streak = 0, missedWords = new Set();
-let listening = false, rec = null, ac = null;
-let finished = false, restartAttempts = 0, finalsProcessed = 0, interimSeen = '';
-let compatChecked = false;
-let wordElements = [];
-let lastAcceptedToken = '';
-let lockButtons = false;
-let restarting = false;
+        function saveToStorage() {
+            localStorage.setItem('snippets_db', JSON.stringify(snippets));
+            renderCategories();
+            renderSnippets();
+        }
 
-const $ = id => document.getElementById(id);
-const say = text => $('heard').innerHTML = text;
+        function renderCategories() {
+            const categories = ['الكل', ...new Set(snippets.map(s => s.category || 'عام'))];
+            const filterContainer = document.getElementById('categoryFilter');
+            filterContainer.innerHTML = categories.map(cat => 
+                `<button class="chip ${cat === activeCategory ? 'active' : ''}" onclick="setCategory('${cat}')">${cat}</button>`
+            ).join('');
+        }
 
-// 1. تصحيح دالة escapeHtml
-const escapeHtml = s =>
-  (s || '').replace(/[&<>"']/g, c => ({
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#39;'
-  }[c]));
+        function setCategory(cat) {
+            activeCategory = cat;
+            renderCategories();
+            renderSnippets();
+        }
 
-const store = {
-  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
-  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
-};
+        function renderSnippets() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const grid = document.getElementById('snippetsGrid');
+            
+            const filtered = snippets.filter(s => {
+                const matchesCat = activeCategory === 'الكل' || (s.category || 'عام') === activeCategory;
+                const matchesSearch = s.title.toLowerCase().includes(search) || s.content.toLowerCase().includes(search);
+                return matchesCat && matchesSearch;
+            });
 
-if ('speechSynthesis' in window) {
-  window.speechSynthesis.getVoices();
-  window.speechSynthesis.onvoiceschanged = function(){};
-}
-function getArabicVoice(){
-  if (!('speechSynthesis' in window)) return null;
-  const vs = window.speechSynthesis.getVoices();
-  return vs.find(v => /^ar/i.test(v.lang)) || vs.find(v => /arabic/i.test(v.name)) || null;
-}
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1/-1; text-align: center; color: var(--text-muted); padding: 40px;">لا توجد قوالب مطابقة.</div>`;
+                return;
+            }
 
-function unlockIOSAudio() {
-  const unlock = () => {
-    if (!ac) {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (AudioCtx) ac = new AudioCtx();
-    }
-    if (ac && ac.state === 'suspended') ac.resume();
-    if ('speechSynthesis' in window) {
-      const u = new SpeechSynthesisUtterance('');
-      window.speechSynthesis.speak(u);
-    }
-    document.removeEventListener('touchstart', unlock);
-    document.removeEventListener('click', unlock);
-  };
-  document.addEventListener('touchstart', unlock, { once: true });
-  document.addEventListener('click', unlock, { once: true });
-}
+            grid.innerHTML = filtered.map(s => `
+                <div class="card">
+                    <div>
+                        <div class="card-header">
+                            <span class="card-title">${escapeHtml(s.title)}</span>
+                            <span class="badge">${escapeHtml(s.category || 'عام')}</span>
+                        </div>
+                        <div class="card-body">${escapeHtml(s.content)}</div>
+                    </div>
+                    <div class="card-actions">
+                        <button class="btn btn-copy" onclick="copyText('${s.id}')">نسخ النص</button>
+                        <div>
+                            <button class="btn btn-outline" onclick="editSnippet(${s.id})">تعديل</button>
+                            <button class="btn btn-danger" onclick="deleteSnippet(${s.id})">حذف</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
 
-function checkiPadCompatibility(force) {
-  if (compatChecked && !force) return;
-  const isSecure = window.location.protocol === 'https:' ||
-                   window.location.hostname === 'localhost' ||
-                   window.location.protocol === 'file:';
-  const hasSR = !!SR;
-  const hasTTS = 'speechSynthesis' in window;
+        function copyText(id) {
+            const item = snippets.find(s => s.id == id);
+            if (!item) return;
+            navigator.clipboard.writeText(item.content).then(() => {
+                showToast();
+            });
+        }
 
-  let issues = [];
-  if (!isSecure) issues.push("يلزم فتح التطبيق عبر رابط آمن (HTTPS) ليعمل المايك.");
-  if (!hasSR) issues.push("التعرف الصوتي (المايك) غير مدعوم على هذا المتصفح.");
-  if (!hasTTS) issues.push("خاصية نطق الصوت غير مدعومة في متصفحك الحالي.");
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2000);
+        }
 
-  if (issues.length > 0) {
-    compatChecked = true;
-    let html = '<ul>' + issues.map(i => '<li>' + i + '</li>').join('') + '</ul>';
-    if (isIOSDevice() && !hasSR) {
-      html += '<div class="tip-box"><b>حل مشكلة المايك على iPad:</b><br>افتح الرابط باستخدام متصفح <b>Safari</b> لتفعيل المايك.</div>';
-    }
-    html += '<p style="font-size:0.85rem;">يمكنك دائماً استخدام زر <b>(✓ صح)</b> للتقييم اليدوي.</p>';
-    $('modalBody').innerHTML = html;
-    $('fixModal').classList.add('show');
-  }
-}
+        function openModal(editId = null) {
+            document.getElementById('snippetForm').reset();
+            document.getElementById('snippetId').value = '';
+            document.getElementById('modalTitle').innerText = editId ? 'تعديل القالب' : 'إضافة قالب جديد';
+            
+            if (editId) {
+                const item = snippets.find(s => s.id === editId);
+                if (item) {
+                    document.getElementById('snippetId').value = item.id;
+                    document.getElementById('snippetTitle').value = item.title;
+                    document.getElementById('snippetCategory').value = item.category || '';
+                    document.getElementById('snippetContent').value = item.content;
+                }
+            }
+            document.getElementById('templateModal').classList.add('active');
+        }
 
-function showMicPermissionHelp(){
-  let html = '<p>تم رفض إذن استخدام المايك 🎤</p>';
-  if (isIOSDevice()) {
-    html += '<div class="tip-box"><b>على iPad/iPhone:</b><br>1. افتح تطبيق <b>الإعدادات</b> ← <b>Safari</b> ← <b>الميكروفون</b> واسمح به.<br>2. أو اضغط أيقونة <b>aA</b> في شريط العنوان ← <b>إعدادات الموقع</b> ← فعّل الميكروفون.</div>';
-  } else {
-    html += '<div class="tip-box">اضغط أيقونة 🔒 أو ℹ️ بجانب شريط العنوان واسمح باستخدام الميكروفون لهذه الصفحة.</div>';
-  }
-  html += '<p style="font-size:0.85rem;">يمكنك دائماً استخدام زر <b>(✓ صح)</b> للتقييم اليدوي.</p>';
-  $('modalBody').innerHTML = html;
-  $('fixModal').classList.add('show');
-}
+        function closeModal() {
+            document.getElementById('templateModal').classList.remove('active');
+        }
 
-function closeFixModal() { $('fixModal').classList.remove('show'); }
+        function saveSnippet(e) {
+            e.preventDefault();
+            const id = document.getElementById('snippetId').value;
+            const title = document.getElementById('snippetTitle').value.trim();
+            const category = document.getElementById('snippetCategory').value.trim() || 'عام';
+            const content = document.getElementById('snippetContent').value.trim();
 
-/* ===== 2. الصوت المباشر (Web Speech API) ===== */
-function speak(text, onend){
-  if (!('speechSynthesis' in window)) {
-    say('عذراً، محرك الصوت غير مدعوم في هذا المتصفح.');
-    if (onend) onend();
-    return;
-  }
-  try {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text.trim());
-    u.lang = 'ar-SA';
-    u.rate = 0.85;
-    const v = getArabicVoice();
-    if (v) u.voice = v;
-    let keepAlive = null;
-    
-    u.onstart = () => {
-      keepAlive = setInterval(() => {
-        try {
-          if (window.speechSynthesis.speaking) {
-            window.speechSynthesis.pause();
-            window.speechSynthesis.resume();
-          }
-        } catch(e){}
-      }, 10000);
-    };
-    
-    // 4. معالجة تسريب الذاكرة وتثبيت الأحداث
-    const done = () => { 
-      if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } 
-      if (onend) onend(); 
-    };
-    u.onend = done;
-    u.onerror = done;
-    window.speechSynthesis.speak(u);
-  } catch(e) { if (onend) onend(); }
-}
+            if (id) {
+                const index = snippets.findIndex(s => s.id == id);
+                if (index !== -1) snippets[index] = { id: Number(id), title, category, content };
+            } else {
+                snippets.push({ id: Date.now(), title, category, content });
+            }
 
-// 7. تقشير وتقسيم النص الطويل لمنع توقف المحرك
-function speakLongText(text){
-  const parts = text.match(/.{1,120}(\s|$)/g) || [text];
-  let i = 0;
-  function next(){
-    if (i >= parts.length) return;
-    speak(parts[i++], next);
-  }
-  next();
-}
+            saveToStorage();
+            closeModal();
+        }
 
-function pauseMicAndSpeak(text, resumeAfter){
-  const wasListening = listening;
-  if (wasListening) stopMic();
-  speak(text, (resumeAfter && wasListening && !finished && idx < words.length) ? () => startMic() : null);
-}
+        function editSnippet(id) {
+            openModal(id);
+        }
 
-/* ===== 3. الوضع الداكن والتقدم ===== */
-$('themeBtn').onclick = () => {
-  document.body.classList.toggle('dark');
-  const isDark = document.body.classList.contains('dark');
-  $('themeBtn').textContent = isDark ? '☀️' : '🌙';
-  store.set('theme', isDark ? 'dark' : 'light');
-};
-if (store.get('theme') === 'dark') {
-  document.body.classList.add('dark');
-  $('themeBtn').textContent = '☀️';
-}
+        function deleteSnippet(id) {
+            if (confirm('هل أنت تأكد من حذف هذا القالب؟')) {
+                snippets = snippets.filter(s => s.id !== id);
+                saveToStorage();
+            }
+        }
 
-function loadProgress(){ score = parseInt(store.get('reading_score') || '0', 10) || 0; $('score').textContent = score; }
-function saveProgress(){ store.set('reading_score', String(score)); }
+        function filterSnippets() { renderSnippets(); }
 
-// 8. حفظ واسترجاع الجلسة
-function saveSession(){
-  store.set('reading_text', words.join(' '));
-  store.set('reading_idx', idx);
-  saveProgress();
-}
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
 
-/* ===== 4. معالجة وتدقيق النصوص ===== */
-// 13. تحسين دالة norm بـ Regex أكثر دقة
-function norm(s){
-  return (s || "")
-    .replace(/[ً-ٟـ]/g,"")
-    .replace(/[أإآٱ]/g,"ا")
-    .replace(/ؤ/g,"و")
-    .replace(/ئ/g,"ي")
-    .replace(/[^\u0621-\u064Aa-zA-Z0-9]/g,"")
-    .trim();
-}
-
-function sim(a,b){
-  if(a===b) return 1; if(!a||!b) return 0;
-  const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
-  for(let j=0;j<=n;j++) d[0][j]=j;
-  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
-    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
-  return 1-d[m][n]/Math.max(m,n);
-}
-
-function accept(said,target){
-  const t=norm(target), s=norm(said);
-  if(!t) return true; if(!s) return false; if(s===t) return true;
-  if(t.length>3 && (s.includes(t)||t.includes(s))) return true;
-  return sim(s,t) >= (t.length<=3 ? .95 : (t.length<=5 ? .75 : .68));
-}
-
-/* ===== 5. بناء واجهة النص والعرض ===== */
-function build(txt){
-  const box=$('text'); box.innerHTML="";
-  words = txt.trim().split(/\s+/).filter(Boolean);
-  wordElements = [];
-  words.forEach((w,i)=>{
-    const el=document.createElement('span');
-    el.className='w'; el.textContent=w;
-    el.onclick=()=>{
-      idx=i;
-      saveSession();
-      paint();
-      pauseMicAndSpeak(words[idx], true);
-    };
-    box.appendChild(el); box.appendChild(document.createTextNode(' '));
-    wordElements.push(el); // 5. تخزين المراجع مسبقاً لمنع بطء DOM
-  });
-  idx=0; finished=false; finalsProcessed=0; interimSeen=''; lastAcceptedToken='';
-  paint();
-}
-
-function paint(){
-  // 5. الاعتماد على المصفوفة المحفوظة مباشرة
-  wordElements.forEach((el,i)=>{
-    el.classList.toggle('done',i<idx);
-    el.classList.toggle('now',i===idx);
-  });
-  $('bigword').textContent = words[idx] || '🎉';
-  $('bigword').className = 'bigword';
-  $('prevw').textContent = idx>0 ? words[idx-1] : '';
-  $('nextw').textContent = idx<words.length-1 ? words[idx+1] : '';
-  $('cnow').textContent = Math.min(idx+1, words.length);
-  $('ctot').textContent = words.length;
-  $('streak').textContent = streak;
-  const pct = words.length ? Math.round(idx/words.length*100) : 0;
-  $('fill').style.width=pct+'%'; $('prog').textContent=pct; $('score').textContent=score;
-
-  const cur=document.querySelector('.w.now');
-  // 6. إصلاح التمرير بدون تحريك الصفحة كاملة في iPad
-  if(cur && !$('fullView').classList.contains('hide')) {
-    cur.scrollIntoView({ block:'nearest', inline:'nearest' });
-  }
-}
-
-/* ===== 6. الأصوات والتفاعل ===== */
-function beep(f,d){
-  try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)();
-    const o=ac.createOscillator(),g=ac.createGain(); o.frequency.value=f;
-    g.gain.setValueAtTime(.001,ac.currentTime);
-    g.gain.exponentialRampToValueAtTime(.22,ac.currentTime+.02);
-    g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);
-    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+d);
-  }catch(e){}
-}
-
-// 9. القفل الزمني لمنع الضغطات المتكررة على زر الصح
-function correct(){
-  if (lockButtons || finished || idx >= words.length) return;
-  lockButtons = true;
-  setTimeout(() => { lockButtons = false; }, 300);
-
-  const b=$('bigword'); b.classList.add('ok','pop'); setTimeout(()=>b.classList.remove('pop'),450);
-  beep(880,.12); setTimeout(()=>beep(1320,.14),90);
-  score++; streak++;
-  
-  if(streak % 5 === 0) { say('🔥 ممتازة! '+streak+' كلمات متتالية صحيحة!'); }
-  idx++;
-  saveSession();
-  
-  if(idx>=words.length){ paint(); finish(); return; }
-  
-  // 15. خيار نطق تلقائي عند النجاح
-  if(AUTO_READ && idx < words.length){
-    setTimeout(()=>{ pauseMicAndSpeak(words[idx], true); }, 500);
-  }
-  
-  setTimeout(paint,180);
-}
-
-function wrong(){
-  if (finished) return;
-  if(words[idx]) missedWords.add(words[idx]);
-  streak = 0;
-  saveSession();
-  const b=$('bigword'); b.classList.add('miss'); setTimeout(()=>b.classList.remove('miss'),350);
-}
-
-function finish(){
-  if (finished) return;
-  finished = true;
-  stopMic();
-  $('winMsg').textContent='قرأتِ '+words.length+' كلمة وحصلتِ على '+score+' نجمة ⭐';
-  const mr = $('missedReport');
-  if(missedWords.size > 0){
-    mr.innerHTML = '<div class="missed-box"><b>الكلمات الصعبة للتدرب عليها:</b><br>' +
-      Array.from(missedWords).map(w=>'<span class="missed-tag">'+escapeHtml(w)+'</span>').join('') + '</div>';
-    $('retryMissedBtn').style.display = 'inline-block';
-  } else {
-    mr.innerHTML = '<p style="color:#2f8f5b">🎉 قراءة ممتازة بدون أي أخطاء!</p>';
-    $('retryMissedBtn').style.display = 'none';
-  }
-  $('win').classList.add('show');
-  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
-  for(let i=0;i<50;i++) confetti();
-}
-
-function retryMissed(){
-  if(!missedWords.size) return;
-  const arr = Array.from(missedWords);
-  missedWords.clear();
-  streak = 0;
-  build(arr.join(' '));
-  saveSession();
-  $('win').classList.remove('show');
-}
-
-function confetti(){
-  const c=document.createElement('div'); c.className='confetti';
-  c.style.left=Math.random()*100+'vw';
-  c.style.background=['#e2725b','#f0b429','#2f8f5b','#5aa9d6','#fff'][Math.floor(Math.random()*5)];
-  document.body.appendChild(c);
-  c.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(105vh) rotate(720deg)'}],
-    {duration:2200+Math.random()*1600,easing:'ease-in'}).onfinish=()=>c.remove();
-}
-
-function restart(){
-  $('win').classList.remove('show');
-  missedWords.clear(); streak=0; idx=0; finished=false;
-  saveSession();
-  paint();
-}
-
-// 12. حماية من تكرار الكلمة الحالية
-function processTokens(tokens){
-  tokens.forEach(token => {
-    if(token === lastAcceptedToken || finished || idx >= words.length) return;
-    if(accept(token, words[idx])){
-      lastAcceptedToken = token;
-      correct();
-    }
-  });
-}
-
-/* ===== 7. المايك والتعرف الصوتي ===== */
-function startMic(){
-  // 2. فحص الدعم تعطيل الزر إن لم يوجد
-  if(!SR){ 
-    $('micBtn').disabled = true;
-    $('micBtn').textContent = '❌ المايك غير مدعوم';
-    checkiPadCompatibility(true); 
-    return; 
-  }
-  if(listening || finished) return;
-  listening=true; restartAttempts=0; finalsProcessed=0; interimSeen=''; lastAcceptedToken='';
-  $('micBtn').classList.add('on'); $('micBtn').textContent='⏹ إيقاف';
-  try{
-    rec = new SR();
-    rec.lang='ar-SA';
-    rec.continuous = !isIOSDevice();
-    rec.interimResults = true;
-
-    rec.onresult = e => {
-      if (finished) return;
-      restartAttempts = 0;
-      const res = e.results;
-      let interim = '';
-      for (let i = 0; i < res.length; i++) {
-        if (!res[i].isFinal) interim += res[i][0].transcript;
-      }
-      let newFinals = '';
-      for (let i = finalsProcessed; i < res.length; i++) {
-        if (res[i].isFinal) newFinals += (newFinals ? ' ' : '') + res[i][0].transcript;
-      }
-      finalsProcessed = 0;
-      for (let i = 0; i < res.length; i++) if (res[i].isFinal) finalsProcessed++;
-      
-      const it = interim.trim();
-      let newInterim = '';
-      if (it.startsWith(interimSeen)) newInterim = it.slice(interimSeen.length).trim();
-      interimSeen = it;
-
-      let allFinals = '';
-      for (let i = 0; i < res.length; i++) {
-        if (res[i].isFinal) allFinals += (allFinals ? ' ' : '') + res[i][0].transcript;
-      }
-      const display = (allFinals + ' ' + it).trim();
-      if (display) say('سمعت: <b>' + escapeHtml(display) + '</b>');
-
-      const toProcess = (newFinals + ' ' + newInterim).trim();
-      if (!toProcess) return;
-      
-      processTokens(toProcess.split(/\s+/).filter(Boolean));
-    };
-
-    rec.onerror = (ev) => {
-      const err = ev.error || '';
-      if (err === 'not-allowed' || err === 'service-not-allowed') {
-        stopMic();
-        showMicPermissionHelp();
-      } else if (err === 'language-not-supported') {
-        stopMic();
-        say('⚠️ التعرف الصوتي بالعربية غير مدعوم على هذا الجهاز/المتصفح.');
-      } else if (err === 'network') {
-        say('⚠️ يحتاج التعرف الصوتي إلى اتصال بالإنترنت.');
-      }
-    };
-
-    // 3. منع الحلقة اللانهائية وحماية المحاولة الزائدة مع مهلة زامنية Safe-Timeout
-    rec.onend = () => {
-      if (!listening) return;
-      if (restartAttempts >= MAX_RESTARTS) {
-        stopMic();
-        say('🎤 اضغطي زر المايك مرة أخرى للمتابعة.');
-        return;
-      }
-      if (restarting) return;
-      restarting = true;
-      restartAttempts++;
-      setTimeout(() => {
-        try {
-          if (listening) rec.start();
-        } catch(e) { stopMic(); }
-        restarting = false;
-      }, 400);
-    };
-
-    rec.start();
-    say('🎧 أنا أسمعك… اقرئي الكلمة الكبيرة.');
-  }catch(e){
-    stopMic();
-    say('تعذر تشغيل المايك على هذا الجهاز.');
-  }
-}
-
-function stopMic(){
-  listening=false;
-  try{ rec && rec.stop(); }catch(e){}
-  $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
-}
-
-/* ===== 8. أحداث الأزرار والتشغيل ===== */
-$('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView').classList.add('hide'); $('tabCard').classList.add('act'); $('tabFull').classList.remove('act'); };
-$('tabFull').onclick=()=>{ $('fullView').classList.remove('hide'); $('cardView').classList.add('hide'); $('tabFull').classList.add('act'); $('tabCard').classList.remove('act'); paint(); };
-$('micBtn').onclick=()=> listening ? stopMic() : startMic();
-$('sayBtn').onclick=()=>{ if (words[idx] && !finished) pauseMicAndSpeak(words[idx], true); };
-$('bigword').onclick=()=>{ if (words[idx] && !finished) pauseMicAndSpeak(words[idx], true); };
-
-// 7. تحسين نطق كامل النص
-$('readBtn').onclick = () => {
-  if(!words.length) return;
-  if(listening) stopMic();
-  speakLongText(words.join(' '));
-};
-
-$('okBtn').onclick=()=>{ if(!finished && idx<words.length) correct(); };
-$('prevBtn').onclick=()=>{ if(!finished && idx>0){ idx--; saveSession(); paint(); } };
-
-// 13. تحسين زر التالي وحفظ المسائل غير المقروءة
-$('nextBtn').onclick = () => {
-  if(finished || idx >= words.length) return;
-  missedWords.add(words[idx]);
-  streak = 0;
-  idx++;
-  saveSession();
-  paint();
-  if(idx >= words.length){ finish(); }
-};
-
-$('resetBtn').onclick=()=>{ stopMic(); restart(); };
-$('editBtn').onclick=()=>{ $('ta').value=words.join(' '); openDlg(); };
-$('presetSel').onchange=e=>{ if(PRESETS[e.target.value]) $('ta').value = PRESETS[e.target.value]; };
-
-function openDlg(){
-  const d=$('dlg');
-  try { if (d.showModal) d.showModal(); else d.setAttribute('open',''); }
-  catch(e){ d.setAttribute('open',''); }
-}
-function closeDlg(){
-  const d=$('dlg');
-  try { if (d.close) d.close(); } catch(e){}
-  d.removeAttribute('open');
-}
-
-function applyText(){
-  stopMic();
-  const v=$('ta').value.trim();
-  if(v){ missedWords.clear(); streak=0; build(v); saveSession(); }
-  closeDlg();
-}
-
-// 14. التعامل مع تغيير حالة الرؤية للنافذة (إيقاف المايك عند مغادرة الصفحة أو القفل)
-document.addEventListener("visibilitychange", () => {
-  if (document.hidden) {
-    stopMic();
-  } else {
-    paint();
-  }
-});
-
-window.addEventListener('DOMContentLoaded', () => {
-  unlockIOSAudio();
-  checkiPadCompatibility();
-  loadProgress();
-
-  // 8. استعادة الجلسة السابقة إن وجدت
-  const savedText = store.get('reading_text');
-  build(savedText || DEFAULT_TEXT);
-  const savedIdx = parseInt(store.get('reading_idx') || '0', 10);
-  if(savedIdx > 0 && savedIdx < words.length){
-    idx = savedIdx;
-    paint();
-  }
-});
-</script>
+        init();
+    </script>
 </body>
 </html>
