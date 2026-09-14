@@ -182,108 +182,75 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 .win>div{max-width:620px;background:rgba(255,255,255,.12);border-radius:28px;padding:26px}.result-box{border-radius:18px}
 @media(max-width:700px){{display:block}{margin-top:9px}{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.controls .row:first-child button{font-size:1rem}.controls{padding-left:8px;padding-right:8px}}
 </style>
-
-<style id="clean-reading-v17-ui">
-  body{padding-bottom:150px!important;}
-  .old-reading-ui-hidden{display:none!important}.old-main-storage{display:none!important}
-  .simple-shell{max-width:860px;margin:0 auto;padding:4px 8px 150px}
-  .simple-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px}
-  .simple-home,.simple-more{border:2px solid #cfe4ee;background:#fff;border-radius:16px;padding:8px 12px;box-shadow:0 3px 0 #cfe4ee;color:#31576c;font-weight:800;text-decoration:none;font-family:var(--font-ui);cursor:pointer}
-  .simple-title{flex:1;text-align:center;font-size:1.25rem;font-weight:800;color:#23445a}
-  .simple-sub{font-size:.78rem;color:#71838d;text-align:center;margin-top:-3px}
-  .simple-score{display:flex;justify-content:center;gap:7px;margin:8px 0 10px}
-  .simple-pill{background:#fff;border:2px solid #d8e8f0;border-radius:999px;padding:5px 12px;font-weight:800;color:#31576c;box-shadow:0 3px 0 #e6f1f6}
-  .simple-card{background:#fffdf8;border:3px solid #e4e8df;border-radius:30px;box-shadow:0 18px 36px rgba(40,75,95,.11);padding:22px 16px;text-align:center}
-  .simple-counter{font-size:.9rem;color:#71838d;font-weight:800}
-  .simple-word{font-family:var(--font-read);font-size:clamp(3.8rem,15vw,7rem);font-weight:700;line-height:1.2;min-height:1.5em;margin:20px 0 16px;color:#253844}
-  .simple-word.ok{color:#3c9368}.simple-word.miss{animation:shake .35s}
-  .simple-full{display:none;text-align:right;font-family:var(--font-read);font-size:1.75rem;line-height:2;background:#fff;border:2px solid #dbe9ef;border-radius:20px;padding:16px;margin:10px 0}
-  .simple-word-strip{display:flex;justify-content:center;gap:10px;align-items:center;color:#a7bac4;font-family:var(--font-read);font-size:1.15rem;min-height:30px}
-  .simple-word-strip span{max-width:30%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .simple-progress{height:11px;background:#e7f0f4;border-radius:999px;overflow:hidden;margin:16px 4px 4px}
-  .simple-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd568,#61c391);border-radius:999px;transition:width .25s}
-  .simple-hint{margin:10px 0 0;color:#748791;font-size:.82rem;min-height:1.3em}
-  .simple-actions{position:fixed;left:0;right:0;bottom:0;z-index:8;padding:8px max(8px,env(safe-area-inset-left)) calc(9px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-right));background:linear-gradient(to top,rgba(237,248,255,.98) 80%,rgba(237,248,255,0))}
-  .simple-action-row{display:flex;gap:8px;max-width:860px;margin:0 auto}
-  .simple-action-row+.simple-action-row{margin-top:7px}
-  .simple-action{flex:1;border:2px solid #bcd7e5;border-radius:16px;padding:11px 8px;background:#fff;color:#253844;font-family:var(--font-ui);font-weight:800;font-size:.96rem;box-shadow:0 4px 0 #bcd7e5;touch-action:manipulation}
-  .simple-action.listen{background:#67b8e9;color:#fff;border-color:#3f88b4;box-shadow:0 4px 0 #3f88b4}
-  .simple-action.mic{background:#61c391;color:#fff;border-color:#3c9368;box-shadow:0 4px 0 #3c9368}
-  .simple-action.check{background:#ffd568;color:#4f4318;border-color:#c4a542;box-shadow:0 4px 0 #c4a542}
-  .simple-action.more{background:#fff}
-  .simple-mini-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:860px;margin:8px auto 0}
-  .simple-mini{border:2px dashed #cfe4ee;border-radius:14px;padding:8px;background:#fff;color:#31576c;font-family:var(--font-ui);font-weight:800}
-  #simpleMoreDlg{border:none;border-radius:24px;max-width:94vw;width:580px;background:#fffdf8;padding:18px;box-shadow:0 18px 42px rgba(40,75,95,.22);font-family:var(--font-ui)}
-  #simpleMoreDlg::backdrop{background:rgba(35,56,68,.45)}
-  .more-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-  .more-grid button{box-shadow:none;border:2px solid #cfe4ee;background:#fff;border-radius:15px;padding:10px 8px;font-size:.9rem}
-  .more-section{margin-top:12px;padding-top:12px;border-top:1px solid #e3edf1}.more-section h4{margin:0 0 8px;font-size:.9rem;color:#56707c}
-  .more-modes{display:flex;gap:6px}.more-modes button{flex:1;box-shadow:none;border:2px solid #cfe4ee;border-radius:14px;padding:8px;background:#fff;font-weight:800}.more-modes button.active{background:#4f9fcb;color:#fff;border-color:#3f81a5}
-  .more-close{width:100%;margin-top:12px;background:#edf7fb!important;border-color:#cfe4ee!important;box-shadow:none!important}
-  @media(max-width:560px){.simple-shell{padding-left:6px;padding-right:6px}.simple-title{font-size:1.1rem}.simple-card{padding:18px 10px}.simple-word{font-size:clamp(3.4rem,17vw,5.2rem)}.simple-action{font-size:.9rem;padding:10px 5px}.simple-mini{font-size:.8rem}.more-grid{grid-template-columns:1fr 1fr}}
-</style>
 </head>
-<body>
-<div class="simple-shell" id="simpleShell">
-  <div class="simple-top">
-    <a class="simple-home" href="index.html">⌂ الرئيسية</a>
-    <div class="simple-title">📖 تدريب القراءة<div class="simple-sub">اسمعي • اقرئي • تحققي</div></div>
-    <button class="simple-more" id="simpleMoreBtn">☰ المزيد</button>
-  </div>
-  <div class="simple-score">
-    <div class="simple-pill">⭐ <span id="simpleScore">0</span></div>
-    <div class="simple-pill">📊 <span id="simpleProg">0</span>%</div>
-  </div>
-
-  <div class="simple-card">
-    <div class="simple-counter">الكلمة <span id="simpleNow">1</span> من <span id="simpleTotal">1</span></div>
-    <div class="simple-word-strip"><span id="simplePrev"></span><span>•</span><span id="simpleNext"></span></div>
-    <div class="simple-word" id="simpleWord">…</div>
-    <div class="simple-full" id="simpleFull"></div>
-    <div class="simple-progress"><i id="simpleFill"></i></div>
-    <div class="simple-hint" id="simpleHint">اضغطي 🔊 لسماع الكلمة، ثم 🎤 اقرئيها.</div>
-  </div>
+<body><div style="max-width:760px;margin:0 auto 10px;display:flex;gap:8px;"><a href="reading_app_dictation.html" style="display:block;flex:1;text-align:center;text-decoration:none;background:#fff;border:2px solid #d9cdb2;border-radius:14px;padding:10px;font-weight:800;color:#2f3437;box-shadow:0 3px 0 #d9cdb2;">✍️ الانتقال إلى تدريب الإملاء</a></div>
+<div id="v8ReadSection">
+<div class="wrap">
+<header>
+<h1>اقرئي <span>كلمة كلمة</span> 📖</h1>
+<div class="stats">
+<div class="pill">⭐ <span id="score">0</span></div>
+<div class="pill">📊 <span id="prog">0</span>%</div>
 </div>
-
-<div class="simple-actions">
-  <div class="simple-action-row">
-    <button class="simple-action listen" id="simpleListen">🔊 استمع</button>
-    <button class="simple-action mic" id="simpleMic">🎤 اقرأ</button>
-    <button class="simple-action check" id="simpleCheck">✓ تحقق</button>
-  </div>
-  <div class="simple-action-row">
-    <button class="simple-action" id="simplePrevBtn">⏮ السابقة</button>
-    <button class="simple-action" id="simpleRepeat">🔁 أعد</button>
-    <button class="simple-action" id="simpleNextBtn">⏭ التالية</button>
-  </div>
-  <div class="simple-mini-row">
-    <button class="simple-mini" id="simpleReadAll">📖 اقرأ النص</button>
-    <button class="simple-mini" id="simpleEcho">🔁 رددي ورايي</button>
-  </div>
+</header>
+<div class="banner hide" id="banner"></div>
+<div class="tabs">
+<button class="act" id="tabCard">🔠 كلمة وحدة</button>
+<button id="tabFull">📄 النص كامل</button>
 </div>
-
-<dialog id="simpleMoreDlg">
-  <h3 style="margin:0 0 4px">☰ المزيد</h3>
-  <div style="color:#71838d;font-size:.82rem">كل الأدوات الإضافية موجودة هنا حتى تبقى الصفحة الرئيسية بسيطة.</div>
-  <div class="more-section">
-    <h4>الوضع</h4>
-    <div class="more-modes">
-      <button id="moreWord">🔠 كلمة</button><button id="moreSentence">🧩 جملة</button><button id="moreFull">📖 النص كامل</button>
-    </div>
-  </div>
-  <div class="more-section">
-    <h4>الأدوات</h4>
-    <div class="more-grid">
-      <button id="moreTexts">📚 نصوصي</button>
-      <button id="moreVoice">⚙️ إعدادات الصوت</button>
-      <button id="moreProgress">📊 تقدمي</button>
-      <button id="moreRecord">🎙 تسجيلاتي</button>
-      <button id="moreDiag">🩺 فحص الصوت والمايك</button>
-      <button id="morePause">⏸ إيقاف/استئناف</button>
-    </div>
-  </div>
-  <button class="more-close" id="moreClose">إغلاق</button>
-</dialog>
+<div class="text-manager">
+<div class="inline">
+<select aria-label="النصوص المحفوظة" id="savedTextSel"></select>
+<button class="ghost" id="manageTextsBtn">📚 نصوصي</button>
+</div>
+<div class="saved-count" id="savedCount">لا توجد نصوص محفوظة</div>
+</div>
+<div class="text-meta" id="textMeta">—</div>
+<div class="card" id="cardView">
+<div class="counter">الكلمة <span id="cnow">1</span> من <span id="ctot">1</span></div>
+<div class="ghostw"><span id="prevw"></span></div>
+<div class="bigword" id="bigword">…</div>
+<div class="ghostw"><span id="nextw"></span></div>
+</div>
+<div class="sheet hide" id="fullView">
+<div id="text"></div>
+</div>
+<div class="bar"><i id="fill"></i></div>
+<div aria-label="وضع القراءة" class="mode-strip">
+<button class="active" data-mode="word">🔠 كلمة</button>
+<button data-mode="sentence">🧩 جملة</button>
+<button data-mode="full">📖 النص كامل</button>
+</div>
+<div class="pause-bar">
+<button id="repeatBtn">🔁 أعد الكلمة</button>
+<button id="pauseBtn">⏸ إيقاف مؤقت</button>
+</div>
+<div class="heard" id="heard">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
+<small class="note">🎧 Sana تقرأ لك — يمكنك التبديل بين كلمة/جملة/نص كامل، وإيقاف القراءة مؤقتًا أو إعادة الكلمة.</small>
+<div id="azureSecureStatus" style="margin-top:8px;font-size:.78rem;color:#2f8f5b;font-weight:700;text-align:center">☁️ Azure Neural: Sana — صوت تعليمي عبر Token</div>
+</div>
+<div class="mistakes" id="mistakesBox">
+<div class="mistakes-title">🎯 كلمات تحتاج تدريبًا</div>
+<div class="mistake-list" id="mistakeList"></div>
+</div>
+</div>
+<div id="v8ReadControlsWrap">
+<div class="controls">
+<div class="row">
+<button class="mic" id="micBtn">🎤 ابدئي القراءة</button>
+<button id="sayBtn">🔊 اسمعي</button>
+<button id="okBtn">✓ صح</button>
+</div>
+<div class="row">
+<button class="hold" id="holdBtn">🎙 اضغطي واحكِ</button>
+<button id="prevBtn">⏮ السابقة</button>
+<button id="nextBtn">⏭ التالية</button>
+</div>
+<div class="row">
+<button class="read" id="readBtn">📖 اقرأ لي النص</button>
+<button id="echoBtn">🔁 رددي ورايي</button>
+</div>
+</div>
 
 <div class="win" id="win">
 <div>
@@ -1326,46 +1293,6 @@ renderDashboard();
 renderTextMeta();
 
 
-</script>
-
-<script id="simple-ui-behavior">
-(function(){
-  const $=id=>document.getElementById(id);
-  function clickOld(id){ const el=$(id); if(el) el.click(); }
-  function syncSimple(){
-    const w=$('bigword')?.textContent?.trim()||'…';
-    const prev=$('prevw')?.textContent?.trim()||''; const next=$('nextw')?.textContent?.trim()||'';
-    $('simpleWord').textContent=w; $('simplePrev').textContent=prev; $('simpleNext').textContent=next;
-    $('simpleNow').textContent=$('cnow')?.textContent||'1'; $('simpleTotal').textContent=$('ctot')?.textContent||'1';
-    $('simpleScore').textContent=$('score')?.textContent||'0'; $('simpleProg').textContent=$('prog')?.textContent||'0';
-    $('simpleFill').style.width=(($('prog')?.textContent||0)+'%');
-  }
-  const mo=$('simpleMoreDlg');
-  $('simpleMoreBtn').onclick=()=>mo.showModal();
-  $('moreClose').onclick=()=>mo.close();
-  $('simpleListen').onclick=()=>clickOld('sayBtn');
-  $('simpleMic').onclick=()=>clickOld('micBtn');
-  $('simpleCheck').onclick=()=>clickOld('okBtn');
-  $('simplePrevBtn').onclick=()=>clickOld('prevBtn');
-  $('simpleNextBtn').onclick=()=>clickOld('nextBtn');
-  $('simpleRepeat').onclick=()=>clickOld('repeatBtn');
-  $('simpleReadAll').onclick=()=>clickOld('readBtn');
-  $('simpleEcho').onclick=()=>clickOld('echoBtn');
-  $('moreTexts').onclick=()=>{mo.close();clickOld('manageTextsBtn');};
-  $('moreVoice').onclick=()=>{mo.close();document.getElementById('voiceDlg')?.showModal();};
-  $('moreProgress').onclick=()=>{mo.close();clickOld('progressBtn');};
-  $('moreRecord').onclick=()=>{mo.close();document.getElementById('recDlg')?.showModal();};
-  $('moreDiag').onclick=()=>{mo.close();document.getElementById('diagDlg')?.showModal();};
-  $('morePause').onclick=()=>{clickOld('pauseBtn');};
-  $('moreWord').onclick=()=>{const x=document.querySelector('[data-mode="word"]'); if(x)x.click(); clickOld('tabCard'); syncSimple();};
-  $('moreSentence').onclick=()=>{const x=document.querySelector('[data-mode="sentence"]'); if(x)x.click(); syncSimple();};
-  $('moreFull').onclick=()=>{const x=document.querySelector('[data-mode="full"]'); if(x)x.click(); clickOld('tabFull'); syncSimple();};
-  // Keep the simplified card synchronized with the original working state.
-  const ob=new MutationObserver(syncSimple);
-  ['bigword','cnow','ctot','score','prog','prevw','nextw'].forEach(id=>{const el=$(id);if(el)ob.observe(el,{subtree:true,childList:true,characterData:true});});
-  setTimeout(syncSimple,300);
-  setInterval(syncSimple,500);
-})();
 </script>
 </body>
 </html>
