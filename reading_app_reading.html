@@ -130,6 +130,53 @@
   .danger-note{background:#fff1ed;border:1px solid #efb1a3;color:#8c3a26;border-radius:10px;padding:7px;font-size:.75rem}
   @media(max-width:560px){.top-actions{grid-template-columns:1fr 1fr 1fr}.progress-grid{grid-template-columns:repeat(2,1fr)}}
 
+
+/* V12 child-simple redesign */
+:root{--kid-bg:#f6fbff;--kid-card:#ffffff;--kid-primary:#4b7bec;--kid-primary-dark:#3565d3;--kid-accent:#ffb84d;--kid-green:#35a66a;--kid-text:#24324a;--kid-muted:#718096;--kid-border:#dfe9f5;--kid-shadow:0 12px 30px rgba(65,95,130,.10)}
+html,body{background:var(--kid-bg)!important;color:var(--kid-text)!important}
+body{padding:10px 10px 80px!important}
+.v9-dashboard,.v10-tools,.child-intro{display:none!important}
+#v8ReadSection{max-width:760px!important;margin:0 auto!important}
+#v8ReadSection>.wrap{max-width:720px!important;margin:0 auto!important}
+#v8ReadSection header{display:block;text-align:center;margin:2px 0 12px!important}
+#v8ReadSection header h1{font-size:1.45rem!important;color:var(--kid-text)!important;margin:0 0 5px!important}
+#v8ReadSection header h1 span{display:none}
+#v8ReadSection .stats{display:flex;justify-content:center;gap:8px}
+#v8ReadSection .pill{border:0!important;background:#eef5ff!important;color:var(--kid-primary-dark)!important;box-shadow:none!important;padding:5px 10px!important}
+.tabs,.text-manager,.top-actions,.text-meta,.bar,.mode-strip,.pause-bar,.note,#azureSecureStatus,.mistakes{display:none!important}
+.card{background:var(--kid-card)!important;border:2px solid var(--kid-border)!important;border-radius:28px!important;box-shadow:var(--kid-shadow)!important;padding:24px 18px 28px!important;min-height:290px;display:flex;flex-direction:column;justify-content:center;align-items:center}
+.counter{color:var(--kid-muted)!important;font-size:.9rem!important;margin-bottom:5px}
+.ghostw{color:#bdc8d7!important;font-size:1.05rem!important;min-height:1.5em!important}
+.bigword{color:var(--kid-text)!important;font-size:clamp(3.2rem,16vw,6.4rem)!important;line-height:1.45!important;padding:5px!important}
+.bigword.ok{color:var(--kid-green)!important}
+#fullView{display:none!important}
+#heard{background:#f7faff;border:1px solid var(--kid-border);border-radius:16px;padding:10px 12px;color:var(--kid-muted)!important;margin:10px 0 0!important}
+#v8ReadControlsWrap{max-width:720px;margin:12px auto 0!important}
+.controls{background:transparent!important;padding:0!important;box-shadow:none!important;border:0!important}
+.controls .settings-hint{display:none!important}
+.controls .row{display:flex!important;gap:10px!important;margin:10px 0!important}
+.controls .row:first-of-type button{min-height:62px!important;font-size:1.1rem!important;font-weight:800!important;border-radius:20px!important}
+#sayBtn{flex:1.05!important;background:#fff7e8!important;border-color:#ffd78c!important;color:#9a6500!important}
+#micBtn{flex:1.25!important;background:var(--kid-primary)!important;border-color:var(--kid-primary)!important;color:#fff!important}
+#okBtn{flex:.72!important;background:#eaf8ef!important;border-color:#b8e2c7!important;color:#207548!important}
+#holdBtn,#prevBtn,#nextBtn,#readBtn,#echoBtn,#recBtn,#voiceBtn,#diagBtn,#editBtn,#resetBtn{display:none!important}
+#v8ReadControlsWrap .row:nth-of-type(n+2){display:none!important}
+#simpleMoreBtn{width:100%;min-height:52px;border-radius:18px;border:2px solid var(--kid-border);background:#fff;color:var(--kid-text);font-size:1rem;font-weight:800;box-shadow:none}
+#simpleBackBtn{display:block;width:max-content;margin:8px auto 0;background:transparent;border:0;color:var(--kid-muted);font-weight:700;font-size:.9rem}
+#simpleMoreDlg{border:0;border-radius:24px;padding:0;width:min(92vw,440px);box-shadow:0 24px 60px rgba(30,50,80,.22)}
+#simpleMoreDlg::backdrop{background:rgba(30,50,80,.30)}
+.simple-menu{padding:18px;background:#fff}
+.simple-menu h3{margin:0 0 12px;text-align:center;font-size:1.2rem}
+.simple-menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.simple-menu button{min-height:52px;border-radius:16px;border:2px solid var(--kid-border);background:#f8fbff;color:var(--kid-text);font:700 1rem var(--font-ui);padding:8px}
+.simple-menu button.primary{background:#eef4ff;border-color:#cbdcff;color:var(--kid-primary-dark)}
+.simple-close{width:100%;margin-top:10px;min-height:48px;border:0;background:#eef2f7;border-radius:14px;font-weight:800}
+@media(max-width:520px){
+  body{padding:8px 8px 72px!important}
+  #v8ReadSection header h1{font-size:1.28rem!important}
+  .card{min-height:250px;padding:18px 12px 22px!important}
+  .simple-menu-grid{grid-template-columns:1fr}
+}
 </style>
 <script>
 window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
@@ -203,7 +250,6 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
 .v10-voice-status{font-weight:800;margin-top:6px}
 .v10-voice-ok{color:#27824b}.v10-voice-warn{color:#b36a00}.v10-voice-error{color:#c44536}
 </style>
-
 <style id="child-friendly-redesign">
 :root{--kid-blue:#67b8e9;--kid-green:#61c391;--kid-yellow:#ffd568;--kid-coral:#ff8b78;--kid-ink:#253844;--kid-soft:#f4fbff;--kid-line:#d8e8f0}
 body{background:linear-gradient(180deg,#edf8ff 0,#fffaf1 62%,#f3fff8 100%);color:var(--kid-ink)}
@@ -238,7 +284,6 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <div id="v9HardWords">لا توجد كلمات صعبة مسجلة بعد.</div>
 </div>
 </div>
-
 <div class="v10-tools">
 <div class="v10-grid">
 <button class="v10-btn" id="v10Listen">🎧 استماع</button>
@@ -249,45 +294,8 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <button class="v10-btn" id="v10Report">📄 تقرير</button>
 </div>
 <div class="v10-panel hide" id="v10Panel"></div>
-<div class="v10-voice-card" id="v10VoiceCard">
-<h4>⚙️ إعدادات الصوت</h4>
-<div class="v10-voice-line">
-<span>☁️ صوت Azure</span>
-<strong>🇯🇴 Sana — عربي أردني</strong>
 </div>
-<div class="v10-voice-line">
-<button class="v10-voice-btn primary" id="v10TestSana">🔊 اختبار Sana</button>
-<button class="v10-voice-btn" id="v10UseSana">✓ استخدام Sana</button>
-</div>
-<div class="v10-voice-line">
-<span>📱 صوت الجهاز</span>
-</div>
-<select aria-label="صوت الجهاز" class="v10-voice-select" id="v10DeviceVoice"></select>
-<p class="v10-voice-note">
-    صوت الجهاز يُستخدم فقط عند اختيار «صوت الجهاز». أما القراءة الافتراضية في التطبيق فتستخدم Sana.
-  </p>
-<div class="v10-voice-line">
-<label style="flex:1">سرعة القراءة
-      <input class="v10-voice-input" id="v10Rate" max="1.3" min="0.5" step="0.05" type="range" value="0.7"/>
-</label>
-<strong id="v10RateValue">0.70</strong>
-</div>
-<div class="v10-voice-line">
-<label style="flex:1">درجة الصوت
-      <input class="v10-voice-input" id="v10Pitch" max="10" min="-10" step="1" type="range" value="0"/>
-</label>
-<strong id="v10PitchValue">0</strong>
-</div>
-<div class="v10-voice-line">
-<label style="flex:1">مستوى الصوت
-      <input class="v10-voice-input" id="v10Volume" max="100" min="0" step="5" type="range" value="100"/>
-</label>
-<strong id="v10VolumeValue">100%</strong>
-</div>
-<div class="v10-voice-status" id="v10VoiceStatus"></div>
-</div>
-</div>
-<div class="child-intro" style="max-width:860px;margin:10px auto 8px;text-align:center;background:#fff;border:2px solid #d8e8f0;border-radius:22px;padding:12px 16px;box-shadow:0 8px 18px rgba(40,75,95,.07)"><div style="font-size:1.55rem">🌟 جاهزة للقراءة؟</div><div style="color:#6c7d86;font-size:.95rem">اسمعي أولًا 🔊 ثم اقرئي بهدوء 🎤 وخذي وقتك.</div></div><div id="v8ReadSection">
+<div class="child-intro" style="max-width:860px;margin:10px auto 8px;text-align:center;background:#fff;border:2px solid #d8e8f0;border-radius:22px;padding:12px 16px;box-shadow:0 8px 18px rgba(40,75,95,.07)"><div style="font-size:1.55rem">🌟 جاهزة للقراءة؟</div><div style="color:#6c7d86;font-size:.95rem">اسمعي أولًا 🔊 ثم اقرئي بهدوء 🎤 وخذي وقتك.</div></div><div class="simple-topbar" style="max-width:720px;margin:0 auto 8px;display:flex;justify-content:flex-start;gap:8px;"><button id="simpleMoreBtn">⚙️ المزيد</button></div><div id="v8ReadSection">
 <div class="wrap">
 <header>
 <h1>اقرئي <span>كلمة كلمة</span> 📖</h1>
@@ -342,8 +350,9 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <div class="mistake-list" id="mistakeList"></div>
 </div>
 </div>
-<div id="v8ReadControlsWrap">
+<div style="text-align:center;color:#6f8093;font-weight:800;font-size:.95rem;margin:4px 0 6px;">استمعي → اقرئي → تحققي</div><div id="v8ReadControlsWrap">
 <div class="controls">
+<div class="settings-hint" style="text-align:center;color:#6b7b83;font-size:.82rem;margin:0 0 8px">⚙️ إعدادات الصوت موجودة داخل «إعدادات الصوت» فقط</div>
 <div class="row">
 <button class="mic" id="micBtn">🎤 ابدئي القراءة</button>
 <button id="sayBtn">🔊 اسمعي</button>
@@ -360,14 +369,13 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 </div>
 <div class="row">
 <button class="ghost" id="recBtn">🎙 سجّل بصوتك</button>
-<button class="ghost" id="voiceBtn">🎚 الصوت</button>
+<button class="ghost" id="voiceBtn">⚙️ إعدادات الصوت</button>
 <button class="ghost" id="diagBtn">🩺 فحص</button>
 <button class="ghost" id="editBtn">✎ غيّري النص</button>
 <button class="ghost" id="resetBtn">↺ من البداية</button>
 </div>
 </div>
-</div>
-
+</div><dialog id="simpleMoreDlg"><div class="simple-menu"><h3>ماذا تريدين أن تفعلي؟</h3><div class="simple-menu-grid"><button data-action="mode" type="button">🧩 وضع القراءة</button><button data-action="texts" type="button">📚 نصوصي</button><button data-action="progress" type="button">📊 تقدّمي</button><button data-action="rec" type="button">🎙 تسجيل</button><button data-action="voice" type="button">⚙️ إعدادات الصوت</button><button data-action="diag" type="button">🩺 فحص الصوت</button><button data-action="edit" type="button">✎ تغيير النص</button><button data-action="reset" type="button">↺ من البداية</button></div><button class="simple-close" data-action="close" type="button">إغلاق</button></div></dialog>
 <div class="win" id="win">
 <div>
 <div style="font-size:4rem">🏆</div>
@@ -846,7 +854,6 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
   };
 })();
 </script>
-
 <script>
 const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟";
 const TEXTS_STORAGE='readingSavedTextsV1';
@@ -1027,17 +1034,9 @@ function fillVoices(){
   checkVoice();
 }
 function checkVoice(){
-  const bn=$('banner'); if(!bn) return;
-  if(engine!=='google' && arVoices().length===0 && allVoices().length>0){
-    bn.classList.remove('hide');
-    bn.innerHTML='⚠️ <b>ما في صوت عربي على هذا الجهاز</b> — القراءة الصوتية رح يطلع لفظها غلط.<br>'+
-      '📱 آيفون/آيباد: الإعدادات ‹ إمكانية الوصول ‹ المحتوى المنطوق ‹ الأصوات ‹ العربية.<br>'+
-      '🤖 أندرويد: الإعدادات ‹ اللغة والإدخال ‹ تحويل النص إلى كلام ‹ تثبيت بيانات صوتية ‹ العربية.<br>'+
-      '💻 ويندوز: الإعدادات ‹ الوقت واللغة ‹ اللغة ‹ إضافة لغة ‹ العربية مع خيار الكلام (Speech).<br>'+
-      'باقي الأزرار شغّالة عادي بدون صوت 👍';
-  } else bn.classList.add('hide');
-}
-let engine='azure', sentenceMode=true;
+  const bn=$('banner');
+  if(bn) bn.classList.add('hide');
+}let engine='azure', sentenceMode=true;
 const azureAudio = new Audio(); azureAudio.preload='auto';
 const AZURE_TOKEN_ENDPOINT = (window.READING_APP_CONFIG||{}).TOKEN_ENDPOINT || 'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token';
 const AZURE_SDK_URL = (window.READING_APP_CONFIG||{}).SDK_URL || 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js';
@@ -1775,5 +1774,35 @@ renderTextMeta();
 
 
 </script>
-</body>
+<script>
+(() => {
+ const dlg=document.getElementById('simpleMoreDlg');
+ const more=document.getElementById('simpleMoreBtn');
+ if(more&&dlg) more.addEventListener('click',()=>dlg.showModal());
+ const q=id=>document.getElementById(id);
+ dlg?.addEventListener('click',e=>{
+   const b=e.target.closest('button[data-action]'); if(!b) return;
+   const a=b.dataset.action;
+   if(a==='close'){dlg.close();return;}
+   if(a==='texts'){q('manageTextsBtn')?.click();}
+   else if(a==='progress'){q('progressBtn')?.click();}
+   else if(a==='rec'){q('recBtn')?.click();}
+   else if(a==='voice'){q('voiceBtn')?.click();}
+   else if(a==='diag'){q('diagBtn')?.click();}
+   else if(a==='edit'){q('editBtn')?.click();}
+   else if(a==='reset'){q('resetBtn')?.click();}
+   else if(a==='mode'){
+     // reveal a compact mode chooser without adding it to the main page
+     const current=document.querySelector('.mode-strip button.active')?.textContent?.trim()||'🧩 جملة';
+     const pick=prompt('اختاري الوضع: كلمة / جملة / النص كامل', current.replace(/^[^\u0621-\u064A]*/,'').trim());
+     if(!pick) return;
+     const t=pick.trim();
+     const btns=[...document.querySelectorAll('.mode-strip button')];
+     const target=btns.find(b=>b.textContent.includes(t)) || btns.find(b=>/جملة/.test(b.textContent));
+     target?.click();
+   }
+   dlg.close();
+ });
+})();
+</script></body>
 </html>
