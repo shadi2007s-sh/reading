@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-<title>تدرّب على القراءة</title>
+<title>مدرّب القراءة العربية — V2</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&family=Noto+Naskh+Arabic:wght@400;600;700&display=swap" rel="stylesheet">
@@ -92,6 +92,23 @@
   .set select,.set input[type=range]{width:100%;font-family:var(--font-ui);font-size:1rem;
     padding:8px;border:2px solid #d9cdb2;border-radius:10px;background:#fff}
   .set .chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700;font-size:.9rem}
+
+  .student{background:#fff;border:1px solid #e6dcc6;border-radius:18px;padding:12px;margin-bottom:10px;box-shadow:var(--shadow)}
+  .student-grid{display:grid;grid-template-columns:1.1fr 1.1fr 1fr;gap:8px}
+  .student label{display:block;font-size:.78rem;color:#7b8085;font-weight:800;margin-bottom:4px}
+  .student select{width:100%;font:700 .92rem var(--font-ui);padding:8px;border:2px solid #d9cdb2;border-radius:10px;background:#fff;color:var(--ink)}
+  .mini-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
+  .mini{background:#fbf6e9;border:1px solid #e6dcc6;border-radius:12px;padding:7px;text-align:center}
+  .mini b{display:block;font-size:1rem}.mini span{font-size:.7rem;color:#8b9096;font-weight:700}
+  .streak{margin-top:8px;font-size:.78rem;color:#7b8085;text-align:center}
+  .mistakes{margin:10px 0 0;background:#fff3cf;border:2px solid #f0b429;border-radius:14px;padding:10px;display:none}
+  .mistakes.show{display:block}.mistakes-title{font-weight:800;margin-bottom:6px}.mistake-list{display:flex;gap:6px;flex-wrap:wrap}
+  .mistake-chip{border:2px solid #d9cdb2;background:#fff;border-radius:999px;padding:4px 9px;font:700 .82rem var(--font-ui);cursor:pointer}
+  .home-btn{margin-top:8px;background:#fff;box-shadow:none;border-color:#d9cdb2;font-size:.82rem;padding:8px}
+  .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.result-box{background:#fbf6e9;border-radius:12px;padding:8px}.result-box b{font-size:1.2rem}.result-box span{display:block;font-size:.7rem;color:#7b8085}
+  .level-note{font-size:.74rem;color:#7b8085;margin-top:4px}
+  @media(max-width:560px){.student-grid{grid-template-columns:1fr 1fr}.mini-stats{grid-template-columns:repeat(2,1fr)}}
+
 </style>
 </head>
 <body>
@@ -104,6 +121,22 @@
     </div>
   </header>
   <div id="banner" class="banner hide"></div>
+
+  <div class="student" id="studentPanel">
+    <div class="student-grid">
+      <div><label for="studentSel">👤 الطالب</label><select id="studentSel"></select></div>
+      <div><label for="levelSel">📚 المستوى</label><select id="levelSel"></select><div class="level-note" id="levelNote"></div></div>
+      <div><label for="lessonSel">📖 النص</label><select id="lessonSel"></select></div>
+    </div>
+    <div class="mini-stats">
+      <div class="mini"><b id="mAccuracy">0%</b><span>الدقة</span></div>
+      <div class="mini"><b id="mCorrect">0</b><span>صحيح</span></div>
+      <div class="mini"><b id="mWrong">0</b><span>أخطاء</span></div>
+      <div class="mini"><b id="mTime">00:00</b><span>الوقت</span></div>
+    </div>
+    <div class="streak">🔥 سلسلة صحيحة: <b id="mStreak">0</b> — أفضل سلسلة: <b id="mBest">0</b></div>
+    <button class="home-btn" id="startLessonBtn">▶ ابدأ الدرس من البداية</button>
+  </div>
   <div class="tabs">
     <button id="tabCard" class="act">🔠 كلمة وحدة</button>
     <button id="tabFull">📄 النص كامل</button>
@@ -120,6 +153,11 @@
   <div class="bar"><i id="fill"></i></div>
   <div class="heard" id="heard">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
   <small class="note">🎧 «اقرأ لي» بيقرا النص كامل — و«رددي ورايي» بيقرا كلمة وبستنّاكِ تعيديها</small>
+</div>
+
+<div class="mistakes" id="mistakesBox">
+  <div class="mistakes-title">🎯 كلمات تحتاج تدريبًا</div>
+  <div class="mistake-list" id="mistakeList"></div>
 </div>
 <div class="controls">
   <div class="row">
@@ -148,8 +186,14 @@
   <div>
     <div style="font-size:4rem">🏆</div>
     <h2>أحسنتِ! خلّصتِ النص</h2>
+    <div class="result-grid">
+      <div class="result-box"><b id="resAccuracy">0%</b><span>الدقة</span></div>
+      <div class="result-box"><b id="resTime">00:00</b><span>الوقت</span></div>
+      <div class="result-box"><b id="resWords">0/0</b><span>الكلمات</span></div>
+    </div>
     <p id="winMsg"></p>
     <button style="max-width:220px;margin:auto;background:#fff" onclick="restart()">↺ مرة ثانية</button>
+    <button id="reviewBtn" style="max-width:220px;margin:8px auto 0;background:#fff">🎯 تدرب على الكلمات الصعبة</button>
   </div>
 </div>
 <dialog id="dlg">
@@ -203,10 +247,21 @@
   <div class="set">
     <label>محرك النطق</label>
     <select id="engineSel">
-      <option value="device">📱 صوت الجهاز (الافتراضي)</option>
-      <option value="google">🌐 Google (محجوب حالياً)</option>
+      <option value="azure">☁️ Azure Neural — الموصى به</option>
+      <option value="device">📱 صوت الجهاز (احتياطي)</option>
+      <option value="google">🌐 Google (احتياطي)</option>
     </select>
-    <label>الصوت المستخدم (لصوت الجهاز)</label>
+    <label>الصوت العربي</label>
+    <select id="azureVoiceSel">
+      <option value="ar-JO-SanaNeural">🇯🇴 Sana — أنثى أردنية</option>
+      <option value="ar-JO-TaimNeural">🇯🇴 Taim — ذكر أردني</option>
+    </select>
+    <label>منطقة Azure (Region)</label>
+    <input id="azureRegion" placeholder="مثل: westeurope" autocomplete="off">
+    <label>مفتاح Azure Speech</label>
+    <input id="azureKey" type="password" placeholder="ضع المفتاح هنا — لا تشاركه مع أحد" autocomplete="off">
+    <small style="display:block;color:#8b9096;margin-top:5px;line-height:1.5">🔐 للاستخدام المحلي فقط. لتطبيق منشور، ضع الاستدعاء في خادم وسيط ولا تضع المفتاح داخل الموقع.</small>
+    <label>الصوت المستخدم (عند اختيار صوت الجهاز)</label>
     <select id="voiceSel"></select>
     <label>سرعة القراءة: <span id="rateVal">0.70</span></label>
     <input type="range" id="rateSel" min="0.4" max="1.1" step="0.05" value="0.7">
@@ -233,8 +288,62 @@ const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const LANGS = ['ar-JO','ar-SA','ar-EG','ar'];
 let langI=0, words=[], idx=0, score=0, listening=false, rec=null, micOK=false;
 let reading=false, echo=false, holdRec=null;
+const LEVELS = {
+  easy: {
+    name:'المستوى 1 — كلمات وجمل قصيرة', note:'بداية هادئة مع كلمات واضحة.',
+    lessons:[
+      ['أصدقاء','أنا أحب أصدقائي ونلعب معًا كل يوم.'],
+      ['مدرستي','مدرستي جميلة وفيها معلمون يساعدونني.'],
+      ['الصباح','أستيقظ في الصباح وأرتب غرفتي ثم أذهب إلى المدرسة.']
+    ]
+  },
+  medium: {
+    name:'المستوى 2 — فقرات قصيرة', note:'جمل أطول وتدريب أكثر على التتابع.',
+    lessons:[
+      ['التعلّم','التعلّم يساعدنا على اكتشاف أشياء جديدة، ويجعلنا أكثر قدرة على التفكير وحل المشكلات.'],
+      ['الوقت','تنظيم الوقت يساعد الطالب على إنهاء واجباته، والاستمتاع بوقته، والحصول على راحة كافية.'],
+      ['القراءة','القراءة عادة جميلة؛ فهي تزيد المعرفة، وتوسّع الخيال، وتساعدنا على التعبير عن أفكارنا بوضوح.']
+    ]
+  },
+  advanced: {
+    name:'المستوى 3 — نصوص متقدمة', note:'نصوص أطول مع مفردات وتراكيب أكثر تنوعًا.',
+    lessons:[
+      ['التقنية','أصبحت التقنية جزءًا مهمًا من حياتنا اليومية، ولذلك من المفيد أن نتعلم استخدامها بطريقة واعية وآمنة ومفيدة.'],
+      ['المعرفة','تتوسع المعرفة عندما نقرأ ونسأل ونجرب، وكل تجربة جديدة تمنحنا فرصة لفهم العالم من حولنا بصورة أفضل.'],
+      ['المجتمع','يسهم التعاون بين أفراد المجتمع في حل المشكلات وتحسين الحياة، لأن العمل المشترك يجمع مهارات وأفكارًا متنوعة.']
+    ]
+  }
+};
+let appState = {student:'الطالب 1', level:'easy', lesson:0, correct:0, wrong:0, streak:0, best:0, startedAt:null, mistakes:{}, attempts:0, finished:false};
+const STORAGE='readingCoachV2';
+function loadState(){try{const x=JSON.parse(localStorage.getItem(STORAGE)||'{}'); if(x && typeof x==='object') appState={...appState,...x,mistakes:x.mistakes||{}};}catch(e){}}
+function saveState(){try{localStorage.setItem(STORAGE,JSON.stringify(appState));}catch(e){}}
+function currentLesson(){return LEVELS[appState.level].lessons[appState.lesson]||LEVELS.easy.lessons[0];}
+function elapsedMs(){return appState.startedAt?Math.max(0,Date.now()-appState.startedAt):0;}
+function fmtTime(ms){const s=Math.floor(ms/1000),m=Math.floor(s/60),r=s%60;return String(m).padStart(2,'0')+':'+String(r).padStart(2,'0');}
+function accuracy(){return appState.attempts?Math.round(appState.correct/appState.attempts*100):0;}
+function renderDashboard(){
+  const ss=$('studentSel'), ls=$('levelSel'), les=$('lessonSel'); if(!ss)return;
+  ss.innerHTML=['الطالب 1','الطالب 2','ضيف'].map(v=>`<option>${v}</option>`).join(''); ss.value=appState.student;
+  ls.innerHTML=Object.entries(LEVELS).map(([k,v])=>`<option value="${k}">${v.name}</option>`).join(''); ls.value=appState.level;
+  les.innerHTML=LEVELS[appState.level].lessons.map((v,i)=>`<option value="${i}">${v[0]}</option>`).join(''); les.value=String(appState.lesson);
+  $('levelNote').textContent=LEVELS[appState.level].note;
+  $('mAccuracy').textContent=accuracy()+'%'; $('mCorrect').textContent=appState.correct; $('mWrong').textContent=appState.wrong;
+  $('mTime').textContent=fmtTime(elapsedMs()); $('mStreak').textContent=appState.streak; $('mBest').textContent=appState.best;
+  renderMistakes();
+}
+function tickDashboard(){if($('mTime')) $('mTime').textContent=fmtTime(elapsedMs());}
+function resetLessonStats(){appState.correct=0;appState.wrong=0;appState.streak=0;appState.best=0;appState.attempts=0;appState.startedAt=Date.now();appState.mistakes={};appState.finished=false;saveState();renderDashboard();}
+function startLesson(){stopAll(); const [title,txt]=currentLesson(); build(txt); $('banner').classList.add('hide'); resetLessonStats(); say('📖 بدأنا: '+title+' — اقرئي الكلمة الكبيرة.');}
+function chooseLevel(v){appState.level=v;appState.lesson=0;saveState();renderDashboard();startLesson();}
+function chooseLesson(v){appState.lesson=Number(v)||0;saveState();renderDashboard();startLesson();}
+function recordWrong(target){appState.wrong++;appState.attempts++;appState.streak=0; const k=norm(target); appState.mistakes[k]=(appState.mistakes[k]||0)+1;saveState();renderDashboard();}
+function recordCorrect(target){appState.correct++;appState.attempts++;appState.streak++;appState.best=Math.max(appState.best,appState.streak);saveState();renderDashboard();}
+function renderMistakes(){const box=$('mistakesBox'),list=$('mistakeList'); if(!box||!list)return; const entries=Object.entries(appState.mistakes||{}).sort((a,b)=>b[1]-a[1]).slice(0,12); box.classList.toggle('show',entries.length>0); list.innerHTML=''; entries.forEach(([k,n])=>{const b=document.createElement('button');b.className='mistake-chip';b.textContent=k+' ×'+n;b.onclick=()=>{const i=words.findIndex(w=>norm(w)===k);if(i>=0){idx=i;paint();say('🎯 تدرّبي على: '+words[i]);}};list.appendChild(b);});}
+function restoreDashboard(){loadState();renderDashboard();}
+let micStartToken=0, holdStartToken=0, fullRecToken=0, wordRecToken=0;
 const $ = id => document.getElementById(id);
-const say = h => $('heard').innerHTML = h;
+const say = h => $('heard').textContent = h;
 function norm(s){
   return (s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
     .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
@@ -266,6 +375,7 @@ function build(txt){
     box.appendChild(el); box.appendChild(document.createTextNode(' '));
   });
   idx=0; score=0; paint(); refreshRecSet();
+  renderDashboard();
 }
 function paint(){
   document.querySelectorAll('.w').forEach((el,i)=>{
@@ -318,8 +428,56 @@ function checkVoice(){
       'باقي الأزرار شغّالة عادي بدون صوت 👍';
   } else bn.classList.add('hide');
 }
-let engine='device', sentenceMode=true;
+let engine='azure', sentenceMode=true;
 const gAudio = new Audio(); gAudio.preload='auto';
+const azureAudio = new Audio(); azureAudio.preload='auto';
+let azureVoice='ar-JO-SanaNeural';
+let azureRegion='';
+let azureKey='';
+let azureAbort=null;
+function loadAzureConfig(){
+  try{azureVoice=localStorage.getItem('azureVoice')||'ar-JO-SanaNeural'; azureRegion=localStorage.getItem('azureRegion')||''; azureKey=localStorage.getItem('azureKey')||'';}catch(e){}
+  if($('azureVoiceSel')) $('azureVoiceSel').value=azureVoice;
+  if($('azureRegion')) $('azureRegion').value=azureRegion;
+  if($('azureKey')) $('azureKey').value=azureKey;
+}
+function saveAzureConfig(){
+  azureVoice=$('azureVoiceSel')?.value || azureVoice;
+  azureRegion=($('azureRegion')?.value||'').trim();
+  azureKey=($('azureKey')?.value||'').trim();
+  try{localStorage.setItem('azureVoice',azureVoice); localStorage.setItem('azureRegion',azureRegion); localStorage.setItem('azureKey',azureKey);}catch(e){}
+}
+function xmlEscape(t){return String(t).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\"/g,'&quot;').replace(/'/g,'&apos;');}
+function azureRate(r){ const n=Math.max(.5,Math.min(1.5,r||rate||.7)); return n.toFixed(2); }
+function buildAzureSSML(text){
+  const clean=xmlEscape(stripTash ? stripT(text) : text);
+  const rr=azureRate(rate);
+  return `<?xml version="1.0" encoding="utf-8"?><speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="ar-JO"><voice name="${azureVoice}"><prosody rate="${rr}">${clean}</prosody></voice></speak>`;
+}
+async function azureSpeak(t, cb){
+  if(!azureRegion || !azureKey){
+    say('⚙️ يحتاج Azure إلى Region وSpeech Key — رجعنا لصوت الجهاز.'); engine='device'; speakDevice(t,rate,cb); return;
+  }
+  try{
+    if(azureAbort) azureAbort.abort();
+    azureAbort=new AbortController();
+    const endpoint=`https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`;
+    const res=await fetch(endpoint,{method:'POST',headers:{'Ocp-Apim-Subscription-Key':azureKey,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'audio-24khz-48kbitrate-mono-mp3'},body:buildAzureSSML(t),signal:azureAbort.signal});
+    if(!res.ok) throw new Error('Azure HTTP '+res.status);
+    const blob=await res.blob();
+    const u=URL.createObjectURL(blob);
+    azureAudio.pause(); azureAudio.src=u;
+    azureAudio.onended=()=>{URL.revokeObjectURL(u);cb&&cb();};
+    azureAudio.onerror=()=>{URL.revokeObjectURL(u);throw new Error('audio');};
+    await azureAudio.play();
+  }catch(e){
+    if(e && e.name==='AbortError') return;
+    say('⚠️ Azure لم يعمل — رجعنا لصوت الجهاز 📱');
+    engine='device'; speakDevice(t,rate,cb);
+  }
+}
+function azureConfigured(){return !!(azureRegion && azureKey);}
+
 function gUrl(t){
   return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&total=1&idx=0&prev=input&textlen=' + t.length + '&q=' + encodeURIComponent(t);
 }
@@ -342,16 +500,18 @@ function gTest(cb){
 }
 function gRate(){ return Math.min(1, Math.max(.55, rate + .2)); }
 function stripT(t){ return t.replace(/[\u064B-\u0652\u0670]/g,''); }
+let gSpeakGuard=null;
 function gSpeak(t, cb){
   try{
     gAudio.pause();
     gAudio.src = gUrl(stripTash ? stripT(t) : t);
     gAudio.playbackRate = gRate();
-    gAudio.onended = ()=> cb && cb();
-    gAudio.onerror = ()=>{ say('⚠️ صوت Google ما اشتغل — رجعنا لصوت الجهاز.'); engine='device'; speakDevice(t, rate, cb); };
-    const guard=setTimeout(()=>{ if(gAudio.paused){ engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); } }, 3500);
-    gAudio.onplaying=()=>clearTimeout(guard);
-    gAudio.play().catch(()=>{ clearTimeout(guard); engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); });
+    const fallback=()=>{ if(gSpeakGuard) { clearTimeout(gSpeakGuard); gSpeakGuard=null; } engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); };
+    gAudio.onended = ()=>{ if(gSpeakGuard){ clearTimeout(gSpeakGuard); gSpeakGuard=null; } cb && cb(); };
+    gAudio.onerror = fallback;
+    gSpeakGuard=setTimeout(()=>{ if(gAudio.paused) fallback(); }, 3500);
+    gAudio.onplaying=()=>{ if(gSpeakGuard){ clearTimeout(gSpeakGuard); gSpeakGuard=null; } };
+    gAudio.play().catch(fallback);
   }catch(e){ cb && cb(); }
 }
 const recAudio = new Audio();
@@ -405,6 +565,7 @@ async function speak(t, r, cb){
       }catch(e){}
     }
   }
+  if(engine==='azure') return azureSpeak(t, cb);
   if(engine==='google') return gSpeak(t, cb);
   return speakDevice(t, r, cb);
 }
@@ -423,22 +584,23 @@ function speakDevice(t, r, cb){
     speechSynthesis.speak(u);
   }catch(e){ cb&&cb(); }
 }
-function testVoice(){ speak('مَرحَبًا، أنا رح أقرا معكِ', rate); }
+function testVoice(){ saveAzureConfig(); speak('مَرحَبًا، أنا رح أقرأ معكِ اليوم. هذا اختبار للصوت العربي الواضح.', rate); }
 function arVoice(){ return chosenVoice || arVoices()[0] || null; }
 
 function correct(){
-  const b=$('bigword'); b.classList.add('ok','pop'); setTimeout(()=>b.classList.remove('pop'),450);
-  beep(880,.12); setTimeout(()=>beep(1320,.14),90);
-  score++; idx++;
+  const target=words[idx]||''; const b=$('bigword'); b.classList.add('ok','pop'); setTimeout(()=>b.classList.remove('pop'),450);
+  beep(880,.12); setTimeout(()=>beep(1320,.14),90); score++; recordCorrect(target); idx++;
   if(idx>=words.length){ paint(); finish(); return; }
   setTimeout(paint,180);
 }
 function wrong(){
-  const b=$('bigword'); b.classList.add('miss'); setTimeout(()=>b.classList.remove('miss'),350);
+  const target=words[idx]||''; const b=$('bigword'); b.classList.add('miss'); setTimeout(()=>b.classList.remove('miss'),350); recordWrong(target);
 }
 function finish(){
   stopAll();
-  $('winMsg').textContent='قرأتِ '+words.length+' كلمة وجمعتِ '+score+' نجمة ⭐';
+  appState.finished=true; saveState(); renderDashboard();
+  $('resAccuracy').textContent=accuracy()+'%'; $('resTime').textContent=fmtTime(elapsedMs()); $('resWords').textContent=score+'/'+words.length;
+  $('winMsg').textContent='قرأتِ '+words.length+' كلمة وجمعتِ '+score+' نجمة ⭐ — ممتاز!';
   $('win').classList.add('show');
   [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
   for(let i=0;i<60;i++) confetti();
@@ -451,7 +613,7 @@ function confetti(){
   c.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(105vh) rotate(720deg)'}],
     {duration:2200+Math.random()*1600,easing:'ease-in'}).onfinish=()=>c.remove();
 }
-function restart(){ $('win').classList.remove('show'); idx=0; score=0; paint(); }
+function restart(){ $('win').classList.remove('show'); startLesson(); }
 function hi(i){
   document.querySelectorAll('.w').forEach((el,k)=>el.classList.toggle('spk',k===i));
   if(words[i]!==undefined){
@@ -549,7 +711,7 @@ function echoMode(){
 async function echoStep(){
   if(!echo || idx>=words.length) return;
   if(!(await primeMic())){ echo=false; $('echoBtn').textContent='🔁 رددي ورايي'; return; }
-  paint(); say('🎧 اسمعي: <b>'+words[idx]+'</b>');
+  paint(); say('🎧 اسمعي: '+words[idx]);
   speak(words[idx], rate, ()=>{
     if(!echo) return;
     say('🎤 دورك… رددي الكلمة');
@@ -567,7 +729,7 @@ function listenOnce(cb){
     let h="";
     for(let i=e.resultIndex;i<e.results.length;i++)
       for(let a=0;a<e.results[i].length;a++) h += " " + e.results[i][a].transcript;
-    say('سمعت: <b>'+h.trim()+'</b>');
+    say('سمعت: '+h.trim());
     if(done) return;
     const hit = h.trim().split(/\s+/).some(t=>accept(t, words[idx]));
     if(hit){ done=true; try{r.stop();}catch(e){} cb(true); }
@@ -577,13 +739,14 @@ function listenOnce(cb){
   setTimeout(()=>{ try{ r.stop(); }catch(e){} }, 6000);
 }
 async function primeMic(){
+  if(!window.isSecureContext){ say('🔒 لازم https.'); return false; }
   if(micOK) return true;
   if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ micOK=true; return true; }
   try{
     const st = await navigator.mediaDevices.getUserMedia({audio:true});
     st.getTracks().forEach(t=>t.stop()); micOK=true; return true;
   }catch(e){
-    say('⛔ المايك مرفوض ('+e.name+'). اسمحي للموقع بالمايك أو استخدمي <b>✓ صح</b>.');
+    say('⛔ المايك مرفوض ('+e.name+'). اسمحي للموقع بالمايك أو استخدمي ✓ صح.');
     return false;
   }
 }
@@ -594,12 +757,12 @@ function makeRec(continuous){
     if(ev.error==='language-not-supported' && langI<LANGS.length-1){ langI++; say('بجرّب لغة ثانية: '+LANGS[langI]); return; }
     if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){ say('⛔ المتصفح رافض المايك.'); stopMic(); return; }
     if(ev.error==='network'){ say('🌐 التعرّف على الصوت محتاج إنترنت.'); return; }
-    if(ev.error!=='no-speech'&&ev.error!=='aborted') say('خطأ: <b>'+ev.error+'</b>');
+    if(ev.error!=='no-speech'&&ev.error!=='aborted') say('خطأ: '+ev.error);
   };
   return r;
 }
 function handleT(h){
-  say('سمعت: <b>'+h.trim()+'</b>');
+  say('سمعت: '+h.trim());
   let guard=0;
   for(const tk of h.trim().split(/\s+/)){
     if(idx>=words.length) break;
@@ -609,9 +772,10 @@ function handleT(h){
   }
 }
 async function startMic(){
-  if(!SR){ say('😕 المتصفح ما بيدعم التعرّف على الصوت. استخدمي <b>✓ صح</b>.'); return; }
+  const token=++micStartToken;
+  if(!SR){ say('😕 المتصفح ما بيدعم التعرّف على الصوت. استخدمي ✓ صح.'); return; }
   if(!window.isSecureContext){ say('🔒 لازم https.'); return; }
-  if(!(await primeMic())) return;
+  if(!(await primeMic()) || token!==micStartToken) return;
   reading=false; echo=false;
   try{
     rec=makeRec(true);
@@ -626,6 +790,7 @@ async function startMic(){
   }catch(e){ say('ما قدرت أشغّل المايك.'); }
 }
 function stopMic(){
+  ++micStartToken;
   listening=false;
   try{ rec && (rec.onend=null, rec.stop()); }catch(e){}
   $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
@@ -635,9 +800,11 @@ function stopAll(){ stopMic(); reading=false; echo=false;
   try{speechSynthesis.cancel();}catch(e){} }
 async function holdStart(ev){
   ev.preventDefault();
+  const token=++holdStartToken;
   if(!SR){ say('المتصفح ما بيدعم المايك.'); return; }
-  if(!(await primeMic())) return;
+  if(!(await primeMic()) || token!==holdStartToken) return;
   stopMic();
+  if(token!==holdStartToken) return;
   try{
     holdRec=makeRec(false);
     holdRec.onresult=e=>{ let h="";
@@ -648,7 +815,7 @@ async function holdStart(ev){
     holdRec.start(); $('holdBtn').textContent='🔴 احكِ الآن…';
   }catch(e){}
 }
-function holdEnd(){ try{ holdRec && holdRec.stop(); }catch(e){} }
+function holdEnd(){ ++holdStartToken; try{ holdRec && holdRec.stop(); }catch(e){} }
 async function runDiag(){
   const rows=[]; const add=(k,v,g)=>rows.push('<div><span>'+k+'</span><b style="color:'+(g?'#2f8f5b':'#e2725b')+'">'+v+'</b></div>');
   add('التعرّف على الصوت', SR?'مدعوم ✓':'غير مدعوم ✗', !!SR);
@@ -663,7 +830,8 @@ async function runDiag(){
     st.getTracks().forEach(t=>t.stop()); add('فتح المايك','نجح ✓',true);
   }catch(e){ add('فتح المايك','فشل: '+e.name,false); }
   add('اللغة', LANGS[langI], true);
-  add('المحرك الحالي', engine==='google'?'🌐 Google':'📱 الجهاز', true);
+  add('المحرك الحالي', engine==='azure'?'☁️ Azure Neural':(engine==='google'?'🌐 Google':'📱 الجهاز'), true);
+  add('إعداد Azure', azureConfigured()?'جاهز ✓':'غير مكتمل', azureConfigured());
   const g = await new Promise(r=>gTest(r));
   add('اختبار صوت Google', g.ok ? ('يعمل ✓ ('+Math.round(g.dur*10)/10+'ث)') : ('فشل: '+g.why), g.ok);
   $('diag').innerHTML = rows.join('') +
@@ -695,9 +863,11 @@ async function refreshFull(){
 }
 async function fmrStart(ev){
   ev.preventDefault();
+  const token=++fullRecToken;
   if(!navigator.mediaDevices || !window.MediaRecorder){ $('fState').textContent='المتصفح ما بيدعم التسجيل'; return; }
   try{
     fmrStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    if(token!==fullRecToken){ fmrStream.getTracks().forEach(t=>t.stop()); return; }
     fmrChunks = [];
     fmr = new MediaRecorder(fmrStream);
     fmr.ondataavailable = e=>{ if(e.data && e.data.size) fmrChunks.push(e.data); };
@@ -713,7 +883,7 @@ async function fmrStart(ev){
     $('fState').textContent='بسجّل الآن 🎙';
   }catch(e){ $('fState').textContent='المايك مرفوض ⛔'; }
 }
-function fmrStop(){ try{ if(fmr && fmr.state!=='inactive') fmr.stop(); }catch(e){} }
+function fmrStop(){ ++fullRecToken; try{ if(fmr && fmr.state!=='inactive') fmr.stop(); }catch(e){} try{ fmrStream && fmrStream.getTracks().forEach(t=>t.stop()); }catch(e){} }
 async function playFull(){
   const b = await recGet(FULL_KEY);
   if(!b){ $('fState').textContent='ما في تسجيل بعد'; return; }
@@ -754,9 +924,11 @@ function renderRec(){
 }
 async function mrStart(ev){
   ev.preventDefault();
+  const token=++wordRecToken;
   if(!navigator.mediaDevices || !window.MediaRecorder){ $('rState').textContent='المتصفح ما بيدعم التسجيل'; return; }
   try{
     mrStream = await navigator.mediaDevices.getUserMedia({audio:true});
+    if(token!==wordRecToken){ mrStream.getTracks().forEach(t=>t.stop()); return; }
     mrChunks = [];
     mr = new MediaRecorder(mrStream);
     mr.ondataavailable = e=>{ if(e.data && e.data.size) mrChunks.push(e.data); };
@@ -773,7 +945,7 @@ async function mrStart(ev){
     $('rState').textContent='اقرأي الكلمة الآن';
   }catch(e){ $('rState').textContent='المايك مرفوض ⛔'; }
 }
-function mrStop(){ try{ if(mr && mr.state!=='inactive') mr.stop(); }catch(e){} }
+function mrStop(){ ++wordRecToken; try{ if(mr && mr.state!=='inactive') mr.stop(); }catch(e){} try{ mrStream && mrStream.getTracks().forEach(t=>t.stop()); }catch(e){} }
 function b64(blob){ return new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); }); }
 async function exportRecs(){
   const keys = await recKeys(); const out={};
@@ -818,10 +990,29 @@ $('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
 $('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
 $('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); };
 $('noTash').onchange=e=>{ stripTash=e.target.checked; };
-$('engineSel').onchange=e=>{ engine=e.target.value; checkVoice(); say(engine==='google'?'صوت Google مفعّل 🌐':'صوت الجهاز مفعّل 📱'); };
+$('engineSel').onchange=e=>{
+  engine=e.target.value;
+  if(engine==='azure'){saveAzureConfig(); say(azureConfigured()?'Azure Neural مفعّل ☁️':'⚙️ اختاري Region وSpeech Key ثم جرّبي الصوت.');}
+  else if(engine==='google'){say('صوت Google الاحتياطي مفعّل 🌐');}
+  else {checkVoice(); say('صوت الجهاز الاحتياطي مفعّل 📱');}
+};
+$('azureVoiceSel').onchange=e=>{azureVoice=e.target.value;saveAzureConfig();};
+$('azureRegion').oninput=saveAzureConfig;
+$('azureKey').oninput=saveAzureConfig;
 $('sentMode').onchange=e=>{ sentenceMode=e.target.checked; };
+loadAzureConfig();
 if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); }; setTimeout(fillVoices,600); }
-build(DEFAULT_TEXT);
+if(!localStorage.getItem(STORAGE)){ build(DEFAULT_TEXT); } else { const [,txt]=currentLesson(); build(txt); }
+
+$('studentSel').onchange=e=>{appState.student=e.target.value;saveState();renderDashboard();startLesson();};
+$('levelSel').onchange=e=>chooseLevel(e.target.value);
+$('lessonSel').onchange=e=>chooseLesson(e.target.value);
+$('startLessonBtn').onclick=startLesson;
+$('reviewBtn').onclick=()=>{ $('win').classList.remove('show'); renderMistakes(); const first=Object.keys(appState.mistakes||{})[0]; if(first){const i=words.findIndex(w=>norm(w)===first); if(i>=0){idx=i;paint();}} };
+window.addEventListener('beforeunload',saveState);
+setInterval(tickDashboard,1000);
+restoreDashboard();
+
 </script>
 </body>
 </html>
