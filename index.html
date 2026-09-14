@@ -556,7 +556,7 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
 const DEFAULT_TEXT = &quot;تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟&quot;;
 const $ = id =&gt; document.getElementById(id);
 
-let words = [], idx = 0, score = 0, tries = 0, wrongs = [], sentenceMode = false, rate = 0.75;
+let words = [], idx = 0, score = 0, tries = 0, wrongs = [], sentenceMode = false, rate = 0.9;
 let mode = &#x27;kb&#x27;, tileStr = &#x27;&#x27;;
 const LETTERS = [&#x27;ا&#x27;,&#x27;ب&#x27;,&#x27;ت&#x27;,&#x27;ث&#x27;,&#x27;ج&#x27;,&#x27;ح&#x27;,&#x27;خ&#x27;,&#x27;د&#x27;,&#x27;ذ&#x27;,&#x27;ر&#x27;,&#x27;ز&#x27;,&#x27;س&#x27;,&#x27;ش&#x27;,&#x27;ص&#x27;,&#x27;ض&#x27;,&#x27;ط&#x27;,&#x27;ظ&#x27;,&#x27;ع&#x27;,&#x27;غ&#x27;,&#x27;ف&#x27;,&#x27;ق&#x27;,&#x27;ك&#x27;,&#x27;ل&#x27;,&#x27;م&#x27;,&#x27;ن&#x27;,&#x27;ه&#x27;,&#x27;و&#x27;,&#x27;ي&#x27;,&#x27;أ&#x27;,&#x27;إ&#x27;,&#x27;آ&#x27;,&#x27;ء&#x27;,&#x27;ؤ&#x27;,&#x27;ئ&#x27;,&#x27;ة&#x27;,&#x27;ى&#x27;,&#x27;ال&#x27;];
 
@@ -1413,7 +1413,7 @@ let currentText={id:'',name:'',text:DEFAULT_TEXT};
 let savedTexts=[];
 let appState = {correct:0, wrong:0, streak:0, best:0, startedAt:null, mistakes:{}, attempts:0, finished:false, wordCount:0};
 let progressHistory=[];
-let readingMode='word';
+let readingMode='sentence';
 let pausedReading=false;
 let activeReadIndex=0;
 let readSessionStartedAt=null;
@@ -1673,7 +1673,7 @@ async function getAzureToken(force=false){
   azureTokenExpires=Date.now()+9*60*1000;
   return azureSpeechToken;
 }
-function azureRate(r){return Math.max(.5,Math.min(1.35,Number(r||rate||.7)));}
+function azureRate(r){return Math.max(.65,Math.min(1.35,Number(r||rate||.9)));}
 function escapeXml(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function stripTashFn(t){return String(t||'').replace(/[\u064B-\u0652\u0670]/g,'');}
 function buildAzureSSML(text){
@@ -1940,16 +1940,25 @@ async function readAloud(from){
   if(readingMode==='word') readWords(startIdx); else readSentence(startIdx);
 }
 function readWords(i){
-  const step = ()=>{
-    if(!reading || i>=words.length){ stopRead(); return; }
-    hi(i);
-    speak(words[i], rate, ()=>{ i++; setTimeout(step, 240); });
-  };
-  step();
+  // Azure works much more smoothly when we synthesize a group of words at once
+  // instead of making one network/synthesis request per word.
+  const BATCH_WORDS = 8;
+  const batch = words.slice(i, i + BATCH_WORDS);
+  if(!reading || !batch.length){ stopRead(); return; }
+  activeReadIndex = i;
+  hi(i);
+  const text = batch.join(' ');
+  speak(text, rate, ()=>{
+    if(!reading || pausedReading) return;
+    const next = i + batch.length;
+    activeReadIndex = next;
+    if(next >= words.length){ stopRead(); return; }
+    setTimeout(()=>readWords(next), pausePreset==='long'?420:pausePreset==='short'?80:160);
+  });
 }
 function readSentence(start){
   const slice=words.slice(start); const chunks=[]; let cur=[],len=0,ci=start;
-  slice.forEach((w,i)=>{const ends=/[.!؟]$/.test(w); if((len+w.length+1>150||ends)&&cur.length){chunks.push({from:ci,ws:cur});ci=start+i;cur=[];len=0;} cur.push(w);len+=w.length+1;if(ends){chunks.push({from:ci,ws:cur});ci=start+i+1;cur=[];len=0;}});
+  slice.forEach((w,i)=>{const ends=/[.!؟]$/.test(w); if((len+w.length+1>220||ends)&&cur.length){chunks.push({from:ci,ws:cur});ci=start+i;cur=[];len=0;} cur.push(w);len+=w.length+1;if(ends){chunks.push({from:ci,ws:cur});ci=start+i+1;cur=[];len=0;}});
   if(cur.length)chunks.push({from:ci,ws:cur}); let k=0; activeReadIndex=start;
   const play=()=>{
     if(!reading||pausedReading){if(k<chunks.length)activeReadIndex=chunks[k]?.from??start;return;}
@@ -1959,13 +1968,13 @@ function readSentence(start){
       speak(text,rate,()=>{
         if(!reading||pausedReading)return;
         k++;
-        setTimeout(play,pausePreset==='long'?520:pausePreset==='short'?180:320);
+        setTimeout(play,pausePreset==='long'?420:pausePreset==='short'?80:160);
       });
     }else{
       speak(text,rate,()=>{
         if(!reading||pausedReading)return;
         k++;
-        setTimeout(play,pausePreset==='long'?520:pausePreset==='short'?180:320);
+        setTimeout(play,pausePreset==='long'?420:pausePreset==='short'?80:160);
       });
     }
   };
