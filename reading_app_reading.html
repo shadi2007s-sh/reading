@@ -4,7 +4,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport"/>
-<title>مدرّب القراءة العربية — Sana Neural</title>
+<title>مدرّب القراءة العربية</title>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&amp;family=Noto+Naskh+Arabic:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
@@ -109,10 +109,6 @@
   .text-manager .inline{display:flex;gap:8px;flex-wrap:wrap}
   .text-manager select,.text-manager input{flex:1;min-width:180px}
   .saved-count{font-size:.76rem;color:#7b8085;text-align:center}
-
-
-  .top-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 10px}
-  .top-actions button{box-shadow:none;padding:8px;font-size:.82rem;border-color:#d9cdb2}
   .text-meta{background:#fff;border:1px solid #e6dcc6;border-radius:12px;padding:8px 10px;font-size:.75rem;color:#7b8085;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:7px}
   .progress-card{background:#fff;border:1px solid #e6dcc6;border-radius:14px;padding:10px;margin-top:10px}
   .progress-card h4{margin:0 0 8px;font-size:.9rem}
@@ -128,7 +124,7 @@
   .pause-bar{display:flex;gap:6px;justify-content:center;margin:7px 0}.pause-bar button{box-shadow:none;font-size:.78rem;padding:7px 9px;border-color:#d9cdb2}
   .smart-tip{background:#eef7fb;border:1px solid #b7dce9;border-radius:12px;padding:8px;font-size:.76rem;color:#4d6872;margin-top:8px;line-height:1.6}
   .danger-note{background:#fff1ed;border:1px solid #efb1a3;color:#8c3a26;border-radius:10px;padding:7px;font-size:.75rem}
-  @media(max-width:560px){.top-actions{grid-template-columns:1fr 1fr 1fr}.progress-grid{grid-template-columns:repeat(2,1fr)}}
+  @media(max-width:560px){.progress-grid{grid-template-columns:repeat(2,1fr)}}
 
 </style>
 <script>
@@ -158,40 +154,6 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
     #dictationFrame{min-height:780px;height:calc(100vh - 105px)}
   }
 </style>
-<style id="v9-css">
-  .v9-dashboard{
-    max-width:760px;margin:0 auto 12px;padding:12px;background:#fbf6e9;
-    border:1px solid #e6dcc6;border-radius:18px;box-shadow:0 8px 20px -14px rgba(47,52,55,.45)
-  }
-  .v9-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-  .v9-stat{background:#fff;border:2px solid #e6dcc6;border-radius:12px;padding:8px;text-align:center}
-  .v9-stat b{display:block;font-size:1.05rem}
-  .v9-stat span{font-size:.72rem;color:#7b8085}
-  .v9-actions{display:flex;gap:7px;margin-top:8px}
-  .v9-actions button{flex:1;padding:9px;border:2px solid #d9cdb2;border-radius:12px;background:#fff;font-weight:800;box-shadow:0 2px 0 #d9cdb2}
-  .v9-panel{
-    background:#fff;border:2px solid #e6dcc6;border-radius:14px;padding:10px;margin-top:8px;
-    font-family:var(--font-ui)
-  }
-  .v9-panel h3{margin:0 0 6px;font-size:.95rem}
-  .v9-chip{display:inline-block;padding:5px 8px;margin:3px;border-radius:999px;background:#fff3cf;border:1px solid #f0b429;font-family:var(--font-read)}
-  .v9-hidden{display:none!important}
-  @media (max-width:600px){.v9-grid{grid-template-columns:repeat(2,1fr)}}
-</style>
-<style id="v10-css">
-  .v10-tools{max-width:760px;margin:10px auto;padding:10px;background:#fbf6e9;border:1px solid #e6dcc6;border-radius:18px}
-  .v10-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-  .v10-btn{padding:10px 8px;border:2px solid #d9cdb2;border-radius:12px;background:#fff;font-family:inherit;font-weight:800;box-shadow:0 3px 0 #d9cdb2}
-  .v10-btn.act{background:#2f3437;color:#fff;border-color:#2f3437;box-shadow:0 3px 0 #2f3437}
-  .v10-panel{margin-top:8px;background:#fff;border:2px solid #e6dcc6;border-radius:14px;padding:10px}
-  .v10-panel h3{margin:0 0 8px;font-size:.95rem}
-  .v10-row{display:flex;gap:7px;flex-wrap:wrap}
-  .v10-chip{display:inline-block;padding:5px 8px;margin:3px;border-radius:999px;background:#fff3cf;border:1px solid #f0b429;font-family:var(--font-read)}
-  .v10-meter{height:10px;background:#e6dcc6;border-radius:999px;overflow:hidden}
-  .v10-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f0b429,#2f8f5b)}
-  .v10-small{font-size:.75rem;color:#7b8085}
-  @media(max-width:600px){.v10-grid{grid-template-columns:repeat(2,1fr)}}
-</style>
 <style id="v10-voice-clean-css">
 .v10-voice-card{margin-top:9px;padding:10px;border:2px solid #e6dcc6;border-radius:14px;background:#fff}
 .v10-voice-card h4{margin:0 0 8px}
@@ -210,127 +172,118 @@ body{background:linear-gradient(180deg,#edf8ff 0,#fffaf1 62%,#f3fff8 100%);color
 body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 4%,rgba(255,214,104,.3),transparent 24%),radial-gradient(circle at 92% 10%,rgba(103,184,233,.22),transparent 26%),radial-gradient(circle at 85% 90%,rgba(97,195,145,.18),transparent 25%)}
 body>div:first-of-type{max-width:860px!important;margin:0 auto 10px!important;padding:2px}
 body>div:first-of-type a{border:0!important;background:#fff!important;color:#31576c!important;box-shadow:0 7px 0 #c9e2ee!important;border-radius:18px!important;padding:12px!important}
-.v9-dashboard,.v10-tools{max-width:860px;margin:12px auto;padding:0;background:transparent;border:0;box-shadow:none}
-.v9-dashboard{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.v9-grid{flex:1;min-width:280px;gap:8px}.v9-stat{border:2px solid var(--kid-line);background:#fff;border-radius:18px;box-shadow:0 5px 0 #e6f1f6}.v9-actions{width:auto;margin-top:0}.v9-actions button{border-color:#cfe4ee;box-shadow:0 4px 0 #cfe4ee;border-radius:16px}
-.v10-tools{background:#fff;border:2px solid var(--kid-line);border-radius:24px;padding:12px;box-shadow:0 10px 24px rgba(40,75,95,.08)}.v10-grid{grid-template-columns:repeat(3,1fr);gap:9px}.v10-btn{border-color:#cfe4ee;box-shadow:0 4px 0 #cfe4ee;border-radius:17px;padding:11px}.v10-btn.act{background:#4f9fcb;border-color:#3f81a5;box-shadow:0 4px 0 #3f81a5}
+,{max-width:860px;margin:12px auto;padding:0;background:transparent;border:0;box-shadow:none}
+{display:flex;gap:10px;align-items:center;flex-wrap:wrap}{flex:1;min-width:280px;gap:8px}{border:2px solid var(--kid-line);background:#fff;border-radius:18px;box-shadow:0 5px 0 #e6f1f6}{width:auto;margin-top:0} button{border-color:#cfe4ee;box-shadow:0 4px 0 #cfe4ee;border-radius:16px}
+{background:#fff;border:2px solid var(--kid-line);border-radius:24px;padding:12px;box-shadow:0 10px 24px rgba(40,75,95,.08)}{grid-template-columns:repeat(3,1fr);gap:9px}{border-color:#cfe4ee;box-shadow:0 4px 0 #cfe4ee;border-radius:17px;padding:11px}.act{background:#4f9fcb;border-color:#3f81a5;box-shadow:0 4px 0 #3f81a5}
 .v10-voice-card{border-color:#d9eaf1;border-radius:20px;background:#fafdff}.v10-voice-btn{border-color:#cfe4ee;border-radius:15px}.v10-voice-btn.primary{background:#4f9fcb;border-color:#3f81a5}
 #v8ReadSection .wrap{max-width:860px}.card{background:#fffdf8;border:3px solid #e7e0cf;border-radius:30px;box-shadow:0 18px 36px rgba(40,75,95,.12);padding:24px}.bigword{font-size:clamp(3.2rem,10vw,6rem);line-height:1.15;margin:.1em 0}.counter{font-size:1rem;color:#71838d}.heard{background:#eef8ff;border:2px solid #cfe7f5;border-radius:16px;padding:10px}.note{display:block;color:#73848d;line-height:1.6}
-.text-manager{background:#fff;border:2px solid var(--kid-line);border-radius:22px;padding:10px}.top-actions{gap:8px}.top-actions button,.text-manager button{border-color:#cfe4ee;border-radius:15px;box-shadow:0 3px 0 #cfe4ee}.mode-strip button{border-color:#cfe4ee!important;border-radius:15px!important}.mode-strip button.active{background:#4f9fcb!important;border-color:#3f81a5!important}
+.text-manager{background:#fff;border:2px solid var(--kid-line);border-radius:22px;padding:10px}.top-actions{gap:8px}.text-manager button{border-color:#cfe4ee;border-radius:15px;box-shadow:0 3px 0 #cfe4ee}.mode-strip button{border-color:#cfe4ee!important;border-radius:15px!important}.mode-strip button.active{background:#4f9fcb!important;border-color:#3f81a5!important}
 .controls{padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(237,248,255,.98) 76%,rgba(237,248,255,0));backdrop-filter:blur(6px)}.row{gap:8px}.controls button{border-radius:16px;box-shadow:0 4px 0 #bcd7e5;border-color:#bcd7e5}.controls button.main{background:#61c391;border-color:#3c9368;box-shadow:0 4px 0 #3c9368}.controls button.hear{background:#67b8e9;border-color:#3f88b4;box-shadow:0 4px 0 #3f88b4}.controls button.ghost{box-shadow:none}
 .win>div{max-width:620px;background:rgba(255,255,255,.12);border-radius:28px;padding:26px}.result-box{border-radius:18px}
-@media(max-width:700px){.v9-dashboard{display:block}.v9-actions{margin-top:9px}.v10-grid{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.controls .row:first-child button{font-size:1rem}.controls{padding-left:8px;padding-right:8px}}
+@media(max-width:700px){{display:block}{margin-top:9px}{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.controls .row:first-child button{font-size:1rem}.controls{padding-left:8px;padding-right:8px}}
+</style>
+
+<style id="clean-reading-v17-ui">
+  body{padding-bottom:150px!important;}
+  .old-reading-ui-hidden{display:none!important}.old-main-storage{display:none!important}
+  .simple-shell{max-width:860px;margin:0 auto;padding:4px 8px 150px}
+  .simple-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:4px 0 12px}
+  .simple-home,.simple-more{border:2px solid #cfe4ee;background:#fff;border-radius:16px;padding:8px 12px;box-shadow:0 3px 0 #cfe4ee;color:#31576c;font-weight:800;text-decoration:none;font-family:var(--font-ui);cursor:pointer}
+  .simple-title{flex:1;text-align:center;font-size:1.25rem;font-weight:800;color:#23445a}
+  .simple-sub{font-size:.78rem;color:#71838d;text-align:center;margin-top:-3px}
+  .simple-score{display:flex;justify-content:center;gap:7px;margin:8px 0 10px}
+  .simple-pill{background:#fff;border:2px solid #d8e8f0;border-radius:999px;padding:5px 12px;font-weight:800;color:#31576c;box-shadow:0 3px 0 #e6f1f6}
+  .simple-card{background:#fffdf8;border:3px solid #e4e8df;border-radius:30px;box-shadow:0 18px 36px rgba(40,75,95,.11);padding:22px 16px;text-align:center}
+  .simple-counter{font-size:.9rem;color:#71838d;font-weight:800}
+  .simple-word{font-family:var(--font-read);font-size:clamp(3.8rem,15vw,7rem);font-weight:700;line-height:1.2;min-height:1.5em;margin:20px 0 16px;color:#253844}
+  .simple-word.ok{color:#3c9368}.simple-word.miss{animation:shake .35s}
+  .simple-full{display:none;text-align:right;font-family:var(--font-read);font-size:1.75rem;line-height:2;background:#fff;border:2px solid #dbe9ef;border-radius:20px;padding:16px;margin:10px 0}
+  .simple-word-strip{display:flex;justify-content:center;gap:10px;align-items:center;color:#a7bac4;font-family:var(--font-read);font-size:1.15rem;min-height:30px}
+  .simple-word-strip span{max-width:30%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .simple-progress{height:11px;background:#e7f0f4;border-radius:999px;overflow:hidden;margin:16px 4px 4px}
+  .simple-progress i{display:block;height:100%;width:0;background:linear-gradient(90deg,#ffd568,#61c391);border-radius:999px;transition:width .25s}
+  .simple-hint{margin:10px 0 0;color:#748791;font-size:.82rem;min-height:1.3em}
+  .simple-actions{position:fixed;left:0;right:0;bottom:0;z-index:8;padding:8px max(8px,env(safe-area-inset-left)) calc(9px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-right));background:linear-gradient(to top,rgba(237,248,255,.98) 80%,rgba(237,248,255,0))}
+  .simple-action-row{display:flex;gap:8px;max-width:860px;margin:0 auto}
+  .simple-action-row+.simple-action-row{margin-top:7px}
+  .simple-action{flex:1;border:2px solid #bcd7e5;border-radius:16px;padding:11px 8px;background:#fff;color:#253844;font-family:var(--font-ui);font-weight:800;font-size:.96rem;box-shadow:0 4px 0 #bcd7e5;touch-action:manipulation}
+  .simple-action.listen{background:#67b8e9;color:#fff;border-color:#3f88b4;box-shadow:0 4px 0 #3f88b4}
+  .simple-action.mic{background:#61c391;color:#fff;border-color:#3c9368;box-shadow:0 4px 0 #3c9368}
+  .simple-action.check{background:#ffd568;color:#4f4318;border-color:#c4a542;box-shadow:0 4px 0 #c4a542}
+  .simple-action.more{background:#fff}
+  .simple-mini-row{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:860px;margin:8px auto 0}
+  .simple-mini{border:2px dashed #cfe4ee;border-radius:14px;padding:8px;background:#fff;color:#31576c;font-family:var(--font-ui);font-weight:800}
+  #simpleMoreDlg{border:none;border-radius:24px;max-width:94vw;width:580px;background:#fffdf8;padding:18px;box-shadow:0 18px 42px rgba(40,75,95,.22);font-family:var(--font-ui)}
+  #simpleMoreDlg::backdrop{background:rgba(35,56,68,.45)}
+  .more-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  .more-grid button{box-shadow:none;border:2px solid #cfe4ee;background:#fff;border-radius:15px;padding:10px 8px;font-size:.9rem}
+  .more-section{margin-top:12px;padding-top:12px;border-top:1px solid #e3edf1}.more-section h4{margin:0 0 8px;font-size:.9rem;color:#56707c}
+  .more-modes{display:flex;gap:6px}.more-modes button{flex:1;box-shadow:none;border:2px solid #cfe4ee;border-radius:14px;padding:8px;background:#fff;font-weight:800}.more-modes button.active{background:#4f9fcb;color:#fff;border-color:#3f81a5}
+  .more-close{width:100%;margin-top:12px;background:#edf7fb!important;border-color:#cfe4ee!important;box-shadow:none!important}
+  @media(max-width:560px){.simple-shell{padding-left:6px;padding-right:6px}.simple-title{font-size:1.1rem}.simple-card{padding:18px 10px}.simple-word{font-size:clamp(3.4rem,17vw,5.2rem)}.simple-action{font-size:.9rem;padding:10px 5px}.simple-mini{font-size:.8rem}.more-grid{grid-template-columns:1fr 1fr}}
 </style>
 </head>
-<body><div style="max-width:760px;margin:0 auto 10px;display:flex;gap:8px;"><a href="reading_app_dictation.html" style="display:block;flex:1;text-align:center;text-decoration:none;background:#fff;border:2px solid #d9cdb2;border-radius:14px;padding:10px;font-weight:800;color:#2f3437;box-shadow:0 3px 0 #d9cdb2;">✍️ الانتقال إلى تدريب الإملاء</a></div>
-<div class="v9-dashboard" id="v9Dashboard">
-<div class="v9-grid">
-<div class="v9-stat"><b id="v9Lessons">0</b><span>جلسات</span></div>
-<div class="v9-stat"><b id="v9Words">0</b><span>كلمات</span></div>
-<div class="v9-stat"><b id="v9Best">0%</b><span>أفضل دقة</span></div>
-<div class="v9-stat"><b id="v9Streak">0</b><span>أفضل سلسلة</span></div>
-</div>
-<div class="v9-actions">
-<button id="v9ProgressBtn">📊 تقدمي</button>
-<button id="v9BackupBtn">💾 نسخة احتياطية</button>
-</div>
-<div class="v9-panel v9-hidden" id="v9ProgressPanel">
-<h3>🎯 الكلمات التي تحتاج تدريبًا</h3>
-<div id="v9HardWords">لا توجد كلمات صعبة مسجلة بعد.</div>
-</div>
+<body>
+<div class="simple-shell" id="simpleShell">
+  <div class="simple-top">
+    <a class="simple-home" href="index.html">⌂ الرئيسية</a>
+    <div class="simple-title">📖 تدريب القراءة<div class="simple-sub">اسمعي • اقرئي • تحققي</div></div>
+    <button class="simple-more" id="simpleMoreBtn">☰ المزيد</button>
+  </div>
+  <div class="simple-score">
+    <div class="simple-pill">⭐ <span id="simpleScore">0</span></div>
+    <div class="simple-pill">📊 <span id="simpleProg">0</span>%</div>
+  </div>
+
+  <div class="simple-card">
+    <div class="simple-counter">الكلمة <span id="simpleNow">1</span> من <span id="simpleTotal">1</span></div>
+    <div class="simple-word-strip"><span id="simplePrev"></span><span>•</span><span id="simpleNext"></span></div>
+    <div class="simple-word" id="simpleWord">…</div>
+    <div class="simple-full" id="simpleFull"></div>
+    <div class="simple-progress"><i id="simpleFill"></i></div>
+    <div class="simple-hint" id="simpleHint">اضغطي 🔊 لسماع الكلمة، ثم 🎤 اقرئيها.</div>
+  </div>
 </div>
 
-<div class="v10-tools">
-<div class="v10-grid">
-<button class="v10-btn" id="v10Listen">🎧 استماع</button>
-<button class="v10-btn" id="v10ReadAlong">🗣️ اقرأ معي</button>
-<button class="v10-btn" id="v10Pron">🎤 قيّم نطقي</button>
-<button class="v10-btn" id="v10Hard">🎯 نقاط ضعفي</button>
-<button class="v10-btn" id="v10Progress">📊 تقدمي</button>
-<button class="v10-btn" id="v10Report">📄 تقرير</button>
+<div class="simple-actions">
+  <div class="simple-action-row">
+    <button class="simple-action listen" id="simpleListen">🔊 استمع</button>
+    <button class="simple-action mic" id="simpleMic">🎤 اقرأ</button>
+    <button class="simple-action check" id="simpleCheck">✓ تحقق</button>
+  </div>
+  <div class="simple-action-row">
+    <button class="simple-action" id="simplePrevBtn">⏮ السابقة</button>
+    <button class="simple-action" id="simpleRepeat">🔁 أعد</button>
+    <button class="simple-action" id="simpleNextBtn">⏭ التالية</button>
+  </div>
+  <div class="simple-mini-row">
+    <button class="simple-mini" id="simpleReadAll">📖 اقرأ النص</button>
+    <button class="simple-mini" id="simpleEcho">🔁 رددي ورايي</button>
+  </div>
 </div>
-<div class="v10-panel hide" id="v10Panel"></div>
-</div>
-<div class="child-intro" style="max-width:860px;margin:10px auto 8px;text-align:center;background:#fff;border:2px solid #d8e8f0;border-radius:22px;padding:12px 16px;box-shadow:0 8px 18px rgba(40,75,95,.07)"><div style="font-size:1.55rem">🌟 جاهزة للقراءة؟</div><div style="color:#6c7d86;font-size:.95rem">اسمعي أولًا 🔊 ثم اقرئي بهدوء 🎤 وخذي وقتك.</div></div><div id="v8ReadSection">
-<div class="wrap">
-<header>
-<h1>اقرئي <span>كلمة كلمة</span> 📖</h1>
-<div class="stats">
-<div class="pill">⭐ <span id="score">0</span></div>
-<div class="pill">📊 <span id="prog">0</span>%</div>
-</div>
-</header>
-<div class="banner hide" id="banner"></div>
-<div class="tabs">
-<button class="act" id="tabCard">🔠 كلمة وحدة</button>
-<button id="tabFull">📄 النص كامل</button>
-</div>
-<div class="text-manager">
-<div class="inline">
-<select aria-label="النصوص المحفوظة" id="savedTextSel"></select>
-<button class="ghost" id="manageTextsBtn">📚 نصوصي</button>
-</div>
-<div class="saved-count" id="savedCount">لا توجد نصوص محفوظة</div>
-</div>
-<div class="top-actions">
-<button id="progressBtn">📊 تقدّمي</button>
-<button id="backupTextsBtn">⬇ نصوصي</button>
-<button id="shareBtn">📤 مشاركة</button>
-</div>
-<div class="text-meta" id="textMeta">—</div>
-<div class="card" id="cardView">
-<div class="counter">الكلمة <span id="cnow">1</span> من <span id="ctot">1</span></div>
-<div class="ghostw"><span id="prevw"></span></div>
-<div class="bigword" id="bigword">…</div>
-<div class="ghostw"><span id="nextw"></span></div>
-</div>
-<div class="sheet hide" id="fullView">
-<div id="text"></div>
-</div>
-<div class="bar"><i id="fill"></i></div>
-<div aria-label="وضع القراءة" class="mode-strip">
-<button class="active" data-mode="word">🔠 كلمة</button>
-<button data-mode="sentence">🧩 جملة</button>
-<button data-mode="full">📖 النص كامل</button>
-</div>
-<div class="pause-bar">
-<button id="repeatBtn">🔁 أعد الكلمة</button>
-<button id="pauseBtn">⏸ إيقاف مؤقت</button>
-</div>
-<div class="heard" id="heard">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
-<small class="note">🎧 Sana تقرأ لك — يمكنك التبديل بين كلمة/جملة/نص كامل، وإيقاف القراءة مؤقتًا أو إعادة الكلمة.</small>
-<div id="azureSecureStatus" style="margin-top:8px;font-size:.78rem;color:#2f8f5b;font-weight:700;text-align:center">☁️ Azure Neural: Sana — صوت تعليمي عبر Token</div>
-</div>
-<div class="mistakes" id="mistakesBox">
-<div class="mistakes-title">🎯 كلمات تحتاج تدريبًا</div>
-<div class="mistake-list" id="mistakeList"></div>
-</div>
-</div>
-<div id="v8ReadControlsWrap">
-<div class="controls">
-<div class="settings-hint" style="text-align:center;color:#6b7b83;font-size:.82rem;margin:0 0 8px">⚙️ إعدادات الصوت موجودة داخل «إعدادات الصوت» فقط</div>
-<div class="row">
-<button class="mic" id="micBtn">🎤 ابدئي القراءة</button>
-<button id="sayBtn">🔊 اسمعي</button>
-<button id="okBtn">✓ صح</button>
-</div>
-<div class="row">
-<button class="hold" id="holdBtn">🎙 اضغطي واحكِ</button>
-<button id="prevBtn">⏮ السابقة</button>
-<button id="nextBtn">⏭ التالية</button>
-</div>
-<div class="row">
-<button class="read" id="readBtn">📖 اقرأ لي النص</button>
-<button id="echoBtn">🔁 رددي ورايي</button>
-</div>
-<div class="row">
-<button class="ghost" id="recBtn">🎙 سجّل بصوتك</button>
-<button class="ghost" id="voiceBtn">⚙️ إعدادات الصوت</button>
-<button class="ghost" id="diagBtn">🩺 فحص</button>
-<button class="ghost" id="editBtn">✎ غيّري النص</button>
-<button class="ghost" id="resetBtn">↺ من البداية</button>
-</div>
-</div>
-</div>
+
+<dialog id="simpleMoreDlg">
+  <h3 style="margin:0 0 4px">☰ المزيد</h3>
+  <div style="color:#71838d;font-size:.82rem">كل الأدوات الإضافية موجودة هنا حتى تبقى الصفحة الرئيسية بسيطة.</div>
+  <div class="more-section">
+    <h4>الوضع</h4>
+    <div class="more-modes">
+      <button id="moreWord">🔠 كلمة</button><button id="moreSentence">🧩 جملة</button><button id="moreFull">📖 النص كامل</button>
+    </div>
+  </div>
+  <div class="more-section">
+    <h4>الأدوات</h4>
+    <div class="more-grid">
+      <button id="moreTexts">📚 نصوصي</button>
+      <button id="moreVoice">⚙️ إعدادات الصوت</button>
+      <button id="moreProgress">📊 تقدمي</button>
+      <button id="moreRecord">🎙 تسجيلاتي</button>
+      <button id="moreDiag">🩺 فحص الصوت والمايك</button>
+      <button id="morePause">⏸ إيقاف/استئناف</button>
+    </div>
+  </div>
+  <button class="more-close" id="moreClose">إغلاق</button>
+</dialog>
 
 <div class="win" id="win">
 <div>
@@ -467,349 +420,6 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <button onclick="document.getElementById('diagDlg').close()">تمام</button>
 </div>
 </dialog>
-<script id="v9-learning-script">
-(() => {
-  const KEY = "readingCoachV9";
-  const load = () => {
-    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
-    catch(e){ return {}; }
-  };
-  const save = s => localStorage.setItem(KEY, JSON.stringify(s));
-
-  let state = Object.assign({
-    sessions: 0,
-    words: 0,
-    bestAccuracy: 0,
-    bestStreak: 0,
-    hard: {},
-    history: []
-  }, load());
-
-  function render(){
-    const totalHard = Object.entries(state.hard)
-      .filter(([_,v]) => v >= 1)
-      .sort((a,b)=>b[1]-a[1]);
-    const lessons = document.getElementById("v9Lessons");
-    const words = document.getElementById("v9Words");
-    const best = document.getElementById("v9Best");
-    const streak = document.getElementById("v9Streak");
-    const hard = document.getElementById("v9HardWords");
-    if(lessons) lessons.textContent = state.sessions;
-    if(words) words.textContent = state.words;
-    if(best) best.textContent = Math.round(state.bestAccuracy) + "%";
-    if(streak) streak.textContent = state.bestStreak;
-    if(hard){
-      hard.innerHTML = totalHard.length
-        ? totalHard.slice(0,20).map(([w,n]) =>
-            `<span class="v9-chip">${escapeHtml(w)} ×${n}</span>`).join("")
-        : "لا توجد كلمات صعبة مسجلة بعد.";
-    }
-  }
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, c => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
-    }[c]));
-  }
-  function recordReading(wordsRead, accuracy, streak){
-    state.sessions += 1;
-    state.words += Math.max(0, Number(wordsRead)||0);
-    state.bestAccuracy = Math.max(state.bestAccuracy, Number(accuracy)||0);
-    state.bestStreak = Math.max(state.bestStreak, Number(streak)||0);
-    state.history.push({
-      type:"reading",
-      at:new Date().toISOString(),
-      words:Number(wordsRead)||0,
-      accuracy:Number(accuracy)||0,
-      streak:Number(streak)||0
-    });
-    state.history = state.history.slice(-50);
-    save(state); render();
-  }
-  function recordHard(word){
-    if(!word) return;
-    state.hard[word] = (state.hard[word] || 0) + 1;
-    save(state); render();
-  }
-  function exportBackup(){
-    const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "reading-coach-progress.json";
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  }
-
-  // Expose a tiny API for the reading and dictation sections.
-  window.readingCoachV9 = {
-    recordReading,
-    recordHard,
-    getState: () => JSON.parse(JSON.stringify(state))
-  };
-
-  document.getElementById("v9ProgressBtn")?.addEventListener("click", () => {
-    document.getElementById("v9ProgressPanel")?.classList.toggle("v9-hidden");
-  });
-  document.getElementById("v9BackupBtn")?.addEventListener("click", exportBackup);
-
-  // Listen for events from the embedded dictation app.
-  window.addEventListener("message", e => {
-    if(!e.data || e.data.source !== "reading-coach-dictation") return;
-    if(e.data.type === "hardWord") recordHard(e.data.word);
-    if(e.data.type === "session"){
-      recordReading(e.data.words, e.data.accuracy, e.data.streak);
-    }
-    if(e.data.type === "speak" && typeof window.v10Voice?.speak === "function"){
-      window.v10Voice.speak(String(e.data.text||''), "azure");
-    }
-  });
-
-  render();
-})();
-</script>
-<script id="v10-voice-controller">
-(() => {
-  const KEY="readingCoachV10Voice";
-  const defaults={engine:"azure",azureVoice:"ar-JO-SanaNeural",deviceVoice:"",rate:0.7,pitch:0,volume:100};
-  let s=Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||"{}"));
-  const save=()=>localStorage.setItem(KEY,JSON.stringify(s));
-  const $=id=>document.getElementById(id);
-  const status=(text,cls="")=>{
-    const el=$("v10VoiceStatus"); if(!el)return;
-    el.textContent=text; el.className="v10-voice-status "+cls;
-  };
-
-  function populateVoices(){
-    const sel=$("v10DeviceVoice"); if(!sel)return;
-    const voices=window.speechSynthesis?.getVoices?.()||[];
-    sel.innerHTML="";
-    const preferred=voices.filter(v=>/^ar(-|_)/i.test(v.lang)||/arab|Arabic|عربي/i.test(v.name));
-    const list=preferred.length?preferred:voices;
-    list.forEach(v=>{
-      const o=document.createElement("option");
-      o.value=v.name; o.textContent=`${v.name} (${v.lang})`;
-      sel.appendChild(o);
-    });
-    if(!list.length){
-      const o=document.createElement("option"); o.value=""; o.textContent="لا توجد أصوات جهاز متاحة"; sel.appendChild(o);
-    }
-    if(s.deviceVoice && [...sel.options].some(o=>o.value===s.deviceVoice)) sel.value=s.deviceVoice;
-  }
-
-  function updateLabels(){
-    $("v10RateValue").textContent=Number(s.rate).toFixed(2);
-    $("v10PitchValue").textContent=String(s.pitch);
-    $("v10VolumeValue").textContent=String(s.volume)+"%";
-    $("v10Rate").value=s.rate; $("v10Pitch").value=s.pitch; $("v10Volume").value=s.volume;
-  }
-
-  async function speakSana(text){
-    if(!text) return;
-    if(typeof window.azureSpeak === "function"){
-      status("جارٍ تشغيل Sana…","v10-voice-warn");
-      return window.azureSpeak(text,null,{fallback:false, source:"voice-panel"});
-    }
-    status("محرك Azure لم يجهز بعد. جرّب مرة أخرى.","v10-voice-error");
-  }
-
-  function speakDevice(text){
-    if(!("speechSynthesis" in window)){status("المتصفح لا يدعم صوت الجهاز.","v10-voice-error");return;}
-    const voices=speechSynthesis.getVoices();
-    const v=voices.find(x=>x.name===s.deviceVoice)||voices.find(x=>/^ar/i.test(x.lang))||voices[0];
-    if(!v){status("لا يوجد صوت جهاز متاح.","v10-voice-warn");return;}
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text);
-    u.voice=v; u.lang=v.lang||"ar-JO"; u.rate=Number(s.rate); u.pitch=1+(Number(s.pitch)/20); u.volume=Number(s.volume)/100;
-    speechSynthesis.speak(u);
-    status(`📱 تم استخدام صوت الجهاز: ${v.name}`,"v10-voice-ok");
-  }
-
-  function currentSample(){
-    return (document.getElementById("bigword")?.textContent||"مرحبًا بك في تدريب القراءة").trim();
-  }
-
-  $("v10TestSana")?.addEventListener("click",()=>{
-    if(typeof window.azureSpeak === "function") window.azureSpeak(currentSample(),null,{fallback:false});
-    else speakSana(currentSample());
-  });
-  $("v10UseSana")?.addEventListener("click",()=>{
-    s.engine="azure"; save();
-    status("✓ Sana هي الصوت الافتراضي للتطبيق.","v10-voice-ok");
-  });
-  $("v10DeviceVoice")?.addEventListener("change",e=>{s.deviceVoice=e.target.value;save();});
-  $("v10Rate")?.addEventListener("input",e=>{s.rate=Number(e.target.value);updateLabels();save();});
-  $("v10Pitch")?.addEventListener("input",e=>{s.pitch=Number(e.target.value);updateLabels();save();});
-  $("v10Volume")?.addEventListener("input",e=>{s.volume=Number(e.target.value);updateLabels();save();});
-
-  window.v10Voice={
-    speak(text,mode){
-      const t=String(text||'').trim(); if(!t)return;
-      if(mode==="azure" && typeof window.azureSpeak === "function") {
-        window.azureSpeak(t,null,{fallback:false});
-        return;
-      }
-      (mode||s.engine)==="device" ? speakDevice(t) : speakSana(t);
-    },
-    getSettings:()=>({...s}),
-    setEngine:engine=>{s.engine=engine;save();}
-  };
-
-  updateLabels();
-  populateVoices();
-  if(window.speechSynthesis) speechSynthesis.onvoiceschanged=populateVoices;
-})();
-</script>
-<script id="v10-js">
-(() => {
-  const SDK_URL = (window.READING_APP_CONFIG||{}).SDK_URL;
-  const cfg = window.READING_APP_CONFIG || {};
-  const panel = document.getElementById("v10Panel");
-  const stateKey = "readingCoachV10";
-  let state = JSON.parse(localStorage.getItem(stateKey) || '{"hard":{},"sessions":0,"words":0,"bestAccuracy":0,"bestStreak":0,"history":[]}');
-
-  function persist(){ localStorage.setItem(stateKey, JSON.stringify(state)); }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
-  function showPanel(title, body){
-    panel.classList.remove("hide");
-    panel.innerHTML = `<h3>${escapeHtml(title)}</h3>${body}`;
-  }
-  function hidePanel(){ panel.classList.add("hide"); }
-
-  async function token(){
-    const url = cfg.TOKEN_ENDPOINT;
-    if(!url || url.includes("YOUR-FUNCTION-APP")) throw new Error("TOKEN_ENDPOINT غير مضبوط.");
-    const r = await fetch(url,{cache:"no-store"});
-    if(!r.ok) throw new Error("فشل الحصول على Speech token.");
-    return await r.json();
-  }
-  async function loadSdk(){
-    if(typeof window.loadAzureSdk === "function") return window.loadAzureSdk();
-    if(window.SpeechSDK) return window.SpeechSDK;
-    throw new Error("Azure SDK loader unavailable");
-  }
-  async function assessPronunciation(referenceText){
-    const SDK = await loadSdk();
-    const t = await token();
-    const speechConfig = SDK.SpeechConfig.fromAuthorizationToken(t.token, t.region || cfg.REGION || "eastus");
-    speechConfig.speechRecognitionLanguage = "ar-JO";
-    const audioConfig = SDK.AudioConfig.fromDefaultMicrophoneInput();
-    const rec = new SDK.SpeechRecognizer(speechConfig, audioConfig);
-    const pac = new SDK.PronunciationAssessmentConfig(
-      referenceText,
-      SDK.PronunciationAssessmentGradingSystem.HundredMark,
-      SDK.PronunciationAssessmentGranularity.Word,
-      true
-    );
-    pac.applyTo(rec);
-
-    return await new Promise((resolve, reject)=>{
-      rec.recognizeOnceAsync(result=>{
-        try{
-          const json = result.properties.getProperty(
-            SDK.PropertyId.SpeechServiceResponse_JsonResult
-          );
-          const data = JSON.parse(json || "{}");
-          const pa = data.NBest?.[0]?.PronunciationAssessment || {};
-          resolve({result, data, pa});
-        }catch(e){ reject(e); }
-        finally { rec.close(); }
-      }, err=>{
-        try{ rec.close(); }catch(e){}
-        reject(new Error(err?.toString?.() || "Pronunciation assessment failed"));
-      });
-    });
-  }
-
-  async function runPron(){
-    // Read current sentence/word from the existing reading page.
-    const words = []; const currentText = (document.getElementById('bigword')?.textContent || '').trim();
-    const ref = currentText;
-    if(!ref){ showPanel("قيّم نطقي","لا توجد كلمة حالية."); return; }
-    showPanel("🎤 تقييم النطق", `<p>اقرأ: <strong>${escapeHtml(ref)}</strong></p><p>ابدأ الكلام الآن…</p>`);
-    try{
-      const r = await assessPronunciation(ref);
-      const score = Number(r.pa?.PronScore || r.pa?.AccuracyScore || 0);
-      showPanel("نتيجة النطق",
-        `<div class="v10-row"><strong>${escapeHtml(ref)}</strong><strong>${Math.round(score)}%</strong></div>
-         <div class="v10-meter"><i style="width:${Math.max(0,Math.min(100,score))}%"></i></div>
-         <p class="v10-small">النتيجة من Azure Pronunciation Assessment.</p>`);
-      state.sessions += 1;
-      state.words += 1;
-      state.bestAccuracy = Math.max(state.bestAccuracy, score);
-      state.history.push({type:"pronunciation",at:new Date().toISOString(),word:ref,score});
-      state.history = state.history.slice(-50);
-      if(score < 85) state.hard[ref] = (state.hard[ref]||0)+1;
-      persist();
-      renderProgress();
-    }catch(e){
-      showPanel("تعذر التقييم", `<p>${escapeHtml(e.message || e)}</p><p class="v10-small">تأكد من السماح بالمايك وبقاء اتصال الإنترنت.</p>`);
-    }
-  }
-
-  function renderProgress(){
-    const hard = Object.entries(state.hard).sort((a,b)=>b[1]-a[1]).slice(0,20);
-    return `
-      <div class="v10-row"><span>الجلسات: <b>${state.sessions}</b></span><span>الكلمات: <b>${state.words}</b></span></div>
-      <p>أفضل دقة: <b>${Math.round(state.bestAccuracy)}%</b></p>
-      <h4>🎯 نقاط الضعف</h4>
-      ${hard.length ? hard.map(([w,n])=>`<span class="v10-chip">${escapeHtml(w)} ×${n}</span>`).join("") : "لا توجد نقاط ضعف مسجلة بعد."}
-    `;
-  }
-
-  function report(){
-    const data = [
-      "تقرير مدرّب القراءة",
-      `التاريخ: ${new Date().toLocaleString("ar-JO")}`,
-      `الجلسات: ${state.sessions}`,
-      `الكلمات: ${state.words}`,
-      `أفضل دقة: ${Math.round(state.bestAccuracy)}%`,
-      "",
-      "نقاط الضعف:",
-      ...Object.entries(state.hard).sort((a,b)=>b[1]-a[1]).map(([w,n])=>`${w} ×${n}`)
-    ].join("\\n");
-    const blob = new Blob([data],{type:"text/plain;charset=utf-8"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="reading-coach-report.txt";
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  }
-
-  document.getElementById("v10Listen")?.addEventListener("click",()=>{
-    const text=(document.getElementById("bigword")?.textContent||"").trim();
-    if(window.v10Voice) window.v10Voice.speak(text,"azure");
-    else { const btn=document.getElementById("sayBtn"); if(btn) btn.click(); }
-  });
-
-  document.getElementById("v10ReadAlong")?.addEventListener("click",()=>{
-    const btn=document.getElementById("readBtn"); if(btn) btn.click();
-  });
-
-  document.getElementById("v10Pron")?.addEventListener("click",runPron);
-
-  document.getElementById("v10Hard")?.addEventListener("click",()=>{
-    const hard = Object.entries(state.hard).sort((a,b)=>b[1]-a[1]);
-    showPanel("🎯 نقاط ضعفي", hard.length
-      ? `<div>${hard.map(([w,n])=>`<span class="v10-chip">${escapeHtml(w)} ×${n}</span>`).join("")}</div>
-         <button class="v10-btn" id="v10TrainHard">🔁 ابدأ التدريب على الكلمات</button>`
-      : "لم يتم تسجيل كلمات صعبة بعد.");
-    document.getElementById("v10TrainHard")?.addEventListener("click",()=>{
-      const hardWords = Object.keys(state.hard);
-      if(!hardWords.length) return;
-      if(typeof window.build === "function") window.build(hardWords.join(" "));
-      hidePanel();
-    });
-  });
-
-  document.getElementById("v10Progress")?.addEventListener("click",()=>showPanel("📊 تقدمي",renderProgress()));
-  document.getElementById("v10Report")?.addEventListener("click",report);
-
-  // Export state for future integration with the embedded dictation section.
-  window.readingCoachV10 = {
-    addHardWord(word){ if(word){ state.hard[word]=(state.hard[word]||0)+1; persist(); } },
-    getState(){ return JSON.parse(JSON.stringify(state)); }
-  };
-})();
-</script>
 
 <script>
 const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟";
@@ -906,14 +516,7 @@ function renderMistakes(){const box=$('mistakesBox'),list=$('mistakeList'); if(!
 function accuracy(){ const total=(appState.correct||0)+(appState.wrong||0); return total?Math.round((appState.correct||0)/total*100):0; }
 function elapsedMs(){ return appState.startedAt ? Math.max(0,Date.now()-appState.startedAt) : 0; }
 function fmtTime(ms){ const sec=Math.floor((ms||0)/1000), m=Math.floor(sec/60), s=sec%60; return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
-function tickDashboard(){
-  if(appState.startedAt && !appState.finished){
-    const el=document.getElementById('liveTime'); if(el)el.textContent=fmtTime(elapsedMs());
-    const el2=document.getElementById('liveAcc'); if(el2)el2.textContent=accuracy()+'%';
-  }
-}
 function resetLessonStats(){ appState={correct:0,wrong:0,streak:0,best:0,startedAt:Date.now(),mistakes:{},attempts:0,finished:false,wordCount:0}; pausedReading=false; activeReadIndex=0; readSessionStartedAt=Date.now(); saveState(); renderDashboard(); }
-function restoreDashboard(){loadState();renderDashboard();}
 let micStartToken=0, holdStartToken=0, fullRecToken=0, wordRecToken=0;
 const $ = id => document.getElementById(id);
 const say = h => $('heard').textContent = h;
@@ -1548,8 +1151,6 @@ $('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
 $('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
 $('readBtn').onclick=()=> readAloud();
 $('echoBtn').onclick=()=> echoMode();
-$('resetBtn').onclick=()=>{ stopAll(); restart(); };
-$('editBtn').onclick=openTextManager;
 $('manageTextsBtn').onclick=openTextManager;
 $('savedTextSel').onchange=e=>selectSavedText(e.target.value);
 $('saveNewTextBtn').onclick=createSavedText;
@@ -1566,7 +1167,6 @@ $('exportTextsBtn2').onclick=exportTexts;
 $('importTextsBtn').onclick=()=>$('textsFile').click();
 $('textsFile').onchange=e=>{if(e.target.files[0])importTexts(e.target.files[0]);};
 document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{readingMode=btn.dataset.mode;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===btn));say('وضع القراءة: '+(readingMode==='word'?'كلمة كلمة':readingMode==='sentence'?'جملة': 'النص كامل'));}));
-$('diagBtn').onclick=()=>{ $('diag').innerHTML='جارٍ الفحص…'; $('diagDlg').showModal(); runDiag(); };
 const hb=$('holdBtn');
 hb.addEventListener('pointerdown',holdStart);
 hb.addEventListener('pointerup',holdEnd);
@@ -1681,7 +1281,6 @@ async function importRecs(file){
     await refreshRecSet(); renderRec(); $('rState').textContent='✅ تم الاسترجاع';
   }catch(e){ $('rState').textContent='الملف مش مظبوط'; }
 }
-$('recBtn').onclick = async ()=>{ recIdx = idx; await refreshRecSet(); renderRec(); await refreshFull(); $('recDlg').showModal(); };
 $('fRec').addEventListener('pointerdown', fmrStart);
 $('fRec').addEventListener('pointerup', fmrStop);
 $('fRec').addEventListener('pointercancel', fmrStop);
@@ -1701,7 +1300,6 @@ $('rExp').onclick = exportRecs;
 $('rImp').onclick = ()=> $('rFile').click();
 $('rFile').onchange = e=>{ if(e.target.files[0]) importRecs(e.target.files[0]); };
 
-$('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
 $('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
 $('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); };
 document.querySelectorAll('[data-speed]').forEach(btn=>btn.addEventListener('click',()=>{const v=parseFloat(btn.dataset.speed);rate=v;$('rateSel').value=v;$('rateVal').textContent=v.toFixed(2);}));
@@ -1724,12 +1322,50 @@ if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); 
 build(currentText.text);
 $('reviewBtn').onclick=()=>{ $('win').classList.remove('show'); renderMistakes(); const first=Object.keys(appState.mistakes||{})[0]; if(first){const i=words.findIndex(w=>norm(w)===first); if(i>=0){idx=i;paint();}} };
 window.addEventListener('beforeunload',saveState);
-setInterval(tickDashboard,1000);
-restoreDashboard();
 renderDashboard();
 renderTextMeta();
 
 
+</script>
+
+<script id="simple-ui-behavior">
+(function(){
+  const $=id=>document.getElementById(id);
+  function clickOld(id){ const el=$(id); if(el) el.click(); }
+  function syncSimple(){
+    const w=$('bigword')?.textContent?.trim()||'…';
+    const prev=$('prevw')?.textContent?.trim()||''; const next=$('nextw')?.textContent?.trim()||'';
+    $('simpleWord').textContent=w; $('simplePrev').textContent=prev; $('simpleNext').textContent=next;
+    $('simpleNow').textContent=$('cnow')?.textContent||'1'; $('simpleTotal').textContent=$('ctot')?.textContent||'1';
+    $('simpleScore').textContent=$('score')?.textContent||'0'; $('simpleProg').textContent=$('prog')?.textContent||'0';
+    $('simpleFill').style.width=(($('prog')?.textContent||0)+'%');
+  }
+  const mo=$('simpleMoreDlg');
+  $('simpleMoreBtn').onclick=()=>mo.showModal();
+  $('moreClose').onclick=()=>mo.close();
+  $('simpleListen').onclick=()=>clickOld('sayBtn');
+  $('simpleMic').onclick=()=>clickOld('micBtn');
+  $('simpleCheck').onclick=()=>clickOld('okBtn');
+  $('simplePrevBtn').onclick=()=>clickOld('prevBtn');
+  $('simpleNextBtn').onclick=()=>clickOld('nextBtn');
+  $('simpleRepeat').onclick=()=>clickOld('repeatBtn');
+  $('simpleReadAll').onclick=()=>clickOld('readBtn');
+  $('simpleEcho').onclick=()=>clickOld('echoBtn');
+  $('moreTexts').onclick=()=>{mo.close();clickOld('manageTextsBtn');};
+  $('moreVoice').onclick=()=>{mo.close();document.getElementById('voiceDlg')?.showModal();};
+  $('moreProgress').onclick=()=>{mo.close();clickOld('progressBtn');};
+  $('moreRecord').onclick=()=>{mo.close();document.getElementById('recDlg')?.showModal();};
+  $('moreDiag').onclick=()=>{mo.close();document.getElementById('diagDlg')?.showModal();};
+  $('morePause').onclick=()=>{clickOld('pauseBtn');};
+  $('moreWord').onclick=()=>{const x=document.querySelector('[data-mode="word"]'); if(x)x.click(); clickOld('tabCard'); syncSimple();};
+  $('moreSentence').onclick=()=>{const x=document.querySelector('[data-mode="sentence"]'); if(x)x.click(); syncSimple();};
+  $('moreFull').onclick=()=>{const x=document.querySelector('[data-mode="full"]'); if(x)x.click(); clickOld('tabFull'); syncSimple();};
+  // Keep the simplified card synchronized with the original working state.
+  const ob=new MutationObserver(syncSimple);
+  ['bigword','cnow','ctot','score','prog','prevw','nextw'].forEach(id=>{const el=$(id);if(el)ob.observe(el,{subtree:true,childList:true,characterData:true});});
+  setTimeout(syncSimple,300);
+  setInterval(syncSimple,500);
+})();
 </script>
 </body>
 </html>
