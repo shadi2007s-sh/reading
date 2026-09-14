@@ -54,10 +54,12 @@
   .bigword.miss{animation:shake .35s}
   @keyframes shake{25%{transform:translateX(10px)}75%{transform:translateX(-10px)}}
   .sheet{position:relative;background:var(--paper);border-radius:18px;padding:24px 20px;
-    box-shadow:var(--shadow);border:1px solid var(--card-border);
-    background-image:repeating-linear-gradient(to bottom,transparent 0 61px,var(--rule) 61px 62px);overflow:hidden}
-  .sheet::before{content:"";position:absolute;top:0;bottom:0;right:46px;width:2px;background:var(--margin);opacity:.5}
-  #text{font-family:var(--font-read);font-size:1.9rem;line-height:1.95;text-align:justify}
+    box-shadow:var(--shadow);border:1px solid var(--card-border);overflow:hidden}
+  #text{font-family:var(--font-read);font-size:1.8rem;line-height:62px;text-align:justify;
+    max-height:56vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+    padding:18px 20px 26px;margin-right:22px;border-right:2px solid var(--margin);
+    background-image:repeating-linear-gradient(to bottom,transparent 0 61px,var(--rule) 61px 62px);
+    background-attachment:local;background-origin:content-box}
   .w{display:inline-block;padding:2px 6px;margin:0 1px;border-radius:10px;transition:all .18s;position:relative;cursor:pointer}
   .w.done{color:var(--ok);background:var(--ok-soft)}
   .w.now{background:#fff3cf;color:#2f3437;box-shadow:0 0 0 3px #f6d97a inset}
@@ -83,6 +85,7 @@
   button.ghost:active{transform:none}
   dialog{border:none;border-radius:18px;padding:18px;max-width:92vw;width:560px;
     box-shadow:var(--shadow);background:var(--paper);color:var(--ink);font-family:var(--font-ui)}
+  dialog[open]{display:block}
   dialog::backdrop{background:rgba(0,0,0,.6)}
   textarea, select{width:100%;font-family:var(--font-ui);font-size:1rem;
     border:2px solid var(--card-border);border-radius:12px;padding:10px;background:var(--paper);color:var(--ink)}
@@ -96,6 +99,7 @@
   .hide{display:none}
   .tip-box{background:#fff3cf; color:#2f3437; padding:12px; border-radius:10px; font-size:.9rem; margin:12px 0; text-align:right;}
 </style>
+<base target="_blank">
 </head>
 <body>
 <div class="wrap">
@@ -105,7 +109,7 @@
       <div class="pill">🔥 <span id="streak">0</span></div>
       <div class="pill">⭐ <span id="score">0</span></div>
       <div class="pill">📊 <span id="prog">0</span>%</div>
-      <button id="themeBtn" class="ghost" style="padding:4px 8px;font-size:1rem" title="الوضع الداكن">🌙</button>
+      <button id="themeBtn" class="ghost" style="padding:4px 8px;font-size:1rem;flex:0 0 auto" title="الوضع الداكن" aria-label="تبديل الوضع الداكن">🌙</button>
     </div>
   </header>
 
@@ -126,19 +130,19 @@
   </div>
 
   <div class="bar"><i id="fill"></i></div>
-  <div class="heard" id="heard">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
+  <div class="heard" id="heard" aria-live="polite">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
 </div>
 
 <div class="controls">
   <div class="row">
-    <button class="mic" id="micBtn">🎤 ابدئي القراءة</button>
-    <button class="say" id="sayBtn">🔊 اسمعي الكلمة</button>
-    <button id="okBtn">✓ صح</button>
+    <button class="mic" id="micBtn" aria-label="تشغيل الميكروفون للبدء بالقراءة">🎤 ابدئي القراءة</button>
+    <button class="say" id="sayBtn" aria-label="استمع للكلمة الحالية">🔊 اسمعي الكلمة</button>
+    <button id="okBtn" aria-label="تقييم إجابة صحيحة">✓ صح</button>
   </div>
   <div class="row">
-    <button class="read" id="readBtn">📖 اقرأ لي النص كامل</button>
-    <button id="prevBtn">⏮ السابقة</button>
-    <button id="nextBtn">⏭ التالية</button>
+    <button class="read" id="readBtn" aria-label="اقرأ لي النص كامل">📖 اقرأ لي النص كامل</button>
+    <button id="prevBtn" aria-label="الانتقال للكلمة السابقة">⏮ السابقة</button>
+    <button id="nextBtn" aria-label="الانتقال للكلمة التالية">⏭ التالية</button>
   </div>
   <div class="row">
     <button class="ghost" id="editBtn">📚 المكتبة والنص</button>
@@ -182,7 +186,7 @@
   <textarea id="ta"></textarea>
   <div class="row" style="margin-top:10px">
     <button onclick="applyText()">حفظ وابدأ</button>
-    <button class="ghost" onclick="document.getElementById('dlg').close()">إلغاء</button>
+    <button class="ghost" onclick="closeDlg()">إلغاء</button>
   </div>
 </dialog>
 
@@ -195,13 +199,49 @@ const PRESETS = {
 const DEFAULT_TEXT = PRESETS.p3;
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 
+/* ===== 0. أدوات مساعدة ===== */
+const isIOSDevice = () => /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+const MAX_RESTARTS = isIOSDevice() ? 3 : 5;
+const AUTO_READ = false;
+
 let words = [], idx = 0, score = 0, streak = 0, missedWords = new Set();
 let listening = false, rec = null, ac = null;
+let finished = false, restartAttempts = 0, finalsProcessed = 0, interimSeen = '';
+let compatChecked = false;
+let wordElements = [];
+let lastAcceptedToken = '';
+let lockButtons = false;
+let restarting = false;
 
 const $ = id => document.getElementById(id);
 const say = text => $('heard').innerHTML = text;
 
-/* ===== 1. فك حظر الصوت وإعداد iPad / iOS ===== */
+// 1. تصحيح دالة escapeHtml
+const escapeHtml = s =>
+  (s || '').replace(/[&<>"']/g, c => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }[c]));
+
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+};
+
+if ('speechSynthesis' in window) {
+  window.speechSynthesis.getVoices();
+  window.speechSynthesis.onvoiceschanged = function(){};
+}
+function getArabicVoice(){
+  if (!('speechSynthesis' in window)) return null;
+  const vs = window.speechSynthesis.getVoices();
+  return vs.find(v => /^ar/i.test(v.lang)) || vs.find(v => /arabic/i.test(v.name)) || null;
+}
+
 function unlockIOSAudio() {
   const unlock = () => {
     if (!ac) {
@@ -220,11 +260,10 @@ function unlockIOSAudio() {
   document.addEventListener('click', unlock, { once: true });
 }
 
-function checkiPadCompatibility() {
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-  const isSecure = window.location.protocol === 'https:' || 
-                   window.location.hostname === 'localhost' || 
+function checkiPadCompatibility(force) {
+  if (compatChecked && !force) return;
+  const isSecure = window.location.protocol === 'https:' ||
+                   window.location.hostname === 'localhost' ||
                    window.location.protocol === 'file:';
   const hasSR = !!SR;
   const hasTTS = 'speechSynthesis' in window;
@@ -235,30 +274,84 @@ function checkiPadCompatibility() {
   if (!hasTTS) issues.push("خاصية نطق الصوت غير مدعومة في متصفحك الحالي.");
 
   if (issues.length > 0) {
-    let html = `<ul>${issues.map(i=>`<li>${i}</li>`).join('')}</ul>`;
-    if (isIOS && !hasSR) {
-      html += `<div class="tip-box"><b>حل مشكلة المايك على iPad:</b><br>افتح الرابط باستخدام متصفح <b>Safari</b> لتفعيل المايك.</div>`;
+    compatChecked = true;
+    let html = '<ul>' + issues.map(i => '<li>' + i + '</li>').join('') + '</ul>';
+    if (isIOSDevice() && !hasSR) {
+      html += '<div class="tip-box"><b>حل مشكلة المايك على iPad:</b><br>افتح الرابط باستخدام متصفح <b>Safari</b> لتفعيل المايك.</div>';
     }
-    html += `<p style="font-size:0.85rem;">يمكنك دائماً استخدام زر <b>(✓ صح)</b> للتقييم اليدوي.</p>`;
+    html += '<p style="font-size:0.85rem;">يمكنك دائماً استخدام زر <b>(✓ صح)</b> للتقييم اليدوي.</p>';
     $('modalBody').innerHTML = html;
     $('fixModal').classList.add('show');
   }
 }
 
+function showMicPermissionHelp(){
+  let html = '<p>تم رفض إذن استخدام المايك 🎤</p>';
+  if (isIOSDevice()) {
+    html += '<div class="tip-box"><b>على iPad/iPhone:</b><br>1. افتح تطبيق <b>الإعدادات</b> ← <b>Safari</b> ← <b>الميكروفون</b> واسمح به.<br>2. أو اضغط أيقونة <b>aA</b> في شريط العنوان ← <b>إعدادات الموقع</b> ← فعّل الميكروفون.</div>';
+  } else {
+    html += '<div class="tip-box">اضغط أيقونة 🔒 أو ℹ️ بجانب شريط العنوان واسمح باستخدام الميكروفون لهذه الصفحة.</div>';
+  }
+  html += '<p style="font-size:0.85rem;">يمكنك دائماً استخدام زر <b>(✓ صح)</b> للتقييم اليدوي.</p>';
+  $('modalBody').innerHTML = html;
+  $('fixModal').classList.add('show');
+}
+
 function closeFixModal() { $('fixModal').classList.remove('show'); }
 
 /* ===== 2. الصوت المباشر (Web Speech API) ===== */
-function playText(text) {
-  if (!text) return;
-  if ('speechSynthesis' in window) {
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text.trim());
-    utterance.lang = 'ar-SA';
-    utterance.rate = 0.85;
-    window.speechSynthesis.speak(utterance);
-  } else {
-    say("عذراً، محرك الصوت غير مدعوم في هذا المتصفح.");
+function speak(text, onend){
+  if (!('speechSynthesis' in window)) {
+    say('عذراً، محرك الصوت غير مدعوم في هذا المتصفح.');
+    if (onend) onend();
+    return;
   }
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text.trim());
+    u.lang = 'ar-SA';
+    u.rate = 0.85;
+    const v = getArabicVoice();
+    if (v) u.voice = v;
+    let keepAlive = null;
+    
+    u.onstart = () => {
+      keepAlive = setInterval(() => {
+        try {
+          if (window.speechSynthesis.speaking) {
+            window.speechSynthesis.pause();
+            window.speechSynthesis.resume();
+          }
+        } catch(e){}
+      }, 10000);
+    };
+    
+    // 4. معالجة تسريب الذاكرة وتثبيت الأحداث
+    const done = () => { 
+      if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } 
+      if (onend) onend(); 
+    };
+    u.onend = done;
+    u.onerror = done;
+    window.speechSynthesis.speak(u);
+  } catch(e) { if (onend) onend(); }
+}
+
+// 7. تقشير وتقسيم النص الطويل لمنع توقف المحرك
+function speakLongText(text){
+  const parts = text.match(/.{1,120}(\s|$)/g) || [text];
+  let i = 0;
+  function next(){
+    if (i >= parts.length) return;
+    speak(parts[i++], next);
+  }
+  next();
+}
+
+function pauseMicAndSpeak(text, resumeAfter){
+  const wasListening = listening;
+  if (wasListening) stopMic();
+  speak(text, (resumeAfter && wasListening && !finished && idx < words.length) ? () => startMic() : null);
 }
 
 /* ===== 3. الوضع الداكن والتقدم ===== */
@@ -266,23 +359,35 @@ $('themeBtn').onclick = () => {
   document.body.classList.toggle('dark');
   const isDark = document.body.classList.contains('dark');
   $('themeBtn').textContent = isDark ? '☀️' : '🌙';
-  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+  store.set('theme', isDark ? 'dark' : 'light');
 };
-if(localStorage.getItem('theme') === 'dark') {
+if (store.get('theme') === 'dark') {
   document.body.classList.add('dark');
   $('themeBtn').textContent = '☀️';
 }
 
-function loadProgress(){ score = parseInt(localStorage.getItem('reading_score')||'0'); $('score').textContent = score; }
-function saveProgress(){ localStorage.setItem('reading_score', score.toString()); }
+function loadProgress(){ score = parseInt(store.get('reading_score') || '0', 10) || 0; $('score').textContent = score; }
+function saveProgress(){ store.set('reading_score', String(score)); }
+
+// 8. حفظ واسترجاع الجلسة
+function saveSession(){
+  store.set('reading_text', words.join(' '));
+  store.set('reading_idx', idx);
+  saveProgress();
+}
 
 /* ===== 4. معالجة وتدقيق النصوص ===== */
+// 13. تحسين دالة norm بـ Regex أكثر دقة
 function norm(s){
-  return (s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
-    .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
-    .replace(/ؤ/g,"و").replace(/ئ/g,"ي")
-    .replace(/[^\u0621-\u064A0-9a-zA-Z]/g,"").trim();
+  return (s || "")
+    .replace(/[ً-ٟـ]/g,"")
+    .replace(/[أإآٱ]/g,"ا")
+    .replace(/ؤ/g,"و")
+    .replace(/ئ/g,"ي")
+    .replace(/[^\u0621-\u064Aa-zA-Z0-9]/g,"")
+    .trim();
 }
+
 function sim(a,b){
   if(a===b) return 1; if(!a||!b) return 0;
   const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
@@ -291,6 +396,7 @@ function sim(a,b){
     d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
   return 1-d[m][n]/Math.max(m,n);
 }
+
 function accept(said,target){
   const t=norm(target), s=norm(said);
   if(!t) return true; if(!s) return false; if(s===t) return true;
@@ -302,21 +408,26 @@ function accept(said,target){
 function build(txt){
   const box=$('text'); box.innerHTML="";
   words = txt.trim().split(/\s+/).filter(Boolean);
+  wordElements = [];
   words.forEach((w,i)=>{
     const el=document.createElement('span');
-    el.className='w'; el.textContent=w; 
+    el.className='w'; el.textContent=w;
     el.onclick=()=>{
-      idx=i; 
+      idx=i;
+      saveSession();
       paint();
-      playText(words[idx]);
+      pauseMicAndSpeak(words[idx], true);
     };
     box.appendChild(el); box.appendChild(document.createTextNode(' '));
+    wordElements.push(el); // 5. تخزين المراجع مسبقاً لمنع بطء DOM
   });
-  idx=0; paint();
+  idx=0; finished=false; finalsProcessed=0; interimSeen=''; lastAcceptedToken='';
+  paint();
 }
 
 function paint(){
-  document.querySelectorAll('.w').forEach((el,i)=>{
+  // 5. الاعتماد على المصفوفة المحفوظة مباشرة
+  wordElements.forEach((el,i)=>{
     el.classList.toggle('done',i<idx);
     el.classList.toggle('now',i===idx);
   });
@@ -329,9 +440,12 @@ function paint(){
   $('streak').textContent = streak;
   const pct = words.length ? Math.round(idx/words.length*100) : 0;
   $('fill').style.width=pct+'%'; $('prog').textContent=pct; $('score').textContent=score;
-  
+
   const cur=document.querySelector('.w.now');
-  if(cur && !$('fullView').classList.contains('hide')) cur.scrollIntoView({block:'center',behavior:'smooth'});
+  // 6. إصلاح التمرير بدون تحريك الصفحة كاملة في iPad
+  if(cur && !$('fullView').classList.contains('hide')) {
+    cur.scrollIntoView({ block:'nearest', inline:'nearest' });
+  }
 }
 
 /* ===== 6. الأصوات والتفاعل ===== */
@@ -345,29 +459,47 @@ function beep(f,d){
   }catch(e){}
 }
 
+// 9. القفل الزمني لمنع الضغطات المتكررة على زر الصح
 function correct(){
+  if (lockButtons || finished || idx >= words.length) return;
+  lockButtons = true;
+  setTimeout(() => { lockButtons = false; }, 300);
+
   const b=$('bigword'); b.classList.add('ok','pop'); setTimeout(()=>b.classList.remove('pop'),450);
   beep(880,.12); setTimeout(()=>beep(1320,.14),90);
-  score++; streak++; saveProgress();
+  score++; streak++;
+  
   if(streak % 5 === 0) { say('🔥 ممتازة! '+streak+' كلمات متتالية صحيحة!'); }
   idx++;
+  saveSession();
+  
   if(idx>=words.length){ paint(); finish(); return; }
+  
+  // 15. خيار نطق تلقائي عند النجاح
+  if(AUTO_READ && idx < words.length){
+    setTimeout(()=>{ pauseMicAndSpeak(words[idx], true); }, 500);
+  }
+  
   setTimeout(paint,180);
 }
 
 function wrong(){
+  if (finished) return;
   if(words[idx]) missedWords.add(words[idx]);
   streak = 0;
+  saveSession();
   const b=$('bigword'); b.classList.add('miss'); setTimeout(()=>b.classList.remove('miss'),350);
 }
 
 function finish(){
+  if (finished) return;
+  finished = true;
   stopMic();
   $('winMsg').textContent='قرأتِ '+words.length+' كلمة وحصلتِ على '+score+' نجمة ⭐';
   const mr = $('missedReport');
   if(missedWords.size > 0){
-    mr.innerHTML = '<div class="missed-box"><b>الكلمات الصعبة للتدرب عليها:</b><br>' + 
-      Array.from(missedWords).map(w=>`<span class="missed-tag">${w}</span>`).join('') + '</div>';
+    mr.innerHTML = '<div class="missed-box"><b>الكلمات الصعبة للتدرب عليها:</b><br>' +
+      Array.from(missedWords).map(w=>'<span class="missed-tag">'+escapeHtml(w)+'</span>').join('') + '</div>';
     $('retryMissedBtn').style.display = 'inline-block';
   } else {
     mr.innerHTML = '<p style="color:#2f8f5b">🎉 قراءة ممتازة بدون أي أخطاء!</p>';
@@ -382,7 +514,9 @@ function retryMissed(){
   if(!missedWords.size) return;
   const arr = Array.from(missedWords);
   missedWords.clear();
+  streak = 0;
   build(arr.join(' '));
+  saveSession();
   $('win').classList.remove('show');
 }
 
@@ -395,30 +529,118 @@ function confetti(){
     {duration:2200+Math.random()*1600,easing:'ease-in'}).onfinish=()=>c.remove();
 }
 
-function restart(){ $('win').classList.remove('show'); missedWords.clear(); streak=0; idx=0; paint(); }
+function restart(){
+  $('win').classList.remove('show');
+  missedWords.clear(); streak=0; idx=0; finished=false;
+  saveSession();
+  paint();
+}
+
+// 12. حماية من تكرار الكلمة الحالية
+function processTokens(tokens){
+  tokens.forEach(token => {
+    if(token === lastAcceptedToken || finished || idx >= words.length) return;
+    if(accept(token, words[idx])){
+      lastAcceptedToken = token;
+      correct();
+    }
+  });
+}
 
 /* ===== 7. المايك والتعرف الصوتي ===== */
 function startMic(){
-  if(!SR){ checkiPadCompatibility(); return; }
-  listening=true; $('micBtn').classList.add('on'); $('micBtn').textContent='⏹ إيقاف';
+  // 2. فحص الدعم تعطيل الزر إن لم يوجد
+  if(!SR){ 
+    $('micBtn').disabled = true;
+    $('micBtn').textContent = '❌ المايك غير مدعوم';
+    checkiPadCompatibility(true); 
+    return; 
+  }
+  if(listening || finished) return;
+  listening=true; restartAttempts=0; finalsProcessed=0; interimSeen=''; lastAcceptedToken='';
+  $('micBtn').classList.add('on'); $('micBtn').textContent='⏹ إيقاف';
   try{
-    rec = new SR(); rec.lang='ar-SA'; rec.continuous=true; rec.interimResults=true;
+    rec = new SR();
+    rec.lang='ar-SA';
+    rec.continuous = !isIOSDevice();
+    rec.interimResults = true;
+
     rec.onresult = e => {
-      let h=""; for(let i=e.resultIndex; i<e.results.length; i++) h += e.results[i][0].transcript;
-      say('سمعت: <b>'+h+'</b>');
-      for(const tk of h.trim().split(/\s+/)){
-        if(idx < words.length && accept(tk, words[idx])) correct();
+      if (finished) return;
+      restartAttempts = 0;
+      const res = e.results;
+      let interim = '';
+      for (let i = 0; i < res.length; i++) {
+        if (!res[i].isFinal) interim += res[i][0].transcript;
+      }
+      let newFinals = '';
+      for (let i = finalsProcessed; i < res.length; i++) {
+        if (res[i].isFinal) newFinals += (newFinals ? ' ' : '') + res[i][0].transcript;
+      }
+      finalsProcessed = 0;
+      for (let i = 0; i < res.length; i++) if (res[i].isFinal) finalsProcessed++;
+      
+      const it = interim.trim();
+      let newInterim = '';
+      if (it.startsWith(interimSeen)) newInterim = it.slice(interimSeen.length).trim();
+      interimSeen = it;
+
+      let allFinals = '';
+      for (let i = 0; i < res.length; i++) {
+        if (res[i].isFinal) allFinals += (allFinals ? ' ' : '') + res[i][0].transcript;
+      }
+      const display = (allFinals + ' ' + it).trim();
+      if (display) say('سمعت: <b>' + escapeHtml(display) + '</b>');
+
+      const toProcess = (newFinals + ' ' + newInterim).trim();
+      if (!toProcess) return;
+      
+      processTokens(toProcess.split(/\s+/).filter(Boolean));
+    };
+
+    rec.onerror = (ev) => {
+      const err = ev.error || '';
+      if (err === 'not-allowed' || err === 'service-not-allowed') {
+        stopMic();
+        showMicPermissionHelp();
+      } else if (err === 'language-not-supported') {
+        stopMic();
+        say('⚠️ التعرف الصوتي بالعربية غير مدعوم على هذا الجهاز/المتصفح.');
+      } else if (err === 'network') {
+        say('⚠️ يحتاج التعرف الصوتي إلى اتصال بالإنترنت.');
       }
     };
-    rec.onerror = () => { checkiPadCompatibility(); stopMic(); };
-    rec.onend = ()=>{ if(listening) try{rec.start();}catch(e){} };
+
+    // 3. منع الحلقة اللانهائية وحماية المحاولة الزائدة مع مهلة زامنية Safe-Timeout
+    rec.onend = () => {
+      if (!listening) return;
+      if (restartAttempts >= MAX_RESTARTS) {
+        stopMic();
+        say('🎤 اضغطي زر المايك مرة أخرى للمتابعة.');
+        return;
+      }
+      if (restarting) return;
+      restarting = true;
+      restartAttempts++;
+      setTimeout(() => {
+        try {
+          if (listening) rec.start();
+        } catch(e) { stopMic(); }
+        restarting = false;
+      }, 400);
+    };
+
     rec.start();
     say('🎧 أنا أسمعك… اقرئي الكلمة الكبيرة.');
-  }catch(e){ stopMic(); }
+  }catch(e){
+    stopMic();
+    say('تعذر تشغيل المايك على هذا الجهاز.');
+  }
 }
 
 function stopMic(){
-  listening=false; try{ rec && rec.stop(); }catch(e){}
+  listening=false;
+  try{ rec && rec.stop(); }catch(e){}
   $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
 }
 
@@ -426,23 +648,74 @@ function stopMic(){
 $('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView').classList.add('hide'); $('tabCard').classList.add('act'); $('tabFull').classList.remove('act'); };
 $('tabFull').onclick=()=>{ $('fullView').classList.remove('hide'); $('cardView').classList.add('hide'); $('tabFull').classList.add('act'); $('tabCard').classList.remove('act'); paint(); };
 $('micBtn').onclick=()=> listening ? stopMic() : startMic();
-$('sayBtn').onclick=()=> words[idx] && playText(words[idx]);
-$('bigword').onclick=()=> words[idx] && playText(words[idx]);
-$('readBtn').onclick=()=> words.length && playText(words.join(' '));
-$('okBtn').onclick=()=> idx<words.length && correct();
-$('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
-$('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
+$('sayBtn').onclick=()=>{ if (words[idx] && !finished) pauseMicAndSpeak(words[idx], true); };
+$('bigword').onclick=()=>{ if (words[idx] && !finished) pauseMicAndSpeak(words[idx], true); };
+
+// 7. تحسين نطق كامل النص
+$('readBtn').onclick = () => {
+  if(!words.length) return;
+  if(listening) stopMic();
+  speakLongText(words.join(' '));
+};
+
+$('okBtn').onclick=()=>{ if(!finished && idx<words.length) correct(); };
+$('prevBtn').onclick=()=>{ if(!finished && idx>0){ idx--; saveSession(); paint(); } };
+
+// 13. تحسين زر التالي وحفظ المسائل غير المقروءة
+$('nextBtn').onclick = () => {
+  if(finished || idx >= words.length) return;
+  missedWords.add(words[idx]);
+  streak = 0;
+  idx++;
+  saveSession();
+  paint();
+  if(idx >= words.length){ finish(); }
+};
+
 $('resetBtn').onclick=()=>{ stopMic(); restart(); };
-$('editBtn').onclick=()=>{ $('ta').value=words.join(' '); $('dlg').showModal(); };
+$('editBtn').onclick=()=>{ $('ta').value=words.join(' '); openDlg(); };
 $('presetSel').onchange=e=>{ if(PRESETS[e.target.value]) $('ta').value = PRESETS[e.target.value]; };
 
-function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
+function openDlg(){
+  const d=$('dlg');
+  try { if (d.showModal) d.showModal(); else d.setAttribute('open',''); }
+  catch(e){ d.setAttribute('open',''); }
+}
+function closeDlg(){
+  const d=$('dlg');
+  try { if (d.close) d.close(); } catch(e){}
+  d.removeAttribute('open');
+}
+
+function applyText(){
+  stopMic();
+  const v=$('ta').value.trim();
+  if(v){ missedWords.clear(); streak=0; build(v); saveSession(); }
+  closeDlg();
+}
+
+// 14. التعامل مع تغيير حالة الرؤية للنافذة (إيقاف المايك عند مغادرة الصفحة أو القفل)
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) {
+    stopMic();
+  } else {
+    paint();
+  }
+});
 
 window.addEventListener('DOMContentLoaded', () => {
   unlockIOSAudio();
   checkiPadCompatibility();
   loadProgress();
-  build(DEFAULT_TEXT);
+
+  // 8. استعادة الجلسة السابقة إن وجدت
+  const savedText = store.get('reading_text');
+  build(savedText || DEFAULT_TEXT);
+  const savedIdx = parseInt(store.get('reading_idx') || '0', 10);
+  if(savedIdx > 0 && savedIdx < words.length){
+    idx = savedIdx;
+    paint();
+  }
 });
 </script>
 </body>
