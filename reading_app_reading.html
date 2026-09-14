@@ -203,6 +203,23 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
 .v10-voice-status{font-weight:800;margin-top:6px}
 .v10-voice-ok{color:#27824b}.v10-voice-warn{color:#b36a00}.v10-voice-error{color:#c44536}
 </style>
+
+<style id="child-friendly-redesign">
+:root{--kid-blue:#67b8e9;--kid-green:#61c391;--kid-yellow:#ffd568;--kid-coral:#ff8b78;--kid-ink:#253844;--kid-soft:#f4fbff;--kid-line:#d8e8f0}
+body{background:linear-gradient(180deg,#edf8ff 0,#fffaf1 62%,#f3fff8 100%);color:var(--kid-ink)}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 4%,rgba(255,214,104,.3),transparent 24%),radial-gradient(circle at 92% 10%,rgba(103,184,233,.22),transparent 26%),radial-gradient(circle at 85% 90%,rgba(97,195,145,.18),transparent 25%)}
+body>div:first-of-type{max-width:860px!important;margin:0 auto 10px!important;padding:2px}
+body>div:first-of-type a{border:0!important;background:#fff!important;color:#31576c!important;box-shadow:0 7px 0 #c9e2ee!important;border-radius:18px!important;padding:12px!important}
+.v9-dashboard,.v10-tools{max-width:860px;margin:12px auto;padding:0;background:transparent;border:0;box-shadow:none}
+.v9-dashboard{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.v9-grid{flex:1;min-width:280px;gap:8px}.v9-stat{border:2px solid var(--kid-line);background:#fff;border-radius:18px;box-shadow:0 5px 0 #e6f1f6}.v9-actions{width:auto;margin-top:0}.v9-actions button{border-color:#cfe4ee;box-shadow:0 4px 0 #cfe4ee;border-radius:16px}
+.v10-tools{background:#fff;border:2px solid var(--kid-line);border-radius:24px;padding:12px;box-shadow:0 10px 24px rgba(40,75,95,.08)}.v10-grid{grid-template-columns:repeat(3,1fr);gap:9px}.v10-btn{border-color:#cfe4ee;box-shadow:0 4px 0 #cfe4ee;border-radius:17px;padding:11px}.v10-btn.act{background:#4f9fcb;border-color:#3f81a5;box-shadow:0 4px 0 #3f81a5}
+.v10-voice-card{border-color:#d9eaf1;border-radius:20px;background:#fafdff}.v10-voice-btn{border-color:#cfe4ee;border-radius:15px}.v10-voice-btn.primary{background:#4f9fcb;border-color:#3f81a5}
+#v8ReadSection .wrap{max-width:860px}.card{background:#fffdf8;border:3px solid #e7e0cf;border-radius:30px;box-shadow:0 18px 36px rgba(40,75,95,.12);padding:24px}.bigword{font-size:clamp(3.2rem,10vw,6rem);line-height:1.15;margin:.1em 0}.counter{font-size:1rem;color:#71838d}.heard{background:#eef8ff;border:2px solid #cfe7f5;border-radius:16px;padding:10px}.note{display:block;color:#73848d;line-height:1.6}
+.text-manager{background:#fff;border:2px solid var(--kid-line);border-radius:22px;padding:10px}.top-actions{gap:8px}.top-actions button,.text-manager button{border-color:#cfe4ee;border-radius:15px;box-shadow:0 3px 0 #cfe4ee}.mode-strip button{border-color:#cfe4ee!important;border-radius:15px!important}.mode-strip button.active{background:#4f9fcb!important;border-color:#3f81a5!important}
+.controls{padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(237,248,255,.98) 76%,rgba(237,248,255,0));backdrop-filter:blur(6px)}.row{gap:8px}.controls button{border-radius:16px;box-shadow:0 4px 0 #bcd7e5;border-color:#bcd7e5}.controls button.main{background:#61c391;border-color:#3c9368;box-shadow:0 4px 0 #3c9368}.controls button.hear{background:#67b8e9;border-color:#3f88b4;box-shadow:0 4px 0 #3f88b4}.controls button.ghost{box-shadow:none}
+.win>div{max-width:620px;background:rgba(255,255,255,.12);border-radius:28px;padding:26px}.result-box{border-radius:18px}
+@media(max-width:700px){.v9-dashboard{display:block}.v9-actions{margin-top:9px}.v10-grid{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.controls .row:first-child button{font-size:1rem}.controls{padding-left:8px;padding-right:8px}}
+</style>
 </head>
 <body><div style="max-width:760px;margin:0 auto 10px;display:flex;gap:8px;"><a href="reading_app_dictation.html" style="display:block;flex:1;text-align:center;text-decoration:none;background:#fff;border:2px solid #d9cdb2;border-radius:14px;padding:10px;font-weight:800;color:#2f3437;box-shadow:0 3px 0 #d9cdb2;">✍️ الانتقال إلى تدريب الإملاء</a></div>
 <div class="v9-dashboard" id="v9Dashboard">
@@ -270,7 +287,7 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
 <div class="v10-voice-status" id="v10VoiceStatus"></div>
 </div>
 </div>
-<div id="v8ReadSection">
+<div class="child-intro" style="max-width:860px;margin:10px auto 8px;text-align:center;background:#fff;border:2px solid #d8e8f0;border-radius:22px;padding:12px 16px;box-shadow:0 8px 18px rgba(40,75,95,.07)"><div style="font-size:1.55rem">🌟 جاهزة للقراءة؟</div><div style="color:#6c7d86;font-size:.95rem">اسمعي أولًا 🔊 ثم اقرئي بهدوء 🎤 وخذي وقتك.</div></div><div id="v8ReadSection">
 <div class="wrap">
 <header>
 <h1>اقرئي <span>كلمة كلمة</span> 📖</h1>
