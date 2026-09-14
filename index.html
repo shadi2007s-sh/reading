@@ -1679,7 +1679,7 @@ function buildAzureSSML(text){
   clean=clean.replace(/([،؛])/g,'$1<break time="'+pp.comma+'ms"/>').replace(/([.؟!])/g,'$1<break time="'+pp.end+'ms"/>').replace(/[:]/g,':<break time="'+pp.colon+'ms"/>');
   const delta=Math.round((azureRate(rate)-1)*100);
   const rateStr=(delta>=0?'+':'')+delta+'%';
-  return '<?xml version="1.0" encoding="utf-8"?><speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="ar-JO"><voice name="'+escapeXml(azureVoice)+'"><prosody rate="'+rateStr+'" pitch="0Hz" volume="+0dB">'+clean+'</prosody></voice></speak>';
+  return '<?xml version="1.0" encoding="utf-8"?><speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="ar-JO"><voice name="'+escapeXml(azureVoice)+'"><prosody rate="'+rateStr+'">'+clean+'</prosody></voice></speak>';
 }
 function unlockAzureAudio(){
   try{
@@ -1708,8 +1708,11 @@ async function azureSpeak(t,cb,options={}){
       res=await fetch(endpoint,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'audio-24khz-48kbitrate-mono-mp3','User-Agent':'ReadingCoach/10.2'},body:ssml,cache:'no-store'});
     }catch(e){throw new Error('TTS_NETWORK_OR_CORS');}
     if(!res.ok){
-      if(res.status===401){azureSpeechToken='';azureTokenExpires=0;throw new Error('TTS_HTTP_401');}
-      throw new Error('TTS_HTTP_'+res.status);
+      const errText = await res.text().catch(()=> '');
+      console.error('Azure TTS HTTP error', res.status, errText);
+      if(res.status===401){azureSpeechToken='';azureTokenExpires=0;throw new Error('TTS_HTTP_401 '+errText.slice(0,300));}
+      if(res.status===400) throw new Error('TTS_HTTP_400 '+errText.slice(0,500));
+      throw new Error('TTS_HTTP_'+res.status+' '+errText.slice(0,300));
     }
     const blob=await res.blob();
     if(!blob || !blob.size) throw new Error('TTS_EMPTY_AUDIO');
