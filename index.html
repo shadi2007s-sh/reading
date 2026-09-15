@@ -1,2083 +1,347 @@
-<!DOCTYPE html>
-
-<html dir="rtl" lang="ar">
+<!doctype html>
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="utf-8"/>
-<meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport"/>
-<title>مدرّب القراءة العربية — Sana Neural</title>
-<link href="https://fonts.googleapis.com" rel="preconnect"/>
-<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
-<link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&amp;family=Noto+Naskh+Arabic:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>تدريب القراءة - النسخة المبسطة</title>
 <style>
-  :root{
-    --paper:#fbf6e9;--ink:#2f3437;--rule:#cfe0e8;--margin:#e2725b;
-    --ok:#2f8f5b;--ok-soft:#dff0e3;--live:#e0a11b;
-    --shadow:0 18px 40px -18px rgba(47,52,55,.45);
-    --font-read:"Noto Naskh Arabic",serif;
-    --font-ui:"Baloo Bhaijaan 2","Noto Naskh Arabic",sans-serif;
-  }
-  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;padding:0}
-  body{font-family:var(--font-ui);
-    background:radial-gradient(circle at 15% 10%,#fff7e2 0%,transparent 55%),
-               radial-gradient(circle at 85% 90%,#eaf3f6 0%,transparent 55%),#efe7d4;
-    color:var(--ink);min-height:100vh;padding:12px 12px 210px}
-  .wrap{max-width:760px;margin:0 auto}
-  header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:10px}
-  h1{font-size:1.05rem;margin:0;font-weight:800}
-  h1 span{color:var(--margin)}
-  .stats{display:flex;gap:6px}
-  .pill{background:#fff;border:2px solid #e6dcc6;border-radius:999px;padding:4px 10px;
-    font-size:.8rem;font-weight:700;box-shadow:0 2px 0 #e6dcc6;white-space:nowrap}
-  .tabs{display:flex;gap:6px;margin-bottom:10px}
-  .tabs button{flex:1;padding:9px;font-size:.9rem;border-radius:12px;border:2px solid #d9cdb2;
-    background:#fff;box-shadow:none;font-weight:700}
-  .tabs button.act{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .card{background:var(--paper);border-radius:22px;border:1px solid #e6dcc6;box-shadow:var(--shadow);
-    padding:18px;text-align:center;position:relative;overflow:hidden}
-  .counter{font-size:.85rem;color:#8b9096;font-weight:700}
-  .ghostw{font-family:var(--font-read);font-size:1.25rem;color:#bfb69f;min-height:1.6em;
-    display:flex;justify-content:center;gap:14px;align-items:center}
-  .bigword{font-family:var(--font-read);font-size:clamp(3rem,17vw,6rem);font-weight:700;
-    line-height:1.5;padding:6px 4px 10px;letter-spacing:.02em;transition:transform .2s}
-  .bigword.ok{color:var(--ok)}
-  .bigword.pop{animation:pop .45s}
-  @keyframes pop{40%{transform:scale(1.18) rotate(-2deg)}}
-  .bigword.miss{animation:shake .35s}
-  @keyframes shake{25%{transform:translateX(10px)}75%{transform:translateX(-10px)}}
-  .sheet{position:relative;background:var(--paper);border-radius:18px;padding:24px 20px;
-    box-shadow:var(--shadow);border:1px solid #e6dcc6;
-    background-image:repeating-linear-gradient(to bottom,transparent 0 61px,var(--rule) 61px 62px);overflow:hidden}
-  .sheet::before{content:"";position:absolute;top:0;bottom:0;right:46px;width:2px;background:var(--margin);opacity:.5}
-  #text{font-family:var(--font-read);font-size:1.9rem;line-height:1.95;text-align:justify}
-  .w{display:inline-block;padding:2px 6px;margin:0 1px;border-radius:10px;transition:all .18s;position:relative;cursor:pointer}
-  .w.done{color:var(--ok);background:var(--ok-soft)}
-  .w.now{background:#fff3cf;box-shadow:0 0 0 3px #f6d97a inset}
-  .w.rec{border-bottom:3px solid #5aa9d6}
-  .w.spk{background:#d7ecfa;box-shadow:0 0 0 3px #7cc0e8 inset}
-  .bar{height:12px;background:#e6dcc6;border-radius:999px;margin:14px 0 4px;overflow:hidden}
-  .bar i{display:block;height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#f0b429,#2f8f5b);transition:width .3s}
-  .heard{margin-top:8px;min-height:24px;font-size:.88rem;color:#7b8085;text-align:center}
-  .heard b{color:var(--live)}
-  small.note{display:block;text-align:center;color:#8b9096;font-size:.72rem;margin-top:6px}
-  .controls{position:fixed;bottom:0;right:0;left:0;padding:8px 12px calc(8px + env(safe-area-inset-bottom));
-    background:linear-gradient(to top,#efe7d4 74%,rgba(239,231,212,0))}
-  .row{display:flex;gap:7px;max-width:760px;margin:0 auto}
-  .row+.row{margin-top:7px}
-  button{font-family:var(--font-ui);font-weight:700;font-size:.98rem;border:2px solid var(--ink);
-    border-radius:14px;background:#fff;color:var(--ink);padding:11px 8px;cursor:pointer;flex:1;
-    box-shadow:0 4px 0 var(--ink);transition:transform .1s,box-shadow .1s;touch-action:manipulation}
-  button:active{transform:translateY(4px);box-shadow:0 0 0 var(--ink)}
-  button.mic{background:#2f8f5b;color:#fff;border-color:#1e5c3b;box-shadow:0 4px 0 #1e5c3b;flex:2}
-  button.mic.on{background:#e2725b;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;animation:glow 1.2s infinite}
-  button.hold{background:#5aa9d6;color:#fff;border-color:#2d6a8f;box-shadow:0 4px 0 #2d6a8f;flex:2}
-  button.read{background:#f0b429;border-color:#9a7413;box-shadow:0 4px 0 #9a7413;flex:2}
-  @keyframes glow{50%{filter:brightness(1.15)}}
-  button.ghost{background:transparent;border-style:dashed;box-shadow:none;font-size:.8rem;padding:7px}
-  button.ghost:active{transform:none}
-  dialog{border:none;border-radius:18px;padding:18px;max-width:92vw;width:560px;
-    box-shadow:var(--shadow);background:var(--paper);font-family:var(--font-ui)}
-  dialog::backdrop{background:rgba(47,52,55,.5)}
-  textarea{width:100%;height:170px;font-family:var(--font-read);font-size:1.15rem;
-    border:2px solid #d9cdb2;border-radius:12px;padding:10px;background:#fff}
-  #diag{font-size:.8rem;line-height:1.7;background:#fff;border-radius:12px;padding:10px;border:2px solid #e6dcc6}
-  #diag div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px dashed #eee;padding:3px 0}
-  .win{position:fixed;inset:0;display:none;place-items:center;background:rgba(47,52,55,.75);z-index:9;text-align:center;color:#fff;padding:20px}
-  .win.show{display:grid}
-  .win h2{font-size:2rem;margin:.2em 0}
-  .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
-  .hide{display:none}
-  .banner{background:#ffe9e2;border:2px solid #e2725b;color:#8c3a26;border-radius:14px;
-    padding:10px 12px;font-size:.85rem;line-height:1.6;margin-bottom:10px}
-  .set label{display:block;font-size:.85rem;font-weight:700;margin:12px 0 4px}
-  .set select,.set input[type=range]{width:100%;font-family:var(--font-ui);font-size:1rem;
-    padding:8px;border:2px solid #d9cdb2;border-radius:10px;background:#fff}
-  .set .chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700;font-size:.9rem}
-  .mini-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
-  .mini{background:#fbf6e9;border:1px solid #e6dcc6;border-radius:12px;padding:7px;text-align:center}
-  .mini b{display:block;font-size:1rem}.mini span{font-size:.7rem;color:#8b9096;font-weight:700}
-  .streak{margin-top:8px;font-size:.78rem;color:#7b8085;text-align:center}
-  .mistakes{margin:10px 0 0;background:#fff3cf;border:2px solid #f0b429;border-radius:14px;padding:10px;display:none}
-  .mistakes.show{display:block}.mistakes-title{font-weight:800;margin-bottom:6px}.mistake-list{display:flex;gap:6px;flex-wrap:wrap}
-  .mistake-chip{border:2px solid #d9cdb2;background:#fff;border-radius:999px;padding:4px 9px;font:700 .82rem var(--font-ui);cursor:pointer}
-  .home-btn{margin-top:8px;background:#fff;box-shadow:none;border-color:#d9cdb2;font-size:.82rem;padding:8px}
-  .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.result-box{background:#fbf6e9;border-radius:12px;padding:8px}.result-box b{font-size:1.2rem}.result-box span{display:block;font-size:.7rem;color:#7b8085}
-  @media(max-width:560px){.mini-stats{grid-template-columns:repeat(2,1fr)}}
-
-
-  .text-manager{display:grid;grid-template-columns:1fr;gap:8px;margin:0 0 14px}
-  .text-manager .inline{display:flex;gap:8px;flex-wrap:wrap}
-  .text-manager select,.text-manager input{flex:1;min-width:180px}
-  .saved-count{font-size:.76rem;color:#7b8085;text-align:center}
-
-
-  .top-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:8px 0 10px}
-  .top-actions button{box-shadow:none;padding:8px;font-size:.82rem;border-color:#d9cdb2}
-  .text-meta{background:#fff;border:1px solid #e6dcc6;border-radius:12px;padding:8px 10px;font-size:.75rem;color:#7b8085;display:flex;justify-content:center;gap:14px;flex-wrap:wrap;margin-top:7px}
-  .progress-card{background:#fff;border:1px solid #e6dcc6;border-radius:14px;padding:10px;margin-top:10px}
-  .progress-card h4{margin:0 0 8px;font-size:.9rem}
-  .progress-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-  .prog-box{background:#fbf6e9;border-radius:10px;padding:7px;text-align:center}
-  .prog-box b{display:block;font-size:1rem}.prog-box span{font-size:.68rem;color:#8b9096}
-  .history-list{display:grid;gap:6px;margin-top:8px;max-height:220px;overflow:auto}
-  .history-item{display:flex;justify-content:space-between;gap:8px;padding:7px 9px;border:1px dashed #d9cdb2;border-radius:10px;font-size:.74rem;background:#fffaf0}
-  .history-item b{font-size:.8rem}
-  .mode-strip{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;justify-content:center}
-  .mode-strip button{box-shadow:none;font-size:.78rem;padding:7px 10px;border-color:#d9cdb2}
-  .mode-strip button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
-  .pause-bar{display:flex;gap:6px;justify-content:center;margin:7px 0}.pause-bar button{box-shadow:none;font-size:.78rem;padding:7px 9px;border-color:#d9cdb2}
-  .smart-tip{background:#eef7fb;border:1px solid #b7dce9;border-radius:12px;padding:8px;font-size:.76rem;color:#4d6872;margin-top:8px;line-height:1.6}
-  .danger-note{background:#fff1ed;border:1px solid #efb1a3;color:#8c3a26;border-radius:10px;padding:7px;font-size:.75rem}
-  @media(max-width:560px){.top-actions{grid-template-columns:1fr 1fr 1fr}.progress-grid{grid-template-columns:repeat(2,1fr)}}
-
+@import url('https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@400;600;700;800&display=swap');
+:root{--ink:#293842;--blue:#55a8d3;--green:#32955e;--gold:#f5b623;--cream:#fffdf8;--line:#d9d1bd}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:linear-gradient(135deg,#eef9fc,#fffaf0 55%,#edf8f0);font-family:"Baloo Bhaijaan 2","Noto Naskh Arabic",Tahoma,sans-serif;color:var(--ink)}
+.wrap{max-width:900px;margin:auto;padding:18px 14px 30px}
+header{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px}
+h1{font-size:1.45rem;margin:0}
+.topbtn{border:2px solid var(--line);background:#fff;border-radius:13px;padding:8px 12px;font-weight:800;cursor:pointer}
+.card{background:var(--cream);border:3px solid #e7deca;border-radius:28px;box-shadow:0 8px 24px #00000012}
+.text-tools{padding:12px;margin-bottom:12px}
+.toolrow{display:flex;gap:8px;flex-wrap:wrap}
+select,input,textarea{font:inherit}
+select,input{border:2px solid #d9d1bd;border-radius:12px;padding:8px;background:#fff}
+#savedTextSel{flex:1;min-width:220px}
+button{font-family:inherit;cursor:pointer}
+.primary{background:var(--blue);color:#fff;border:2px solid #438eb7;border-radius:14px;padding:9px 14px;font-weight:800;box-shadow:0 3px 0 #3b89ae}
+.green{background:var(--green);color:#fff;border:2px solid #2b8051;border-radius:14px;padding:10px 16px;font-weight:800;box-shadow:0 4px 0 #247548}
+.gold{background:var(--gold);color:#293842;border:2px solid #e3a91a;border-radius:14px;padding:11px 16px;font-weight:800;box-shadow:0 4px 0 #d59e16}
+.ghost{background:#fff;border:2px solid #c8dce7;border-radius:14px;padding:10px 14px;font-weight:800;box-shadow:0 3px 0 #b8d2df}
+.meta{text-align:center;color:#687780;background:#f8fbfc;border:1px solid #d7e4e9;border-radius:14px;padding:7px;margin-bottom:8px}
+.reader{padding:16px 18px 18px}
+.counter{text-align:center;font-weight:800;font-size:1.1rem;color:#687780}
+.bigword{min-height:220px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:5.2rem;font-weight:800;padding:20px}
+.ghostw{text-align:center;min-height:35px;color:#d5cdbb;font-size:1.2rem}
+.progress{height:14px;background:#e4ddca;border-radius:99px;overflow:hidden;margin:0 0 12px}
+.progress i{display:block;height:100%;width:0;background:#d1b65d;transition:.2s}
+.modes{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px}
+.mode{padding:11px;border:2px solid #c9ddea;background:#fff;border-radius:15px;font-weight:800;font-size:1rem}
+.mode.active{background:var(--blue);color:#fff;border-color:#438eb7}
+.pause{display:flex;gap:8px;margin-bottom:10px}
+.pause button{flex:1}
+.fullview{background:#fff;border:2px solid #e7deca;border-radius:20px;padding:22px;line-height:2.25;font-size:1.55rem;min-height:260px;margin-bottom:12px}
+.fullview.hide,.hide{display:none!important}
+.w{display:inline;border-radius:7px;padding:2px 3px;cursor:pointer}
+.w.done{color:#aaa}
+.w.now{background:#ffe7a3;outline:2px solid #f0c85e}
+.actions{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:8px}
+.actions button{min-height:54px;font-size:1.02rem}
+.wide{grid-column:1/-1}
+.status{min-height:46px;margin-top:10px;background:#eef8fc;border:2px solid #cce5ef;border-radius:14px;padding:10px;text-align:center;color:#49636d}
+.dialog{border:0;border-radius:22px;padding:0;width:min(700px,calc(100% - 24px));box-shadow:0 20px 60px #0003}
+.dialog::backdrop{background:#0006}
+.dinner{padding:18px}
+.dinner h2{margin-top:0}
+#textName{width:100%;margin-bottom:8px}
+#newText{width:100%;min-height:220px;border:2px solid #d9d1bd;border-radius:15px;padding:12px;resize:vertical}
+.saved-list{margin-top:12px;max-height:180px;overflow:auto}
+.saved-item{display:flex;justify-content:space-between;gap:8px;padding:8px;border-bottom:1px solid #eee}
+.small{font-size:.82rem;color:#718089}
+@media(max-width:620px){.wrap{padding:10px 8px}.bigword{font-size:4rem;min-height:190px}.fullview{font-size:1.3rem}.actions{grid-template-columns:1fr 1fr}.wide{grid-column:1/-1}.topbtn{font-size:.8rem}}
 </style>
 <script>
 window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
-  TOKEN_ENDPOINT: 'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token',
-  REGION: 'eastus',
-  VOICE: 'ar-JO-SanaNeural',
-  SDK_URL: 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'
+  TOKEN_ENDPOINT:'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token',
+  REGION:'eastus',
+  VOICE:'ar-JO-SanaNeural',
+  SDK_URL:'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'
 };
 </script>
-<style id="v8-shell-style">
-  .v8-tabs{
-    display:flex;gap:7px;margin:0 auto 12px;max-width:760px;
-  }
-  .v8-tab{
-    flex:1;padding:11px 10px;border:2px solid #d9cdb2;border-radius:14px;
-    background:#fff;color:#2f3437;font-family:"Baloo Bhaijaan 2","Noto Naskh Arabic",sans-serif;
-    font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 3px 0 #d9cdb2;
-  }
-  .v8-tab.act{background:#2f3437;color:#fff;border-color:#2f3437;box-shadow:0 3px 0 #2f3437}
-  .v8-section.hide{display:none!important}
-  #dictationFrame{
-    width:100%;height:min(900px,calc(100vh - 125px));min-height:720px;
-    border:0;border-radius:22px;background:#efe7d4;display:block;
-  }
-  @media (max-width:700px){
-    #dictationFrame{min-height:780px;height:calc(100vh - 105px)}
-  }
-</style>
-<style id="v9-css">
-  .v9-dashboard{
-    max-width:760px;margin:0 auto 12px;padding:12px;background:#fbf6e9;
-    border:1px solid #e6dcc6;border-radius:18px;box-shadow:0 8px 20px -14px rgba(47,52,55,.45)
-  }
-  .v9-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
-  .v9-stat{background:#fff;border:2px solid #e6dcc6;border-radius:12px;padding:8px;text-align:center}
-  .v9-stat b{display:block;font-size:1.05rem}
-  .v9-stat span{font-size:.72rem;color:#7b8085}
-  .v9-actions{display:flex;gap:7px;margin-top:8px}
-  .v9-actions button{flex:1;padding:9px;border:2px solid #d9cdb2;border-radius:12px;background:#fff;font-weight:800;box-shadow:0 2px 0 #d9cdb2}
-  .v9-panel{
-    background:#fff;border:2px solid #e6dcc6;border-radius:14px;padding:10px;margin-top:8px;
-    font-family:var(--font-ui)
-  }
-  .v9-panel h3{margin:0 0 6px;font-size:.95rem}
-  .v9-chip{display:inline-block;padding:5px 8px;margin:3px;border-radius:999px;background:#fff3cf;border:1px solid #f0b429;font-family:var(--font-read)}
-  .v9-hidden{display:none!important}
-  @media (max-width:600px){.v9-grid{grid-template-columns:repeat(2,1fr)}}
-</style>
-<style id="v10-css">
-  .v10-tools{max-width:760px;margin:10px auto;padding:10px;background:#fbf6e9;border:1px solid #e6dcc6;border-radius:18px}
-  .v10-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
-  .v10-btn{padding:10px 8px;border:2px solid #d9cdb2;border-radius:12px;background:#fff;font-family:inherit;font-weight:800;box-shadow:0 3px 0 #d9cdb2}
-  .v10-btn.act{background:#2f3437;color:#fff;border-color:#2f3437;box-shadow:0 3px 0 #2f3437}
-  .v10-panel{margin-top:8px;background:#fff;border:2px solid #e6dcc6;border-radius:14px;padding:10px}
-  .v10-panel h3{margin:0 0 8px;font-size:.95rem}
-  .v10-row{display:flex;gap:7px;flex-wrap:wrap}
-  .v10-chip{display:inline-block;padding:5px 8px;margin:3px;border-radius:999px;background:#fff3cf;border:1px solid #f0b429;font-family:var(--font-read)}
-  .v10-meter{height:10px;background:#e6dcc6;border-radius:999px;overflow:hidden}
-  .v10-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f0b429,#2f8f5b)}
-  .v10-small{font-size:.75rem;color:#7b8085}
-  @media(max-width:600px){.v10-grid{grid-template-columns:repeat(2,1fr)}}
-</style>
-<style id="v10-voice-clean-css">
-.v10-voice-card{margin-top:9px;padding:10px;border:2px solid #e6dcc6;border-radius:14px;background:#fff}
-.v10-voice-card h4{margin:0 0 8px}
-.v10-voice-line{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}
-.v10-voice-select,.v10-voice-input{width:100%;padding:10px;border:2px solid #d9cdb2;border-radius:12px;background:#fff;font:inherit}
-.v10-voice-btn{padding:9px 12px;border:2px solid #d9cdb2;border-radius:12px;background:#fff;font-weight:800;cursor:pointer}
-.v10-voice-btn.primary{background:#2f3437;color:#fff;border-color:#2f3437}
-.v10-voice-note{font-size:.74rem;color:#777;line-height:1.5}
-.v10-voice-status{font-weight:800;margin-top:6px}
-.v10-voice-ok{color:#27824b}.v10-voice-warn{color:#b36a00}.v10-voice-error{color:#c44536}
-</style>
-
-<style id="child-friendly-redesign">
-:root{--kid-blue:#67b8e9;--kid-green:#61c391;--kid-yellow:#ffd568;--kid-coral:#ff8b78;--kid-ink:#253844;--kid-soft:#f4fbff;--kid-line:#d8e8f0}
-body{background:linear-gradient(180deg,#edf8ff 0,#fffaf1 62%,#f3fff8 100%);color:var(--kid-ink)}
-body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 4%,rgba(255,214,104,.3),transparent 24%),radial-gradient(circle at 92% 10%,rgba(103,184,233,.22),transparent 26%),radial-gradient(circle at 85% 90%,rgba(97,195,145,.18),transparent 25%)}
-body>div:first-of-type{max-width:860px!important;margin:0 auto 10px!important;padding:2px}
-body>div:first-of-type a{border:0!important;background:#fff!important;color:#31576c!important;box-shadow:0 7px 0 #c9e2ee!important;border-radius:18px!important;padding:12px!important}
-.v9-dashboard,.v10-tools{max-width:860px;margin:12px auto;padding:0;background:transparent;border:0;box-shadow:none}
-.v9-dashboard{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.v9-grid{flex:1;min-width:280px;gap:8px}.v9-stat{border:2px solid var(--kid-line);background:#fff;border-radius:18px;box-shadow:0 5px 0 #e6f1f6}.v9-actions{width:auto;margin-top:0}.v9-actions button{border-color:#cfe4ee;box-shadow:0 4px 0 #cfe4ee;border-radius:16px}
-.v10-tools{background:#fff;border:2px solid var(--kid-line);border-radius:24px;padding:12px;box-shadow:0 10px 24px rgba(40,75,95,.08)}.v10-grid{grid-template-columns:repeat(3,1fr);gap:9px}.v10-btn{border-color:#cfe4ee;box-shadow:0 4px 0 #cfe4ee;border-radius:17px;padding:11px}.v10-btn.act{background:#4f9fcb;border-color:#3f81a5;box-shadow:0 4px 0 #3f81a5}
-.v10-voice-card{border-color:#d9eaf1;border-radius:20px;background:#fafdff}.v10-voice-btn{border-color:#cfe4ee;border-radius:15px}.v10-voice-btn.primary{background:#4f9fcb;border-color:#3f81a5}
-#v8ReadSection .wrap{max-width:860px}.card{background:#fffdf8;border:3px solid #e7e0cf;border-radius:30px;box-shadow:0 18px 36px rgba(40,75,95,.12);padding:24px}.bigword{font-size:clamp(3.2rem,10vw,6rem);line-height:1.15;margin:.1em 0}.counter{font-size:1rem;color:#71838d}.heard{background:#eef8ff;border:2px solid #cfe7f5;border-radius:16px;padding:10px}.note{display:block;color:#73848d;line-height:1.6}
-.text-manager{background:#fff;border:2px solid var(--kid-line);border-radius:22px;padding:10px}.top-actions{gap:8px}.top-actions button,.text-manager button{border-color:#cfe4ee;border-radius:15px;box-shadow:0 3px 0 #cfe4ee}.mode-strip button{border-color:#cfe4ee!important;border-radius:15px!important}.mode-strip button.active{background:#4f9fcb!important;border-color:#3f81a5!important}
-.controls{padding:9px 12px calc(10px + env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(237,248,255,.98) 76%,rgba(237,248,255,0));backdrop-filter:blur(6px)}.row{gap:8px}.controls button{border-radius:16px;box-shadow:0 4px 0 #bcd7e5;border-color:#bcd7e5}.controls button.main{background:#61c391;border-color:#3c9368;box-shadow:0 4px 0 #3c9368}.controls button.hear{background:#67b8e9;border-color:#3f88b4;box-shadow:0 4px 0 #3f88b4}.controls button.ghost{box-shadow:none}
-.win>div{max-width:620px;background:rgba(255,255,255,.12);border-radius:28px;padding:26px}.result-box{border-radius:18px}
-@media(max-width:700px){.v9-dashboard{display:block}.v9-actions{margin-top:9px}.v10-grid{grid-template-columns:repeat(2,1fr)}.card{padding:18px}.controls .row:first-child button{font-size:1rem}.controls{padding-left:8px;padding-right:8px}}
-</style>
 </head>
-<body><div style="max-width:760px;margin:0 auto 10px;display:flex;gap:8px;"><a href="reading_app_dictation.html" style="display:block;flex:1;text-align:center;text-decoration:none;background:#fff;border:2px solid #d9cdb2;border-radius:14px;padding:10px;font-weight:800;color:#2f3437;box-shadow:0 3px 0 #d9cdb2;">✍️ الانتقال إلى تدريب الإملاء</a></div>
-<div class="v9-dashboard" id="v9Dashboard">
-<div class="v9-grid">
-<div class="v9-stat"><b id="v9Lessons">0</b><span>جلسات</span></div>
-<div class="v9-stat"><b id="v9Words">0</b><span>كلمات</span></div>
-<div class="v9-stat"><b id="v9Best">0%</b><span>أفضل دقة</span></div>
-<div class="v9-stat"><b id="v9Streak">0</b><span>أفضل سلسلة</span></div>
-</div>
-<div class="v9-actions">
-<button id="v9ProgressBtn">📊 تقدمي</button>
-<button id="v9BackupBtn">💾 نسخة احتياطية</button>
-</div>
-<div class="v9-panel v9-hidden" id="v9ProgressPanel">
-<h3>🎯 الكلمات التي تحتاج تدريبًا</h3>
-<div id="v9HardWords">لا توجد كلمات صعبة مسجلة بعد.</div>
-</div>
-</div>
-
-<div class="v10-tools">
-<div class="v10-grid">
-<button class="v10-btn" id="v10Listen">🎧 استماع</button>
-<button class="v10-btn" id="v10ReadAlong">🗣️ اقرأ معي</button>
-<button class="v10-btn" id="v10Pron">🎤 قيّم نطقي</button>
-<button class="v10-btn" id="v10Hard">🎯 نقاط ضعفي</button>
-<button class="v10-btn" id="v10Progress">📊 تقدمي</button>
-<button class="v10-btn" id="v10Report">📄 تقرير</button>
-</div>
-<div class="v10-panel hide" id="v10Panel"></div>
-</div>
-<div class="child-intro" style="max-width:860px;margin:10px auto 8px;text-align:center;background:#fff;border:2px solid #d8e8f0;border-radius:22px;padding:12px 16px;box-shadow:0 8px 18px rgba(40,75,95,.07)"><div style="font-size:1.55rem">🌟 جاهزة للقراءة؟</div><div style="color:#6c7d86;font-size:.95rem">اسمعي أولًا 🔊 ثم اقرئي بهدوء 🎤 وخذي وقتك.</div></div><div id="v8ReadSection">
+<body>
 <div class="wrap">
 <header>
-<h1>اقرئي <span>كلمة كلمة</span> 📖</h1>
-<div class="stats">
-<div class="pill">⭐ <span id="score">0</span></div>
-<div class="pill">📊 <span id="prog">0</span>%</div>
-</div>
+  <h1>📖 تدريب القراءة</h1>
+  <button class="topbtn" id="advancedBtn">النسخة الحالية ⚙️</button>
 </header>
-<div class="banner hide" id="banner"></div>
-<div class="tabs">
-<button class="act" id="tabCard">🔠 كلمة وحدة</button>
-<button id="tabFull">📄 النص كامل</button>
-</div>
-<div class="text-manager">
-<div class="inline">
-<select aria-label="النصوص المحفوظة" id="savedTextSel"></select>
-<button class="ghost" id="manageTextsBtn">📚 نصوصي</button>
-</div>
-<div class="saved-count" id="savedCount">لا توجد نصوص محفوظة</div>
-</div>
-<div class="top-actions">
-<button id="progressBtn">📊 تقدّمي</button>
-<button id="backupTextsBtn">⬇ نصوصي</button>
-<button id="shareBtn">📤 مشاركة</button>
-</div>
-<div class="text-meta" id="textMeta">—</div>
-<div class="card" id="cardView">
-<div class="counter">الكلمة <span id="cnow">1</span> من <span id="ctot">1</span></div>
-<div class="ghostw"><span id="prevw"></span></div>
-<div class="bigword" id="bigword">…</div>
-<div class="ghostw"><span id="nextw"></span></div>
-</div>
-<div class="sheet hide" id="fullView">
-<div id="text"></div>
-</div>
-<div class="bar"><i id="fill"></i></div>
-<div aria-label="وضع القراءة" class="mode-strip">
-<button class="active" data-mode="word">🔠 كلمة</button>
 
-<button data-mode="full">📖 النص كامل</button>
-</div>
-<div class="pause-bar">
-<button id="repeatBtn">🔁 أعد الكلمة</button>
-<button id="pauseBtn">⏸ إيقاف مؤقت</button>
-</div>
-<div class="heard" id="heard">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
-<small class="note">🎧 Sana تقرأ لك — يمكنك التبديل بين كلمة/نص كامل، وإيقاف القراءة مؤقتًا أو إعادة الكلمة.</small>
-<div id="azureSecureStatus" style="margin-top:8px;font-size:.78rem;color:#2f8f5b;font-weight:700;text-align:center">☁️ Azure Neural: Sana — صوت تعليمي عبر Token</div>
-</div>
-<div class="mistakes" id="mistakesBox">
-<div class="mistakes-title">🎯 كلمات تحتاج تدريبًا</div>
-<div class="mistake-list" id="mistakeList"></div>
-</div>
-</div>
-<div id="v8ReadControlsWrap">
-<div class="controls">
-<div class="settings-hint" style="text-align:center;color:#6b7b83;font-size:.82rem;margin:0 0 8px">⚙️ إعدادات الصوت موجودة داخل «إعدادات الصوت» فقط</div>
-<div class="row">
-<button class="mic" id="micBtn">🎤 ابدئي القراءة</button>
-<button id="sayBtn">🔊 اسمعي</button>
-<button id="okBtn">✓ صح</button>
-</div>
-<div class="row">
-<button class="hold" id="holdBtn">🎙 اضغطي واحكِ</button>
-<button id="prevBtn">⏮ السابقة</button>
-<button id="nextBtn">⏭ التالية</button>
-</div>
-<div class="row">
-<button class="read" id="readBtn">📖 اقرأ لي النص</button>
-</div>
-<div class="row">
-<button class="ghost" id="recBtn">🎙 سجّل بصوتك</button>
-<button class="ghost" id="voiceBtn">⚙️ إعدادات الصوت</button>
-<button class="ghost" id="diagBtn">🩺 فحص</button>
-<button class="ghost" id="editBtn">✎ غيّري النص</button>
-<button class="ghost" id="resetBtn">↺ من البداية</button>
-</div>
-</div>
+<section class="card text-tools">
+  <div class="toolrow">
+    <select id="savedTextSel" aria-label="النصوص المحفوظة"></select>
+    <button class="primary" id="manageBtn">➕ إضافة / تعديل نص</button>
+  </div>
+  <div class="small" id="savedInfo" style="margin-top:7px"></div>
+</section>
+
+<div class="meta" id="textMeta">📖 النص · 0 كلمة</div>
+
+<section class="card reader">
+  <div id="wordView">
+    <div class="counter">الكلمة <span id="cnow">1</span> من <span id="ctot">1</span></div>
+    <div class="ghostw" id="prevw"></div>
+    <div class="bigword" id="bigword">…</div>
+    <div class="ghostw" id="nextw"></div>
+  </div>
+
+  <div id="fullView" class="fullview hide"></div>
+
+  <div class="progress"><i id="fill"></i></div>
+
+  <div class="modes">
+    <button class="mode" data-mode="full">📖 النص كامل</button>
+    <button class="mode active" data-mode="word">🔠 كلمة</button>
+  </div>
+
+  <div class="pause">
+    <button class="ghost" id="listenBtn">🔊 اسمعي</button>
+    <button class="ghost" id="pauseBtn">⏸ إيقاف مؤقت</button>
+  </div>
+
+  <div class="actions">
+    <button class="green" id="micBtn">🎤 ابدئي القراءة</button>
+    <button class="ghost" id="okBtn">✓ صح</button>
+    <button class="ghost" id="prevBtn">⏮ السابقة</button>
+    <button class="ghost" id="nextBtn">⏭ التالية</button>
+    <button class="gold wide" id="readFullBtn">📖 اقرأ لي النص</button>
+  </div>
+
+  <div class="status" id="status">اختاري كلمة وابدئي القراءة.</div>
+</section>
 </div>
 
-<div class="win" id="win">
-<div>
-<div style="font-size:4rem">🏆</div>
-<h2>أحسنتِ! خلّصتِ النص</h2>
-<div class="result-grid">
-<div class="result-box"><b id="resAccuracy">0%</b><span>الدقة</span></div>
-<div class="result-box"><b id="resTime">00:00</b><span>الوقت</span></div>
-<div class="result-box"><b id="resWords">0/0</b><span>الكلمات</span></div>
-</div>
-<p id="winMsg"></p>
-<button onclick="restart()" style="max-width:220px;margin:auto;background:#fff">↺ مرة ثانية</button>
-<button id="reviewBtn" style="max-width:220px;margin:8px auto 0;background:#fff">🎯 تدرب على الكلمات الصعبة</button>
-</div>
-</div>
-<dialog id="dlg">
-<h3 style="margin-top:0">📚 إدارة النصوص</h3>
-<input id="textName" placeholder="اسم النص، مثل: درس المدرسة" type="text"/>
-<textarea id="ta" placeholder="اكتبي النص هنا..."></textarea>
-<div class="row" style="margin-top:10px">
-<button id="saveNewTextBtn">💾 حفظ كنص جديد</button>
-<button class="ghost" id="updateTextBtn">✏️ تحديث النص</button>
-<button class="ghost" id="deleteTextBtn">🗑 حذف</button>
-</div>
-<div class="row" style="margin-top:8px">
-<button class="ghost" id="importTextsBtn">⬆ استرجاع نصوص</button>
-<button class="ghost" id="exportTextsBtn2">⬇ تصدير نصوص</button>
-</div>
-<div class="row" style="margin-top:8px">
-<button class="ghost" id="useTextBtn">▶ استخدام النص</button>
-<button class="ghost" onclick="document.getElementById('dlg').close()">إغلاق</button>
+<dialog class="dialog" id="textDlg">
+<div class="dinner">
+  <h2>📝 إضافة نص جديد</h2>
+  <input id="textName" placeholder="اسم النص، مثل: درس القراءة 1">
+  <textarea id="newText" placeholder="اكتبي النص العربي هنا..."></textarea>
+  <div class="toolrow" style="margin-top:10px">
+    <button class="green" id="saveNewBtn">💾 حفظ كنص جديد</button>
+    <button class="primary" id="updateBtn">✏️ تحديث النص الحالي</button>
+    <button class="ghost" id="deleteBtn">🗑 حذف النص</button>
+    <button class="ghost" id="closeDlg">إغلاق</button>
+  </div>
+  <div class="small" style="margin-top:10px">النصوص محفوظة على هذا الجهاز داخل المتصفح.</div>
 </div>
 </dialog>
-<dialog id="recDlg">
-<h3 style="margin-top:0">🎙 سجّلي الكلمات بصوتك</h3>
-<p style="margin:0 0 8px;font-size:.85rem;color:#7b8085">
-    اضغطي مطوّلاً على الزر الأحمر واقرأي الكلمة، وارفعي إصبعك. بتنحفظ على هذا الجهاز.</p>
-<div style="background:#fff3cf;border:2px solid #f0b429;border-radius:14px;padding:10px;margin-bottom:10px;text-align:center">
-<div style="font-size:.85rem;font-weight:800">🎙 سجّلي النص كامل بمرة وحدة</div>
-<div style="font-size:.78rem;color:#8b7a3a;margin:2px 0 8px">اقرئي النص كله بصوتك الطبيعي — أفضل من كلمة كلمة</div>
-<div id="fState" style="font-size:.8rem;color:#8b9096;min-height:1.2em">— مش مسجّل</div>
-<div class="row" style="margin-top:6px">
-<button id="fRec" style="background:#e2725b;color:#fff;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;flex:2">⏺ اضغطي واقرئي النص كامل</button>
-<button id="fPlay">▶ اسمعي</button>
-<button class="ghost" id="fDel">🗑</button>
-</div>
-</div>
-<div style="text-align:center;background:#fbf6e9;border-radius:14px;padding:10px;border:1px solid #e6dcc6">
-<div style="font-size:.78rem;color:#8b9096;font-weight:700">تسجيل كلمة كلمة (اختياري)</div>
-<div style="font-size:.8rem;color:#8b9096;font-weight:700">
-<span id="rNow">1</span> / <span id="rTot">1</span> — مسجّلة: <span id="rDone">0</span></div>
-<div id="rWord" style="font-family:var(--font-read);font-size:2.4rem;font-weight:700;padding:6px"></div>
-<div id="rState" style="font-size:.8rem;color:#8b9096;min-height:1.2em"></div>
-</div>
-<div class="row" style="margin-top:10px">
-<button id="rRec" style="background:#e2725b;color:#fff;border-color:#a8442f;box-shadow:0 4px 0 #a8442f;flex:2">⏺ اضغطي واقرأي</button>
-<button id="rPlay">▶ اسمعي</button>
-</div>
-<div class="row" style="margin-top:7px">
-<button class="ghost" id="rPrev">⏮ السابقة</button>
-<button class="ghost" id="rNext">⏭ التالية</button>
-<button class="ghost" id="rDel">🗑 امسحي</button>
-</div>
-<div class="row" style="margin-top:7px">
-<button class="ghost" id="rExp">⬇ نسخة احتياطية</button>
-<button class="ghost" id="rImp">⬆ استرجاع</button>
-<button class="ghost" onclick="document.getElementById('recDlg').close()">تمام</button>
-</div>
-<input accept="application/json" id="rFile" style="display:none" type="file"/>
-<input accept="application/json" id="textsFile" style="display:none" type="file"/>
-</dialog>
-<dialog id="voiceDlg">
-<h3 style="margin-top:0">🎚 إعدادات الصوت</h3>
-<div class="set">
-<label>محرك النطق</label>
-<select id="engineSel">
-<option value="azure">☁️ Azure Neural — الموصى به</option>
-<option value="device">📱 صوت الجهاز (احتياطي)</option>
-<option value="google">🌐 Google (احتياطي)</option>
-</select>
-<label>الصوت العربي</label>
-<select id="azureVoiceSel">
-<option value="ar-JO-SanaNeural">🇯🇴 Sana — أنثى أردنية</option>
-<option value="ar-JO-TaimNeural">🇯🇴 Taim — ذكر أردني</option>
-</select>
-<label>منطقة Azure (Region)</label>
-<input id="azureRegion" readonly="" value="eastus"/>
-<div style="font-size:.78rem;color:#7b8085;background:#fff3cf;border:1px solid #f0b429;border-radius:10px;padding:8px;margin-top:8px">🔐 مفتاح Azure محفوظ داخل الخادم ولا يتم وضعه داخل GitHub.</div>
-<small style="display:block;color:#8b9096;margin-top:5px;line-height:1.5">🔐 للاستخدام المحلي فقط. لتطبيق منشور، ضع الاستدعاء في خادم وسيط ولا تضع المفتاح داخل الموقع.</small>
-<label>الصوت المستخدم (عند اختيار صوت الجهاز)</label>
-<select id="voiceSel"></select>
-<label>سرعة القراءة: <span id="rateVal">0.70</span></label>
-<input id="rateSel" max="1.1" min="0.4" step="0.05" type="range" value="0.7"/>
-<div class="row" style="margin-top:7px">
-<button class="ghost" data-speed="0.60" type="button">🐢 بطيء</button>
-<button class="ghost" data-speed="0.75" type="button">🙂 تعليمي</button>
-<button class="ghost" data-speed="0.90" type="button">📖 طبيعي</button>
-</div>
-<label>نمط الوقفات</label>
-<select id="pausePreset">
-<option value="short">⚡ قصيرة</option>
-<option selected="" value="normal">🙂 طبيعية</option>
-<option value="long">🐢 طويلة</option>
-</select>
-
-<div class="chk"><input id="noTash" type="checkbox"/> <span>انطق بدون تشكيل (جرّبيها إذا اللفظ غريب)</span></div>
-<div class="row" style="margin-top:12px">
-<button onclick="testVoice()">🔊 جرّبي الصوت</button>
-<button class="ghost" onclick="document.getElementById('voiceDlg').close()">تمام</button>
-</div>
-</div>
-</dialog>
-<dialog id="progressDlg">
-<h3 style="margin-top:0">📊 تقدّمي</h3>
-<div class="progress-card">
-<h4 id="pTextName">النص الحالي</h4>
-<div class="progress-grid">
-<div class="prog-box"><b id="pAcc">0%</b><span>الدقة</span></div>
-<div class="prog-box"><b id="pBest">0</b><span>أفضل سلسلة</span></div>
-<div class="prog-box"><b id="pAttempts">0</b><span>المحاولات</span></div>
-<div class="prog-box"><b id="pWords">0</b><span>كلمات مقروءة</span></div>
-</div>
-<div class="history-list" id="historyList"></div>
-</div>
-<div class="row" style="margin-top:10px">
-<button id="exportProgressBtn">⬇ تصدير التقدم</button>
-<button class="ghost" onclick="document.getElementById('progressDlg').close()">تمام</button>
-</div>
-</dialog>
-<dialog id="diagDlg">
-<h3 style="margin-top:0">🩺 فحص الصوت والمايك</h3>
-<div id="diag">جارٍ الفحص…</div>
-<div class="row" style="margin-top:10px">
-<button onclick="document.getElementById('diagDlg').close()">تمام</button>
-</div>
-</dialog>
-<script id="v9-learning-script">
-(() => {
-  const KEY = "readingCoachV9";
-  const load = () => {
-    try { return JSON.parse(localStorage.getItem(KEY) || "{}"); }
-    catch(e){ return {}; }
-  };
-  const save = s => localStorage.setItem(KEY, JSON.stringify(s));
-
-  let state = Object.assign({
-    sessions: 0,
-    words: 0,
-    bestAccuracy: 0,
-    bestStreak: 0,
-    hard: {},
-    history: []
-  }, load());
-
-  function render(){
-    const totalHard = Object.entries(state.hard)
-      .filter(([_,v]) => v >= 1)
-      .sort((a,b)=>b[1]-a[1]);
-    const lessons = document.getElementById("v9Lessons");
-    const words = document.getElementById("v9Words");
-    const best = document.getElementById("v9Best");
-    const streak = document.getElementById("v9Streak");
-    const hard = document.getElementById("v9HardWords");
-    if(lessons) lessons.textContent = state.sessions;
-    if(words) words.textContent = state.words;
-    if(best) best.textContent = Math.round(state.bestAccuracy) + "%";
-    if(streak) streak.textContent = state.bestStreak;
-    if(hard){
-      hard.innerHTML = totalHard.length
-        ? totalHard.slice(0,20).map(([w,n]) =>
-            `<span class="v9-chip">${escapeHtml(w)} ×${n}</span>`).join("")
-        : "لا توجد كلمات صعبة مسجلة بعد.";
-    }
-  }
-  function escapeHtml(s){
-    return String(s).replace(/[&<>"']/g, c => ({
-      "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
-    }[c]));
-  }
-  function recordReading(wordsRead, accuracy, streak){
-    state.sessions += 1;
-    state.words += Math.max(0, Number(wordsRead)||0);
-    state.bestAccuracy = Math.max(state.bestAccuracy, Number(accuracy)||0);
-    state.bestStreak = Math.max(state.bestStreak, Number(streak)||0);
-    state.history.push({
-      type:"reading",
-      at:new Date().toISOString(),
-      words:Number(wordsRead)||0,
-      accuracy:Number(accuracy)||0,
-      streak:Number(streak)||0
-    });
-    state.history = state.history.slice(-50);
-    save(state); render();
-  }
-  function recordHard(word){
-    if(!word) return;
-    state.hard[word] = (state.hard[word] || 0) + 1;
-    save(state); render();
-  }
-  function exportBackup(){
-    const blob = new Blob([JSON.stringify(state,null,2)], {type:"application/json"});
-    const a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "reading-coach-progress.json";
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  }
-
-  // Expose a tiny API for the reading and dictation sections.
-  window.readingCoachV9 = {
-    recordReading,
-    recordHard,
-    getState: () => JSON.parse(JSON.stringify(state))
-  };
-
-  document.getElementById("v9ProgressBtn")?.addEventListener("click", () => {
-    document.getElementById("v9ProgressPanel")?.classList.toggle("v9-hidden");
-  });
-  document.getElementById("v9BackupBtn")?.addEventListener("click", exportBackup);
-
-  // Listen for events from the embedded dictation app.
-  window.addEventListener("message", e => {
-    if(!e.data || e.data.source !== "reading-coach-dictation") return;
-    if(e.data.type === "hardWord") recordHard(e.data.word);
-    if(e.data.type === "session"){
-      recordReading(e.data.words, e.data.accuracy, e.data.streak);
-    }
-    if(e.data.type === "speak" && typeof window.v10Voice?.speak === "function"){
-      window.v10Voice.speak(String(e.data.text||''), "azure");
-    }
-  });
-
-  render();
-})();
-</script>
-<script id="v10-voice-controller">
-(() => {
-  const KEY="readingCoachV10Voice";
-  const defaults={engine:"azure",azureVoice:"ar-JO-SanaNeural",deviceVoice:"",rate:0.7,pitch:0,volume:100};
-  let s=Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||"{}"));
-  const save=()=>localStorage.setItem(KEY,JSON.stringify(s));
-  const $=id=>document.getElementById(id);
-  const status=(text,cls="")=>{
-    const el=$("v10VoiceStatus"); if(!el)return;
-    el.textContent=text; el.className="v10-voice-status "+cls;
-  };
-
-  function populateVoices(){
-    const sel=$("v10DeviceVoice"); if(!sel)return;
-    const voices=window.speechSynthesis?.getVoices?.()||[];
-    sel.innerHTML="";
-    const preferred=voices.filter(v=>/^ar(-|_)/i.test(v.lang)||/arab|Arabic|عربي/i.test(v.name));
-    const list=preferred.length?preferred:voices;
-    list.forEach(v=>{
-      const o=document.createElement("option");
-      o.value=v.name; o.textContent=`${v.name} (${v.lang})`;
-      sel.appendChild(o);
-    });
-    if(!list.length){
-      const o=document.createElement("option"); o.value=""; o.textContent="لا توجد أصوات جهاز متاحة"; sel.appendChild(o);
-    }
-    if(s.deviceVoice && [...sel.options].some(o=>o.value===s.deviceVoice)) sel.value=s.deviceVoice;
-  }
-
-  function updateLabels(){
-    $("v10RateValue").textContent=Number(s.rate).toFixed(2);
-    $("v10PitchValue").textContent=String(s.pitch);
-    $("v10VolumeValue").textContent=String(s.volume)+"%";
-    $("v10Rate").value=s.rate; $("v10Pitch").value=s.pitch; $("v10Volume").value=s.volume;
-  }
-
-  async function speakSana(text){
-    if(!text) return;
-    if(typeof window.azureSpeak === "function"){
-      status("جارٍ تشغيل Sana…","v10-voice-warn");
-      return window.azureSpeak(text,null,{fallback:false, source:"voice-panel"});
-    }
-    status("محرك Azure لم يجهز بعد. جرّب مرة أخرى.","v10-voice-error");
-  }
-
-  function speakDevice(text){
-    if(!("speechSynthesis" in window)){status("المتصفح لا يدعم صوت الجهاز.","v10-voice-error");return;}
-    const voices=speechSynthesis.getVoices();
-    const v=voices.find(x=>x.name===s.deviceVoice)||voices.find(x=>/^ar/i.test(x.lang))||voices[0];
-    if(!v){status("لا يوجد صوت جهاز متاح.","v10-voice-warn");return;}
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text);
-    u.voice=v; u.lang=v.lang||"ar-JO"; u.rate=Number(s.rate); u.pitch=1+(Number(s.pitch)/20); u.volume=Number(s.volume)/100;
-    speechSynthesis.speak(u);
-    status(`📱 تم استخدام صوت الجهاز: ${v.name}`,"v10-voice-ok");
-  }
-
-  function currentSample(){
-    return (document.getElementById("bigword")?.textContent||"مرحبًا بك في تدريب القراءة").trim();
-  }
-
-  $("v10TestSana")?.addEventListener("click",()=>{
-    if(typeof window.azureSpeak === "function") window.azureSpeak(currentSample(),null,{fallback:false});
-    else speakSana(currentSample());
-  });
-  $("v10UseSana")?.addEventListener("click",()=>{
-    s.engine="azure"; save();
-    status("✓ Sana هي الصوت الافتراضي للتطبيق.","v10-voice-ok");
-  });
-  $("v10DeviceVoice")?.addEventListener("change",e=>{s.deviceVoice=e.target.value;save();});
-  $("v10Rate")?.addEventListener("input",e=>{s.rate=Number(e.target.value);updateLabels();save();});
-  $("v10Pitch")?.addEventListener("input",e=>{s.pitch=Number(e.target.value);updateLabels();save();});
-  $("v10Volume")?.addEventListener("input",e=>{s.volume=Number(e.target.value);updateLabels();save();});
-
-  window.v10Voice={
-    speak(text,mode){
-      const t=String(text||'').trim(); if(!t)return;
-      if(mode==="azure" && typeof window.azureSpeak === "function") {
-        window.azureSpeak(t,null,{fallback:false});
-        return;
-      }
-      (mode||s.engine)==="device" ? speakDevice(t) : speakSana(t);
-    },
-    getSettings:()=>({...s}),
-    setEngine:engine=>{s.engine=engine;save();}
-  };
-
-  updateLabels();
-  populateVoices();
-  if(window.speechSynthesis) speechSynthesis.onvoiceschanged=populateVoices;
-})();
-</script>
-<script id="v10-js">
-(() => {
-  const SDK_URL = (window.READING_APP_CONFIG||{}).SDK_URL;
-  const cfg = window.READING_APP_CONFIG || {};
-  const panel = document.getElementById("v10Panel");
-  const stateKey = "readingCoachV10";
-  let state = JSON.parse(localStorage.getItem(stateKey) || '{"hard":{},"sessions":0,"words":0,"bestAccuracy":0,"bestStreak":0,"history":[]}');
-
-  function persist(){ localStorage.setItem(stateKey, JSON.stringify(state)); }
-  function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
-  function showPanel(title, body){
-    panel.classList.remove("hide");
-    panel.innerHTML = `<h3>${escapeHtml(title)}</h3>${body}`;
-  }
-  function hidePanel(){ panel.classList.add("hide"); }
-
-  async function token(){
-    const url = cfg.TOKEN_ENDPOINT;
-    if(!url || url.includes("YOUR-FUNCTION-APP")) throw new Error("TOKEN_ENDPOINT غير مضبوط.");
-    const r = await fetch(url,{cache:"no-store"});
-    if(!r.ok) throw new Error("فشل الحصول على Speech token.");
-    return await r.json();
-  }
-  async function loadSdk(){
-    if(typeof window.loadAzureSdk === "function") return window.loadAzureSdk();
-    if(window.SpeechSDK) return window.SpeechSDK;
-    throw new Error("Azure SDK loader unavailable");
-  }
-  async function assessPronunciation(referenceText){
-    const SDK = await loadSdk();
-    const t = await token();
-    const speechConfig = SDK.SpeechConfig.fromAuthorizationToken(t.token, t.region || cfg.REGION || "eastus");
-    speechConfig.speechRecognitionLanguage = "ar-JO";
-    const audioConfig = SDK.AudioConfig.fromDefaultMicrophoneInput();
-    const rec = new SDK.SpeechRecognizer(speechConfig, audioConfig);
-    const pac = new SDK.PronunciationAssessmentConfig(
-      referenceText,
-      SDK.PronunciationAssessmentGradingSystem.HundredMark,
-      SDK.PronunciationAssessmentGranularity.Word,
-      true
-    );
-    pac.applyTo(rec);
-
-    return await new Promise((resolve, reject)=>{
-      rec.recognizeOnceAsync(result=>{
-        try{
-          const json = result.properties.getProperty(
-            SDK.PropertyId.SpeechServiceResponse_JsonResult
-          );
-          const data = JSON.parse(json || "{}");
-          const pa = data.NBest?.[0]?.PronunciationAssessment || {};
-          resolve({result, data, pa});
-        }catch(e){ reject(e); }
-        finally { rec.close(); }
-      }, err=>{
-        try{ rec.close(); }catch(e){}
-        reject(new Error(err?.toString?.() || "Pronunciation assessment failed"));
-      });
-    });
-  }
-
-  async function runPron(){
-    // Read current sentence/word from the existing reading page.
-    const currentText = (document.getElementById('bigword')?.textContent || '').trim();
-    const ref = (typeof window.getReadingReference==='function' ? window.getReadingReference() : currentText);
-    if(!ref){ showPanel("قيّم نطقي","لا توجد كلمة حالية."); return; }
-    showPanel("🎤 تقييم النطق", `<p>اقرأ: <strong>${escapeHtml(ref)}</strong></p><p>ابدأ الكلام الآن…</p>`);
-    try{
-      const r = await assessPronunciation(ref);
-      const score = Number(r.pa?.PronScore || r.pa?.AccuracyScore || 0);
-      showPanel("نتيجة النطق",
-        `<div class="v10-row"><strong>${escapeHtml(ref)}</strong><strong>${Math.round(score)}%</strong></div>
-         <div class="v10-meter"><i style="width:${Math.max(0,Math.min(100,score))}%"></i></div>
-         <p class="v10-small">النتيجة من Azure Pronunciation Assessment.</p>`);
-      state.sessions += 1;
-      state.words += 1;
-      state.bestAccuracy = Math.max(state.bestAccuracy, score);
-      state.history.push({type:"pronunciation",at:new Date().toISOString(),word:ref,score});
-      state.history = state.history.slice(-50);
-      if(score < 85) state.hard[ref] = (state.hard[ref]||0)+1;
-      persist();
-      renderProgress();
-    }catch(e){
-      showPanel("تعذر التقييم", `<p>${escapeHtml(e.message || e)}</p><p class="v10-small">تأكد من السماح بالمايك وبقاء اتصال الإنترنت.</p>`);
-    }
-  }
-
-  function renderProgress(){
-    const hard = Object.entries(state.hard).sort((a,b)=>b[1]-a[1]).slice(0,20);
-    return `
-      <div class="v10-row"><span>الجلسات: <b>${state.sessions}</b></span><span>الكلمات: <b>${state.words}</b></span></div>
-      <p>أفضل دقة: <b>${Math.round(state.bestAccuracy)}%</b></p>
-      <h4>🎯 نقاط الضعف</h4>
-      ${hard.length ? hard.map(([w,n])=>`<span class="v10-chip">${escapeHtml(w)} ×${n}</span>`).join("") : "لا توجد نقاط ضعف مسجلة بعد."}
-    `;
-  }
-
-  function report(){
-    const data = [
-      "تقرير مدرّب القراءة",
-      `التاريخ: ${new Date().toLocaleString("ar-JO")}`,
-      `الجلسات: ${state.sessions}`,
-      `الكلمات: ${state.words}`,
-      `أفضل دقة: ${Math.round(state.bestAccuracy)}%`,
-      "",
-      "نقاط الضعف:",
-      ...Object.entries(state.hard).sort((a,b)=>b[1]-a[1]).map(([w,n])=>`${w} ×${n}`)
-    ].join("\\n");
-    const blob = new Blob([data],{type:"text/plain;charset=utf-8"});
-    const a=document.createElement("a");
-    a.href=URL.createObjectURL(blob);
-    a.download="reading-coach-report.txt";
-    a.click();
-    setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  }
-
-  document.getElementById("v10Listen")?.addEventListener("click",()=>{
-    const text=(document.getElementById("bigword")?.textContent||"").trim();
-    if(window.v10Voice) window.v10Voice.speak(text,"azure");
-    else { const btn=document.getElementById("sayBtn"); if(btn) btn.click(); }
-  });
-
-  document.getElementById("v10ReadAlong")?.addEventListener("click",()=>{
-    const btn=document.getElementById("readBtn"); if(btn) btn.click();
-  });
-
-  document.getElementById("v10Pron")?.addEventListener("click",runPron);
-
-  document.getElementById("v10Hard")?.addEventListener("click",()=>{
-    const hard = Object.entries(state.hard).sort((a,b)=>b[1]-a[1]);
-    showPanel("🎯 نقاط ضعفي", hard.length
-      ? `<div>${hard.map(([w,n])=>`<span class="v10-chip">${escapeHtml(w)} ×${n}</span>`).join("")}</div>
-         <button class="v10-btn" id="v10TrainHard">🔁 ابدأ التدريب على الكلمات</button>`
-      : "لم يتم تسجيل كلمات صعبة بعد.");
-    document.getElementById("v10TrainHard")?.addEventListener("click",()=>{
-      const hardWords = Object.keys(state.hard);
-      if(!hardWords.length) return;
-      if(typeof window.build === "function") window.build(hardWords.join(" "));
-      hidePanel();
-    });
-  });
-
-  document.getElementById("v10Progress")?.addEventListener("click",()=>showPanel("📊 تقدمي",renderProgress()));
-  document.getElementById("v10Report")?.addEventListener("click",report);
-
-  // Export state for future integration with the embedded dictation section.
-  window.readingCoachV10 = {
-    addHardWord(word){ if(word){ state.hard[word]=(state.hard[word]||0)+1; persist(); } },
-    getState(){ return JSON.parse(JSON.stringify(state)); }
-  };
-})();
-</script>
 
 <script>
-// Global helper for the main reading/microphone script.
-window.escapeHtml = window.escapeHtml || function(s){
-  return String(s).replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
-};
-
-const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟";
-const TEXTS_STORAGE='readingSavedTextsV1';
-const SELECTED_TEXT_STORAGE='readingSelectedTextV1';
-const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const LANGS = ['ar-JO','ar-SA','ar-EG','ar'];
-let langI=0, words=[], idx=0, score=0, listening=false, rec=null, micOK=false;
-let reading=false, holdRec=null;
-let currentText={id:'',name:'',text:DEFAULT_TEXT};
-let savedTexts=[];
-let appState = {correct:0, wrong:0, streak:0, best:0, startedAt:null, mistakes:{}, attempts:0, finished:false, wordCount:0};
-let progressHistory=[];
-let readingMode='word';
-let pausedReading=false;
-let activeReadIndex=0;
-let readSessionStartedAt=null;
-let pausePreset='normal';
-const STORAGE='readingCoachV7';
-const HISTORY_STORAGE='readingCoachHistoryV7';
-function loadState(){try{const x=JSON.parse(localStorage.getItem(STORAGE)||'{}'); if(x && typeof x==='object') appState={...appState,...x,mistakes:x.mistakes||{}};}catch(e){}; try{const h=JSON.parse(localStorage.getItem(HISTORY_STORAGE)||'[]'); progressHistory=Array.isArray(h)?h:[];}catch(e){progressHistory=[];}}
-function saveState(){try{localStorage.setItem(STORAGE,JSON.stringify(appState)); localStorage.setItem(HISTORY_STORAGE,JSON.stringify(progressHistory.slice(-50)));}catch(e){}}
-function uid(){return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,8);}
+(() => {
+const CFG=window.READING_APP_CONFIG||{};
+const DEFAULT_TEXT="تدوين رؤوس الأقلام إحدى التقنيات التي دعت الحاجة إليها، نظرًا لكثرة وسائل الاتصال، فلم لا تبادر إلى استخدام هذه التقنية في دراستك؟";
+const TEXT_KEY="readingSimpleTextsV1", SELECT_KEY="readingSimpleSelectedV1";
+let saved=[], current=null, words=[], idx=0, score=0, mode="word", reading=false, paused=false;
+let audio=null, audioUrl="", micToken=0, micState={stream:null,recorder:null,chunks:[],timer:0,ctx:null,source:null,analyser:null,silenceTimer:0,monitorTimer:0,sawSpeech:false,startedAt:0};
+const $=id=>document.getElementById(id);
+const say=t=>$("status").textContent=t;
+const uid=()=>Date.now().toString(36)+"-"+Math.random().toString(36).slice(2,8);
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c]));}
 function loadTexts(){
-  try{savedTexts=JSON.parse(localStorage.getItem(TEXTS_STORAGE)||'[]'); if(!Array.isArray(savedTexts)) savedTexts=[];}catch(e){savedTexts=[];}
-  if(!savedTexts.length){savedTexts=[{id:uid(),name:'النص الافتراضي',text:DEFAULT_TEXT}];}
-  let selected=''; try{selected=localStorage.getItem(SELECTED_TEXT_STORAGE)||'';}catch(e){}
-  currentText=savedTexts.find(x=>x.id===selected)||savedTexts[0];
-  renderTextSelector();
+  try{saved=JSON.parse(localStorage.getItem(TEXT_KEY)||"[]");if(!Array.isArray(saved))saved=[]}catch(e){saved=[]}
+  if(!saved.length)saved=[{id:uid(),name:"النص الافتراضي",text:DEFAULT_TEXT}];
+  let id="";try{id=localStorage.getItem(SELECT_KEY)||""}catch(e){}
+  current=saved.find(x=>x.id===id)||saved[0]; saveTexts(); renderSelector(); build(current.text);
 }
-function saveTexts(){try{localStorage.setItem(TEXTS_STORAGE,JSON.stringify(savedTexts));localStorage.setItem(SELECTED_TEXT_STORAGE,currentText.id);}catch(e){}}
-function renderTextMeta(){
-  const el=$('textMeta'); if(!el)return;
-  const wc=words.length; const chars=(currentText.text||'').length;
-  const hist=progressHistory.filter(h=>h.textId===currentText.id);
-  const last=hist.length?hist[hist.length-1]:null;
-  el.textContent=`📖 ${currentText.name||'نص'} · ${wc} كلمة · ${chars} حرف` + (last?` · آخر دقة ${last.accuracy}%`:'');
+function saveTexts(){try{localStorage.setItem(TEXT_KEY,JSON.stringify(saved));if(current)localStorage.setItem(SELECT_KEY,current.id)}catch(e){}}
+function renderSelector(){
+  $("savedTextSel").innerHTML=saved.map(x=>`<option value="${escapeHtml(x.id)}">${escapeHtml(x.name)}</option>`).join("");
+  if(current)$("savedTextSel").value=current.id;
+  $("savedInfo").textContent=`${saved.length} ${saved.length===1?"نص محفوظ":"نصوص محفوظة"} — تُحفظ تلقائيًا على هذا الجهاز`;
 }
-function renderDashboard(){
-  $('score').textContent=score; $('prog').textContent=words.length?Math.round(idx/words.length*100):0;
-  const acc=accuracy(); const wordsRead=appState.wordCount||appState.correct||0;
-  const s=$('pTextName'); if(s)s.textContent=currentText.name||'النص الحالي';
-  ['pAcc','pBest','pAttempts','pWords'].forEach(()=>{});
-  if($('pAcc'))$('pAcc').textContent=acc+'%'; if($('pBest'))$('pBest').textContent=appState.best||0; if($('pAttempts'))$('pAttempts').textContent=appState.attempts||0; if($('pWords'))$('pWords').textContent=wordsRead;
-  const list=$('historyList'); if(list){ list.innerHTML=''; const hist=progressHistory.filter(h=>h.textId===currentText.id).slice().reverse().slice(0,12); hist.forEach(h=>{const d=document.createElement('div');d.className='history-item';d.innerHTML=`<span>${new Date(h.at).toLocaleString('ar-JO',{dateStyle:'short',timeStyle:'short'})}</span><b>${h.accuracy}% · ${h.correct}/${h.total}</b>`;list.appendChild(d);}); if(!hist.length)list.innerHTML='<div class="history-item">لا توجد محاولات محفوظة بعد.</div>'; }
-  renderMistakes(); renderTextMeta();
+function cleanText(t){return String(t||"").replace(/\s+/g," ").trim()}
+function build(text){
+  stopReading(); stopMic();
+  const clean=cleanText(text);
+  words=clean?clean.split(/\s+/):[];
+  idx=0;score=0;
+  $("textName").value=current?.name||"";
+  $("newText").value=clean;
+  $("textMeta").textContent=`📖 ${current?.name||"النص"} · ${words.length} كلمة · ${clean.length} حرف`;
+  render();
 }
-function renderTextSelector(){
-  const sel=$('savedTextSel'); if(!sel)return;
-  sel.innerHTML='';
-  savedTexts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o);});
-  if(currentText?.id) sel.value=currentText.id;
-  const c=$('savedCount'); if(c)c.textContent=`${savedTexts.length} نص محفوظ` + (savedTexts.length===1?'':'نصوص');
+function render(){
+  const total=words.length||1;
+  $("cnow").textContent=Math.min(idx+1,total); $("ctot").textContent=words.length||0;
+  $("bigword").textContent=words[idx]||"🎉";
+  $("prevw").textContent=idx>0?words[idx-1]:"";
+  $("nextw").textContent=idx<words.length-1?words[idx+1]:"";
+  $("fill").style.width=(words.length?Math.round(idx/words.length*100):0)+"%";
+  document.querySelectorAll(".w").forEach((e,i)=>{e.classList.toggle("done",i<idx);e.classList.toggle("now",i===idx&&!reading)});
+  renderFull();
 }
-function selectSavedText(id, autoStart=true){
-  const t=savedTexts.find(x=>x.id===id); if(!t)return;
-  currentText=t; saveTexts(); renderTextSelector();
-  stopAll(); build(t.text); resetLessonStats(); say('📖 النص المختار: '+t.name);
-  const ta=$('ta'),name=$('textName'); if(ta)ta.value=t.text; if(name)name.value=t.name;
+function renderFull(){
+  const box=$("fullView"); box.innerHTML="";
+  words.forEach((w,i)=>{const s=document.createElement("span");s.className="w"+(i<idx?" done":"")+(i===idx&&!reading?" now":"");s.textContent=w;s.onclick=()=>{idx=i;render();};box.appendChild(s);box.appendChild(document.createTextNode(" "));});
 }
-function openTextManager(){
-  const ta=$('ta'),name=$('textName'); if(ta)ta.value=currentText.text; if(name)name.value=currentText.name;
-  $('dlg').showModal();
+function setMode(m){
+  mode=m; document.querySelectorAll("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===m));
+  $("wordView").classList.toggle("hide",m!=="word"); $("fullView").classList.toggle("hide",m!=="full");
+  render();
 }
-function createSavedText(){
-  const name=($('textName').value||'').trim()||`نص ${savedTexts.length+1}`;
-  const text=($('ta').value||'').trim();
-  if(!text){say('اكتبي نصًا أولًا.');return;}
-  const t={id:uid(),name,text}; savedTexts.push(t); currentText=t; saveTexts(); renderTextSelector(); build(t.text); resetLessonStats(); say('✅ تم حفظ النص: '+name);
+function stopReading(){
+  reading=false;paused=false;
+  try{speechSynthesis.cancel()}catch(e){}
+  if(audio){try{audio.pause();audio.currentTime=0}catch(e){}}
+  $("listenBtn").textContent="🔊 اسمعي"; $("pauseBtn").textContent="⏸ إيقاف مؤقت";
+  document.querySelectorAll(".w").forEach(e=>e.classList.remove("now"));
+  render();
 }
-function updateSavedText(){
-  const text=($('ta').value||'').trim();
-  if(!text){say('اكتبي نصًا أولًا.');return;}
-  const name=($('textName').value||'').trim()||currentText.name||'نص بدون اسم';
-  const i=savedTexts.findIndex(x=>x.id===currentText.id);
-  if(i<0)return;
-  savedTexts[i]={...savedTexts[i],name,text}; currentText=savedTexts[i]; saveTexts(); renderTextSelector(); invalidateFullAudioCache(); build(text); resetLessonStats(); say('✅ تم تحديث النص: '+name);
+async function getToken(){
+  const r=await fetch(CFG.TOKEN_ENDPOINT,{cache:"no-store"});if(!r.ok)throw Error("فشل الحصول على Speech token");return r.json();
 }
-function deleteSavedText(){
-  if(savedTexts.length<=1){say('يجب أن يبقى نص واحد على الأقل.');return;}
-  const i=savedTexts.findIndex(x=>x.id===currentText.id); if(i<0)return;
-  const name=currentText.name; savedTexts.splice(i,1); currentText=savedTexts[Math.max(0,i-1)]; saveTexts(); renderTextSelector(); build(currentText.text); resetLessonStats(); say('🗑 تم حذف: '+name); $('dlg').close();
-}
-function useManagedText(){
-  const text=($('ta').value||'').trim(); if(!text){say('اكتبي نصًا أولًا.');return;}
-  currentText={...currentText,name:(($('textName').value||'').trim()||currentText.name||'نص جديد'),text};
-  const i=savedTexts.findIndex(x=>x.id===currentText.id); if(i>=0)savedTexts[i]=currentText; else {currentText.id=uid();savedTexts.push(currentText);}
-  saveTexts(); renderTextSelector(); build(text); resetLessonStats(); say('📖 تم استخدام النص: '+currentText.name); $('dlg').close();
-}
-function recordWrong(target){appState.wrong++;appState.attempts++;appState.streak=0;appState.wordCount=(appState.wordCount||0)+1; const k=norm(target); appState.mistakes[k]=(appState.mistakes[k]||0)+1;saveState();renderDashboard();}
-function recordCorrect(target){appState.correct++;appState.attempts++;appState.streak++;appState.wordCount=(appState.wordCount||0)+1;appState.best=Math.max(appState.best,appState.streak);saveState();renderDashboard();}
-function renderMistakes(){const box=$('mistakesBox'),list=$('mistakeList'); if(!box||!list)return; const entries=Object.entries(appState.mistakes||{}).sort((a,b)=>b[1]-a[1]).slice(0,12); box.classList.toggle('show',entries.length>0); list.innerHTML=''; entries.forEach(([k,n])=>{const b=document.createElement('button');b.className='mistake-chip';b.textContent=k+' ×'+n;b.onclick=()=>{const i=words.findIndex(w=>norm(w)===k);if(i>=0){idx=i;paint();say('🎯 تدرّبي على: '+words[i]);}};list.appendChild(b);});}
-function accuracy(){ const total=(appState.correct||0)+(appState.wrong||0); return total?Math.round((appState.correct||0)/total*100):0; }
-function elapsedMs(){ return appState.startedAt ? Math.max(0,Date.now()-appState.startedAt) : 0; }
-function fmtTime(ms){ const sec=Math.floor((ms||0)/1000), m=Math.floor(sec/60), s=sec%60; return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
-function tickDashboard(){
-  if(appState.startedAt && !appState.finished){
-    const el=document.getElementById('liveTime'); if(el)el.textContent=fmtTime(elapsedMs());
-    const el2=document.getElementById('liveAcc'); if(el2)el2.textContent=accuracy()+'%';
-  }
-}
-function resetLessonStats(){ appState={correct:0,wrong:0,streak:0,best:0,startedAt:Date.now(),mistakes:{},attempts:0,finished:false,wordCount:0}; pausedReading=false; activeReadIndex=0; readSessionStartedAt=Date.now(); saveState(); renderDashboard(); }
-function restoreDashboard(){loadState();renderDashboard();}
-let micStartToken=0, holdStartToken=0, fullRecToken=0, wordRecToken=0;
-const $ = id => document.getElementById(id);
-const say = h => $('heard').textContent = h;
-function norm(s){
-  return (s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
-    .replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه")
-    .replace(/ؤ/g,"و").replace(/ئ/g,"ي")
-    .replace(/[^\u0621-\u064A0-9a-zA-Z]/g,"").trim();
-}
-function sim(a,b){
-  if(a===b) return 1;
-  if(!a||!b) return 0;
-  const m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>[i,...Array(n).fill(0)]);
-  for(let j=0;j<=n;j++) d[0][j]=j;
-  for(let i=1;i<=m;i++) for(let j=1;j<=n;j++)
-    d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));
-  return 1-d[m][n]/Math.max(m,n);
-}
-function accept(said,target){
-  const t=norm(target), s=norm(said);
-  if(!t) return true; if(!s) return false; if(s===t) return true;
-  if(t.length>3 && (s.includes(t)||t.includes(s))) return true;
-  const th = t.length<=3 ? .95 : (t.length<=5 ? .75 : .68);
-  return sim(s,t) >= th;
-}
-
-function primeMic(){
-  return new Promise(async resolve=>{
-    try{
-      if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){ resolve(false); return; }
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      stream.getTracks().forEach(t=>t.stop());
-      micOK=true; resolve(true);
-    }catch(e){
-      micOK=false; say(e?.name==='NotAllowedError'?'🎤 اسمحي للمتصفح باستخدام المايك ثم اضغطي مرة أخرى.':'🎤 تعذر فتح المايك.');
-      resolve(false);
-    }
+async function azureSpeak(text){
+  const t=await getToken();
+  const r=await fetch(`https://${CFG.REGION||t.region||"eastus"}.tts.speech.microsoft.com/cognitiveservices/v1`,{
+    method:"POST",
+    headers:{"Authorization":"Bearer "+t.token,"Content-Type":"application/ssml+xml","X-Microsoft-OutputFormat":"riff-24khz-16bit-mono-pcm"},
+    body:`<speak version="1.0" xml:lang="ar-JO"><voice name="${CFG.VOICE||"ar-JO-SanaNeural"}">${escapeXml(text)}</voice></speak>`,
+    cache:"no-store"
   });
+  if(!r.ok)throw Error("TTS_HTTP_"+r.status);
+  return new Blob([await r.arrayBuffer()],{type:"audio/wav"});
 }
-function makeRec(continuous=true){
-  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!R) throw new Error('SpeechRecognition unsupported');
-  const r=new R();
-  r.lang=LANGS[langI]||'ar-JO';
-  r.interimResults=true;
-  r.continuous=!!continuous;
-  r.maxAlternatives=5;
-  return r;
-}
-
-function recognitionErrorMessage(code){
-  const m={
-    'no-speech':'لم أسمع كلامًا. قرّبي الميكروفون وتكلمي بوضوح ثم حاولي مرة أخرى.',
-    'audio-capture':'لم أستطع الوصول إلى الميكروفون.',
-    'not-allowed':'اسمحي للمتصفح باستخدام الميكروفون.',
-    'service-not-allowed':'المتصفح منع خدمة التعرف على الصوت.',
-    'network':'تعذر الاتصال بخدمة التعرف على الصوت.',
-    'aborted':'تم إيقاف الاستماع.'
-  };
-  return m[code]||('تعذر التعرف على الصوت: '+code);
-}
-function handleT(said){
-  const heard=String(said||'').trim();
-  const target=words[idx]||'';
-  if(!target) return;
-  $('heard').innerHTML=heard?`سمعت: <b>${window.escapeHtml(heard)}</b>`:'استمع…';
-  if(accept(heard,target) || norm(heard).includes(norm(target))){
-    score++;
-    recordCorrect(target);
-    $('bigword').classList.add('ok','pop');
-    setTimeout(()=>$('bigword').classList.remove('pop','ok'),450);
-    beep(880,.12);
-    idx++;
-    stopMic();
-    if(idx>=words.length){paint();finish();}
-    else {paint();say('✅ ممتاز! الكلمة التالية: '+words[idx]);}
-  }
-}
-function build(txt){
-  invalidateFullAudioCache();
-  const box=$('text'); box.innerHTML="";
-  words = txt.trim().split(/\s+/).filter(Boolean);
-  words.forEach((w,i)=>{
-    const el=document.createElement('span');
-    el.className='w'; el.textContent=w; el.onclick=()=>{idx=i;paint();};
-    box.appendChild(el); box.appendChild(document.createTextNode(' '));
-  });
-  idx=0; score=0; pausedReading=false; activeReadIndex=0; readSessionStartedAt=Date.now(); paint(); refreshRecSet();
-  renderDashboard();
-  // جهّز صوت النص الكامل في الخلفية واحفظه على الجهاز. لا يبدأ التشغيل أو التأشير هنا.
-  setTimeout(()=>{ if(readingMode==='full') prepareFullAudio(false).catch(()=>{}); },120);
-}
-function paint(){
-  document.querySelectorAll('.w').forEach((el,i)=>{
-    el.classList.toggle('done',i<idx);
-    el.classList.toggle('now',i===idx && !reading);
-  });
-  $('bigword').textContent = words[idx] || '🎉';
-  $('bigword').className = 'bigword';
-  $('prevw').textContent = idx>0 ? words[idx-1] : '';
-  $('nextw').textContent = idx<words.length-1 ? words[idx+1] : '';
-  $('cnow').textContent = Math.min(idx+1, words.length);
-  $('ctot').textContent = words.length;
-  const pct = words.length ? Math.round(idx/words.length*100) : 0;
-  $('fill').style.width=pct+'%'; $('prog').textContent=pct; $('score').textContent=score;
-  const cur=document.querySelector('.w.now');
-  if(cur && !$('fullView').classList.contains('hide')) cur.scrollIntoView({block:'center',behavior:'smooth'});
-}
-let ac;
-function beep(f,d){
-  try{ ac = ac || new (window.AudioContext||window.webkitAudioContext)();
-    const o=ac.createOscillator(),g=ac.createGain(); o.frequency.value=f;
-    g.gain.setValueAtTime(.001,ac.currentTime);
-    g.gain.exponentialRampToValueAtTime(.22,ac.currentTime+.02);
-    g.gain.exponentialRampToValueAtTime(.001,ac.currentTime+d);
-    o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+d);
-  }catch(e){}
-}
-function allVoices(){ return speechSynthesis.getVoices(); }
-function arVoices(){ return allVoices().filter(v=>/^ar/i.test(v.lang)||/arab/i.test(v.name)); }
-let chosenVoice=null, rate=0.7, stripTash=false, warned=false;
-function fillVoices(){
-  const sel=$('voiceSel'); if(!sel) return;
-  const ar=arVoices(), all=allVoices();
-  const list = ar.length ? ar : all;
-  sel.innerHTML='';
-  list.forEach(v=>{ const o=document.createElement('option');
-    o.value=v.name; o.textContent=v.name+' ('+v.lang+')'; sel.appendChild(o); });
-  if(!chosenVoice && list.length) chosenVoice=list[0];
-  if(chosenVoice) sel.value=chosenVoice.name;
-  checkVoice();
-}
-function checkVoice(){
-  const bn=$('banner');
-  if(bn) bn.classList.add('hide');
-}let engine='azure';
-const azureAudio = new Audio(); azureAudio.preload='auto';
-const AZURE_TOKEN_ENDPOINT = (window.READING_APP_CONFIG||{}).TOKEN_ENDPOINT || 'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token';
-const AZURE_SDK_URL = (window.READING_APP_CONFIG||{}).SDK_URL || 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js';
-let azureVoice='ar-JO-SanaNeural';
-let azureRegion=(window.READING_APP_CONFIG||{}).REGION || 'eastus';
-let azureSpeechToken='';
-let azureTokenExpires=0;
-let azureSpeaking=false;
-let azureSpeakGeneration=0;
-let azureSdkPromise=null;
-let azureSynth=null;
-let azureSynthTokenKey="";
-azureAudio.preload='auto';
-let azureAudioUrl='';
-let azureQueueBusy=false;
-
-
-function loadAzureConfig(){
-  try{ azureVoice=localStorage.getItem('azureVoice')||'ar-JO-SanaNeural'; }catch(e){}
-  if($('azureVoiceSel')) $('azureVoiceSel').value=azureVoice;
-  if($('azureRegion')) $('azureRegion').value=azureRegion;
-  if($('engineSel')) $('engineSel').value='azure';
-}
-function saveAzureConfig(){
-  azureVoice=$('azureVoiceSel')?.value || azureVoice || 'ar-JO-SanaNeural';
-  try{localStorage.setItem('azureVoice',azureVoice);}catch(e){}
-}
-function setAzureStatus(msg){
-  const x=document.getElementById('v10VoiceStatus'); if(x) x.textContent=msg;
-  const y=document.getElementById('azureSecureStatus'); if(y && msg) y.textContent='☁️ '+msg;
-}
-function azureUserError(e){
-  const m=String(e?.message||e||'');
-  const map={
-    TOKEN_NETWORK_OR_CORS:'تعذر الوصول إلى خادم Token. تحقق من الإنترنت وCORS في Azure.',
-    TOKEN_HTTP_401:'Token: رفض الطلب 401. تأكد أن Function Authorization = Anonymous.',
-    TOKEN_HTTP_403:'Token: رفض الطلب 403. راجع صلاحيات Function/CORS.',
-    TOKEN_HTTP_404:'Token: الرابط غير صحيح (404).',
-    TOKEN_MISSING:'Token: الخادم لم يُرجع Speech token.',
-    TOKEN_BAD_JSON:'Token: الاستجابة ليست JSON صحيحة.',
-    SDK_LOAD_FAILED:'Speech SDK: تعذر تحميل المكتبة.',
-    SDK_LOAD_TIMEOUT:'Speech SDK: التحميل استغرق وقتًا طويلًا.',
-    SDK_LOAD_EMPTY:'Speech SDK: تم التحميل لكن SpeechSDK غير موجود.',
-    TTS_HTTP_400:'Azure TTS: الطلب مرفوض (400).',
-    TTS_HTTP_401:'Azure TTS: التوكن غير صالح أو المنطقة غير مطابقة (401).',
-    TTS_HTTP_403:'Azure TTS: رفضت الخدمة الطلب (403).',
-    TTS_HTTP_404:'Azure TTS: نقطة الخدمة غير صحيحة (404).',
-    TTS_HTTP_429:'Azure TTS: تم تجاوز الحد مؤقتًا (429).',
-    TTS_NETWORK_OR_CORS:'Azure TTS: تعذر الوصول إلى خدمة الصوت (شبكة/CORS).',
-    AUDIO_PLAY_BLOCKED:'المتصفح منع تشغيل الصوت. اضغط زر اختبار Sana مرة أخرى.',
-    TTS_EMPTY_AUDIO:'Azure TTS: لم يصل ملف صوتي.'
-  };
-  return map[m] || m || 'تعذر تشغيل Azure.';
-}
-async function loadAzureSdk(){
-  if(window.SpeechSDK) return window.SpeechSDK;
-  if(azureSdkPromise) return azureSdkPromise;
-  azureSdkPromise=new Promise((resolve,reject)=>{
-    const s=document.createElement('script');
-    s.src=AZURE_SDK_URL; s.async=true; s.crossOrigin='anonymous';
-    const to=setTimeout(()=>reject(new Error('SDK_LOAD_TIMEOUT')),15000);
-    s.onload=()=>{clearTimeout(to); window.SpeechSDK?resolve(window.SpeechSDK):reject(new Error('SDK_LOAD_EMPTY'));};
-    s.onerror=()=>{clearTimeout(to);reject(new Error('SDK_LOAD_FAILED'));};
-    document.head.appendChild(s);
-  }).catch(e=>{azureSdkPromise=null;throw e;});
-  return azureSdkPromise;
-}
-async function getAzureToken(force=false){
-  const now=Date.now();
-  if(!force && azureSpeechToken && now < azureTokenExpires-60000) return azureSpeechToken;
-  let res;
-  try{res=await fetch(AZURE_TOKEN_ENDPOINT,{method:'GET',cache:'no-store',headers:{'Accept':'application/json'}});}
-  catch(e){throw new Error('TOKEN_NETWORK_OR_CORS');}
-  if(!res.ok) throw new Error('TOKEN_HTTP_'+res.status);
-  let data; try{data=await res.json();}catch(e){throw new Error('TOKEN_BAD_JSON');}
-  if(!data.token) throw new Error('TOKEN_MISSING');
-  azureSpeechToken=data.token;
-  azureRegion=String(data.region || (window.READING_APP_CONFIG||{}).REGION || 'eastus').trim().toLowerCase();
-  azureVoice=data.voice || azureVoice || 'ar-JO-SanaNeural';
-  azureTokenExpires=Date.now()+9*60*1000;
-  return azureSpeechToken;
-}
-function azureRate(r){return Math.max(.65,Math.min(1.35,Number(r||rate||.9)));}
-function escapeXml(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
-function stripTashFn(t){return String(t||'').replace(/[\u064B-\u0652\u0670]/g,'');}
-function buildAzureSSML(text){
-  let clean=escapeXml(stripTashFn(text));
-  const pauseMap={short:{comma:110,end:250,colon:90},normal:{comma:170,end:360,colon:140},long:{comma:240,end:520,colon:200}};
-  const pp=pauseMap[pausePreset]||pauseMap.normal;
-  clean=clean.replace(/([،؛])/g,'$1<break time="'+pp.comma+'ms"/>').replace(/([.؟!])/g,'$1<break time="'+pp.end+'ms"/>').replace(/[:]/g,':<break time="'+pp.colon+'ms"/>');
-  const delta=Math.round((azureRate(rate)-1)*100);
-  const rateStr=(delta>=0?'+':'')+delta+'%';
-  return '<?xml version="1.0" encoding="utf-8"?><speak version="1.0" xmlns="http://www.w3.org/2001/10/synthesis" xml:lang="ar-JO"><voice name="'+escapeXml(azureVoice)+'"><prosody rate="'+rateStr+'">'+clean+'</prosody></voice></speak>';
-}
-function unlockAzureAudio(){
+function escapeXml(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&apos;")}
+async function speakText(text){
+  if(!text)return;
   try{
-    if(!azureAudio) return;
-    if(!azureAudio.paused) return;
-    azureAudio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
-    const p=azureAudio.play();
-    if(p&&p.then) p.then(()=>{try{azureAudio.pause();azureAudio.currentTime=0;}catch(e){}}).catch(()=>{});
-  }catch(e){}
-}
-document.addEventListener('pointerdown',unlockAzureAudio,{once:false,passive:true});
-document.addEventListener('touchstart',unlockAzureAudio,{once:false,passive:true});
-async function ensureAzureSynth(force=false){
-  // Reading playback uses Azure TTS REST audio, not the SpeechSynthesizer speaker output.
-  // This prevents the SDK from playing a second voice and avoids disposed synthesizer reuse.
-  return true;
-}
-let azureSpeakAbort=null;
-async function azureSpeak(t,cb,options={}){
-  const generation=++azureSpeakGeneration;
-  const text=String(t||'').trim();
-  if(!text){cb&&cb();return;}
-  try{
-    saveAzureConfig();
-    setAzureStatus('جارٍ تجهيز صوت Sana…');
-    if(azureSpeakAbort){ try{azureSpeakAbort.abort();}catch(e){} }
-    azureSpeakAbort=new AbortController();
-    const controller=azureSpeakAbort;
-    const token=await getAzureToken(false);
-    if(generation!==azureSpeakGeneration || controller.signal.aborted) return;
-    if(!token) throw new Error('TOKEN_MISSING');
-    const res=await fetch(`https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`,{
-      method:'POST',
-      headers:{
-        'Authorization':'Bearer '+token,
-        'Content-Type':'application/ssml+xml',
-        'X-Microsoft-OutputFormat':'riff-24khz-16bit-mono-pcm'
-      },
-      body:buildAzureSSML(text),
-      signal:controller.signal,
-      cache:'no-store'
-    });
-    if(generation!==azureSpeakGeneration || controller.signal.aborted) return;
-    if(!res.ok){
-      const e=new Error('TTS_HTTP_'+res.status);
-      throw e;
-    }
-    const data=await res.arrayBuffer();
-    if(generation!==azureSpeakGeneration || controller.signal.aborted) return;
-    if(!data || !data.byteLength) throw new Error('TTS_EMPTY_AUDIO');
-
-    if(options.playWhenActive && (!reading || pausedReading)) return;
-    if(azureAudioUrl){ try{URL.revokeObjectURL(azureAudioUrl);}catch(e){} }
-    azureAudioUrl=URL.createObjectURL(new Blob([data],{type:'audio/wav'}));
-    try{azureAudio.pause();}catch(e){}
-    try{azureAudio.currentTime=0;}catch(e){}
-    azureAudio.src=azureAudioUrl;
-    azureAudio.playbackRate=1;
-    await new Promise((resolve,reject)=>{
-      let settled=false;
-      const finish=(ok,err)=>{ if(settled)return; settled=true; if(generation!==azureSpeakGeneration) return resolve(); ok?resolve():reject(err||new Error('AUDIO_PLAY_FAILED')); };
-      azureAudio.onended=()=>{
-        if(generation!==azureSpeakGeneration) return finish(true);
-        setAzureStatus('✓ تم تشغيل Sana');
-        cb&&cb();
-        finish(true);
-      };
-      azureAudio.onerror=()=>{
-        if(generation===azureSpeakGeneration) setAzureStatus('✕ تعذر تشغيل ملف Sana');
-        finish(false,new Error('AUDIO_PLAY_FAILED'));
-      };
-      if(generation!==azureSpeakGeneration || controller.signal.aborted) return finish(true);
-      azureAudio.play().then(()=>setAzureStatus('✓ Sana تعمل')).catch(err=>finish(false,err));
-    });
+    const blob=await azureSpeak(text);
+    if(audio){try{audio.pause()}catch(e){}}
+    if(audioUrl)try{URL.revokeObjectURL(audioUrl)}catch(e){}
+    audioUrl=URL.createObjectURL(blob); audio=new Audio(audioUrl);
+    await audio.play();
   }catch(e){
-    if(e?.name==='AbortError' || generation!==azureSpeakGeneration) return;
-    console.error('azureSpeak failed',e);
-    setAzureStatus('✕ '+azureUserError(e));
-    cb&&cb();
-  }finally{
-    if(generation===azureSpeakGeneration) azureSpeakAbort=null;
+    try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang="ar-JO";u.rate=.72;speechSynthesis.speak(u)}catch(x){}
+    say("🔊 تم استخدام صوت الجهاز كاحتياط.");
   }
 }
-function cancelAzure(){
-  azureSpeakGeneration++;
-  try{ if(azureSpeakAbort) azureSpeakAbort.abort(); }catch(e){}
-  azureSpeakAbort=null;
-  try{ if(azureSynth){ azureSynth.close(); } }catch(e){}
-  azureSynth=null;
-  azureSynthTokenKey='';
-  try{azureAudio.pause();azureAudio.currentTime=0;}catch(e){}
-  try{if(azureAudioUrl){URL.revokeObjectURL(azureAudioUrl);azureAudioUrl='';}}catch(e){}
-  try{azureAudio.removeAttribute('src');azureAudio.load();}catch(e){}
-  try{azureAudio.onended=null;azureAudio.onerror=null;}catch(e){}
-}
-async function testAzureSana(){
-  setAzureStatus('🔎 فحص Sana…');
+function readWord(){const w=words[idx];if(!w)return;speakText(w);say("🔊 اسمعي الكلمة ثم اقرئيها.")}
+async function readFull(){
+  if(!words.length)return;
+  if(reading){stopReading();return}
+  reading=true;paused=false;idx=0;$("readFullBtn").textContent="⏹ إيقاف القراءة";$("pauseBtn").textContent="⏸ إيقاف مؤقت";
+  if(mode==="word") setMode("full");
   try{
-    saveAzureConfig();
-    const token=await getAzureToken(true);
-    if(!token) throw new Error('TOKEN_MISSING');
-    setAzureStatus('✓ Token يعمل — جارٍ اختبار الصوت…');
-    await azureSpeak('مرحبًا، أنا سَنا. هذا اختبار للصوت العربي الواضح على جهازك.',null,{fallback:false,source:'test'});
-  }catch(e){setAzureStatus('✕ '+azureUserError(e));}
+    // One Azure request for the full text; the simplified page does not preload/cache it.
+    const blob=await azureSpeak(words.join(" "));
+    if(!reading)return;
+    if(audioUrl)try{URL.revokeObjectURL(audioUrl)}catch(e){}
+    audioUrl=URL.createObjectURL(blob);audio=new Audio(audioUrl);
+    audio.ontimeupdate=()=>{if(!audio||!audio.duration)return;const p=Math.max(0,Math.min(0.999,audio.currentTime/audio.duration));idx=Math.min(words.length-1,Math.floor(p*words.length));render()};
+    audio.onended=()=>{reading=false;$("readFullBtn").textContent="📖 اقرأ لي النص";render()};
+    await audio.play();say("📖 استمعي إلى النص الكامل.");
+  }catch(e){reading=false;$("readFullBtn").textContent="📖 اقرأ لي النص";say("⚠️ تعذر تشغيل صوت النص.");}
 }
-window.loadAzureSdk=loadAzureSdk;
-window.testAzureSana=testAzureSana;
-function arVoice(){ return chosenVoice || arVoices()[0] || null; }
-
-function gUrl(t){
-  return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&total=1&idx=0&prev=input&textlen=' + t.length + '&q=' + encodeURIComponent(t);
+function resetMicState(){
+  clearTimeout(micState.timer);clearTimeout(micState.silenceTimer);clearTimeout(micState.monitorTimer);
+  try{micState.source?.disconnect()}catch(e){} try{micState.analyser?.disconnect()}catch(e){} try{micState.ctx?.close()}catch(e){}
+  try{micState.stream?.getTracks().forEach(t=>t.stop())}catch(e){}
+  micState={stream:null,recorder:null,chunks:[],timer:0,ctx:null,source:null,analyser:null,silenceTimer:0,monitorTimer:0,sawSpeech:false,startedAt:0};
 }
-let audioUnlocked=false;
-function unlockAudio(){
-  if(audioUnlocked) return;
-  audioUnlocked=true;
+function chooseMime(){const a=["audio/ogg;codecs=opus","audio/webm;codecs=opus","audio/webm","audio/mp4"];return a.find(x=>MediaRecorder.isTypeSupported?.(x))||""}
+function monitorSpeech(stream,rec,token){
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)return;
   try{
-    gAudio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
-    gAudio.play().then(()=>{ gAudio.pause(); }).catch(()=>{});
+    const ctx=new AC(),src=ctx.createMediaStreamSource(stream),an=ctx.createAnalyser();an.fftSize=1024;an.smoothingTimeConstant=.15;src.connect(an);
+    micState.ctx=ctx;micState.source=src;micState.analyser=an;micState.startedAt=Date.now();micState.sawSpeech=false;
+    const data=new Uint8Array(an.fftSize);
+    const check=()=>{if(token!==micToken||!micState.recorder||micState.recorder!==rec)return;an.getByteTimeDomainData(data);let sum=0;for(const v of data){const x=(v-128)/128;sum+=x*x}const rms=Math.sqrt(sum/data.length),elapsed=Date.now()-micState.startedAt;
+      if(rms>.035){micState.sawSpeech=true;clearTimeout(micState.silenceTimer);micState.silenceTimer=0}
+      else if(micState.sawSpeech&&elapsed>1100&&!micState.silenceTimer){micState.silenceTimer=setTimeout(()=>{try{if(rec.state!=="inactive")rec.stop()}catch(e){}},650)}
+      micState.monitorTimer=setTimeout(check,120)};
+    ctx.resume().catch(()=>{});check();
   }catch(e){}
 }
-document.addEventListener('pointerdown', unlockAudio, {once:true});
-function gTest(cb){
-  const a=new Audio();
-  const to=setTimeout(()=>cb({ok:false,why:'timeout'}),5000);
-  a.onloadedmetadata=()=>{clearTimeout(to); cb({ok:true,dur:a.duration});};
-  a.onerror=()=>{clearTimeout(to); cb({ok:false,why:(a.error&&a.error.message)||'error'});};
-  a.src=gUrl('مرحبا'); a.load();
-}
-function gRate(){ return Math.min(1, Math.max(.55, rate + .2)); }
-function stripT(t){ return t.replace(/[\u064B-\u0652\u0670]/g,''); }
-let gSpeakGuard=null;
-function gSpeak(t, cb){
-  try{
-    gAudio.pause();
-    gAudio.src = gUrl(stripTash ? stripT(t) : t);
-    gAudio.playbackRate = gRate();
-    const fallback=()=>{ if(gSpeakGuard) { clearTimeout(gSpeakGuard); gSpeakGuard=null; } engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); };
-    gAudio.onended = ()=>{ if(gSpeakGuard){ clearTimeout(gSpeakGuard); gSpeakGuard=null; } cb && cb(); };
-    gAudio.onerror = fallback;
-    gSpeakGuard=setTimeout(()=>{ if(gAudio.paused) fallback(); }, 3500);
-    gAudio.onplaying=()=>{ if(gSpeakGuard){ clearTimeout(gSpeakGuard); gSpeakGuard=null; } };
-    gAudio.play().catch(fallback);
-  }catch(e){ cb && cb(); }
-}
-const recAudio = new Audio();
-let recSet = new Set(), recIdx = 0, mr=null, mrChunks=[], mrStream=null;
-function idb(){
-  return new Promise((res,rej)=>{
-    const r = indexedDB.open('readingRecs',1);
-    r.onupgradeneeded = ()=> r.result.createObjectStore('recs');
-    r.onsuccess = ()=> res(r.result);
-    r.onerror = ()=> rej(r.error);
-  });
-}
-async function recGet(w){
-  try{ const d=await idb(); return await new Promise(res=>{
-    const q=d.transaction('recs').objectStore('recs').get(norm(w));
-    q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }); }catch(e){ return null; }
-}
-const FULL_KEY='__FULL_TEXT__';
-async function recPut(w,blob){
-  try{ const d=await idb(); await new Promise(res=>{
-    const q=d.transaction('recs','readwrite').objectStore('recs').put(blob,norm(w));
-    q.onsuccess=res; q.onerror=res; }); }catch(e){}
-}
-async function recDelete(w){
-  try{ const d=await idb(); await new Promise(res=>{
-    const q=d.transaction('recs','readwrite').objectStore('recs').delete(norm(w));
-    q.onsuccess=res; q.onerror=res; }); }catch(e){}
-}
-async function recKeys(){
-  try{ const d=await idb(); return await new Promise(res=>{
-    const q=d.transaction('recs').objectStore('recs').getAllKeys();
-    q.onsuccess=()=>res(q.result||[]); q.onerror=()=>res([]); }); }catch(e){ return []; }
-}
-async function refreshRecSet(){
-  recSet = new Set(await recKeys());
-  document.querySelectorAll('.w').forEach((el,i)=>el.classList.toggle('rec', recSet.has(norm(words[i]))));
-  const d=$('rDone'); if(d) d.textContent = words.filter(w=>recSet.has(norm(w))).length;
-}
-function hasRec(w){ return recSet.has(norm(w)); }
-async function speak(t, r, cb){
-  return azureSpeak(t, cb, {fallback:false, source:'reading', playWhenActive:true});
-}
-function speakDevice(t, r, cb){
-  try{
-    if(arVoices().length===0){
-      if(!warned){ warned=true; checkVoice(); say('⚠️ ما في صوت عربي على الجهاز — نزّليه عشان النطق يطلع صح.'); }
-      cb&&cb(); return;
-    }
-    const txt = stripTash ? t.replace(/[\u064B-\u0652\u0670]/g,'') : t;
-    const u=new SpeechSynthesisUtterance(txt);
-    const v=chosenVoice||arVoices()[0];
-    if(v){ u.voice=v; u.lang=v.lang; } else u.lang='ar-SA';
-    u.rate = r || rate; u.pitch=1;
-    u.onend=()=>cb&&cb(); u.onerror=()=>cb&&cb();
-    speechSynthesis.speak(u);
-  }catch(e){ cb&&cb(); }
-}
-function testVoice(){ testAzureSana(); }
-function repeatCurrentWord(){ if(!words[idx])return; stopRead(); azureSpeak(words[idx],null,{source:'repeat-word',playWhenActive:false}); }
-function pauseReading(){
-  if(!reading){ say('لا توجد قراءة جارية الآن.'); return; }
-  if(pausedReading){
-    pausedReading=false;
-    $('pauseBtn').textContent='⏸ إيقاف مؤقت';
-    try{ if(azureAudio.src) azureAudio.play().catch(()=>{}); }catch(e){}
-    return;
-  }
-  pausedReading=true;
-  $('pauseBtn').textContent='▶️ استئناف';
-  try{ azureAudio.pause(); }catch(e){}
-}
-
-function stopSpeechEngines(){try{if(azureSynth)azureSynth.stopSpeakingAsync(()=>{},()=>{});}catch(e){} try{speechSynthesis.cancel();}catch(e){} try{gAudio.pause();}catch(e){}}
-function continueReadingFrom(start){ if(!reading||pausedReading)return; activeReadIndex=start; if(readingMode==='word')readWords(start); else readFullTextAzure(); }
-
-window.loadAzureSdk=loadAzureSdk;
-function arVoice(){ return chosenVoice || arVoices()[0] || null; }
-
-function correct(){
-  const target=words[idx]||''; const b=$('bigword'); b.classList.add('ok','pop'); setTimeout(()=>b.classList.remove('pop'),450);
-  beep(880,.12); setTimeout(()=>beep(1320,.14),90); score++; recordCorrect(target); idx++;
-  if(idx>=words.length){ paint(); finish(); return; }
-  setTimeout(paint,180);
-}
-function wrong(){
-  const target=words[idx]||''; const b=$('bigword'); b.classList.add('miss'); setTimeout(()=>b.classList.remove('miss'),350); recordWrong(target);
-}
-function finish(){
-  stopAll();
-  appState.finished=true;
-  const entry={at:Date.now(),textId:currentText.id,textName:currentText.name,accuracy:accuracy(),correct:score,total:words.length,elapsed:elapsedMs()};
-  progressHistory.push(entry); saveState(); renderDashboard();
-  $('resAccuracy').textContent=entry.accuracy+'%'; $('resTime').textContent=fmtTime(entry.elapsed); $('resWords').textContent=score+'/'+words.length;
-  $('winMsg').textContent='قرأتِ '+words.length+' كلمة وجمعتِ '+score+' نجمة ⭐ — ممتاز!';
-  $('win').classList.add('show');
-  [523,659,784,1047].forEach((f,i)=>setTimeout(()=>beep(f,.25),i*140));
-  for(let i=0;i<60;i++) confetti();
-}
-function confetti(){
-  const c=document.createElement('div'); c.className='confetti';
-  c.style.left=Math.random()*100+'vw';
-  c.style.background=['#e2725b','#f0b429','#2f8f5b','#5aa9d6','#fff'][Math.floor(Math.random()*5)];
-  document.body.appendChild(c);
-  c.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(105vh) rotate(720deg)'}],
-    {duration:2200+Math.random()*1600,easing:'ease-in'}).onfinish=()=>c.remove();
-}
-function restart(){ $('win').classList.remove('show'); stopAll(); build(currentText.text); resetLessonStats(); say('📖 بدأنا من البداية: '+currentText.name); }
-function hi(i){
-  document.querySelectorAll('.w').forEach((el,k)=>el.classList.toggle('spk',k===i));
-  if(words[i]!==undefined){
-    $('bigword').textContent=words[i]; $('cnow').textContent=i+1;
-    $('prevw').textContent=i>0?words[i-1]:''; $('nextw').textContent=i<words.length-1?words[i+1]:'';
-  }
-}
-let readTimers=[];
-let fullAudioCache={key:'',blob:null,url:'',text:'',duration:0,ready:false,loading:false,promise:null};
-const FULL_AUDIO_DB='readingFullAudioCacheV1';
-const FULL_AUDIO_STORE='audio';
-function clearReadTimers(){ readTimers.forEach(t=>clearTimeout(t)); readTimers=[]; }
-function invalidateFullAudioCache(){
-  try{ if(fullAudioCache.url) URL.revokeObjectURL(fullAudioCache.url); }catch(e){}
-  fullAudioCache={key:'',blob:null,url:'',text:'',duration:0,ready:false,loading:false,promise:null};
-}
-function fullAudioKey(){
-  return [currentText.id||'', words.join(' '), azureVoice, rate, pausePreset, stripTash?'1':'0'].join('||');
-}
-function openFullAudioDB(){
-  return new Promise((resolve,reject)=>{
-    try{
-      const r=indexedDB.open(FULL_AUDIO_DB,1);
-      r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains(FULL_AUDIO_STORE)) r.result.createObjectStore(FULL_AUDIO_STORE); };
-      r.onsuccess=()=>resolve(r.result);
-      r.onerror=()=>reject(r.error||new Error('AUDIO_DB_OPEN_FAILED'));
-    }catch(e){ reject(e); }
-  });
-}
-async function fullAudioDBGet(key){
-  try{
-    const db=await openFullAudioDB();
-    return await new Promise(resolve=>{
-      const q=db.transaction(FULL_AUDIO_STORE,'readonly').objectStore(FULL_AUDIO_STORE).get(key);
-      q.onsuccess=()=>resolve(q.result||null);
-      q.onerror=()=>resolve(null);
-    });
-  }catch(e){ return null; }
-}
-async function fullAudioDBPut(key,blob){
-  try{
-    const db=await openFullAudioDB();
-    await new Promise(resolve=>{
-      const q=db.transaction(FULL_AUDIO_STORE,'readwrite').objectStore(FULL_AUDIO_STORE).put(blob,key);
-      q.onsuccess=()=>resolve(); q.onerror=()=>resolve();
-    });
-  }catch(e){}
-}
-async function prepareFullAudio(showStatus=true){
-  const text=words.join(' ').trim();
-  if(!text) return null;
-  const key=fullAudioKey();
-  if(fullAudioCache.key===key && fullAudioCache.ready && fullAudioCache.blob) return fullAudioCache;
-  if(fullAudioCache.key===key && fullAudioCache.loading && fullAudioCache.promise) return fullAudioCache.promise;
-  if(fullAudioCache.key!==key) invalidateFullAudioCache();
-  const myKey=key;
-  const promise=(async()=>{
-    try{
-      if(showStatus) setAzureStatus('☁️ التحقق من صوت النص المحفوظ…');
-      const stored=await fullAudioDBGet(myKey);
-      if(stored && stored.size>800){
-        const url=URL.createObjectURL(stored);
-        if(myKey!==fullAudioKey()){ try{URL.revokeObjectURL(url);}catch(e){}; return null; }
-        fullAudioCache={key:myKey,blob:stored,url:'',text,duration:0,ready:true,loading:false,promise:null};
-        if(showStatus) setAzureStatus('✓ الصوت المحفوظ جاهز — بدون إعادة تحميل');
-        return fullAudioCache;
-      }
-      if(showStatus) setAzureStatus('☁️ تجهيز صوت النص الكامل لأول مرة…');
-      saveAzureConfig();
-      const token=await getAzureToken(false);
-      if(myKey!==fullAudioKey()) return null;
-      const controller=new AbortController();
-      const res=await fetch(`https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`,{
-        method:'POST',
-        headers:{'Authorization':'Bearer '+token,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'riff-24khz-16bit-mono-pcm'},
-        body:buildAzureSSML(text), signal:controller.signal, cache:'no-store'
-      });
-      if(!res.ok) throw new Error('TTS_HTTP_'+res.status);
-      const data=await res.arrayBuffer();
-      if(!data || !data.byteLength) throw new Error('TTS_EMPTY_AUDIO');
-      if(myKey!==fullAudioKey()) return null;
-      const blob=new Blob([data],{type:'audio/wav'});
-      await fullAudioDBPut(myKey,blob);
-      if(myKey!==fullAudioKey()) return null;
-      const url=URL.createObjectURL(blob);
-      fullAudioCache={key:myKey,blob,url:'',text,duration:0,ready:true,loading:false,promise:null};
-      if(showStatus) setAzureStatus('✓ صوت النص الكامل جاهز ومحفوظ على الجهاز');
-      return fullAudioCache;
-    }catch(e){
-      if(showStatus) setAzureStatus('✕ '+azureUserError(e));
-      if(fullAudioCache.key===myKey) fullAudioCache.loading=false;
-      throw e;
-    }
-  })();
-  fullAudioCache={key,blob:null,url:'',text,duration:0,ready:false,loading:true,promise};
-  return promise;
-}
-
-function readWordOnly(i){
-  const text=words[i]||'';
-  if(!text){ stopRead(); return; }
-  activeReadIndex=i;
-  hi(i);
-  const done=()=>{ if(reading && !pausedReading) stopRead(); };
-  azureSpeak(text,done,{source:'word',playWhenActive:true});
-}
-
-async function readFullTextAzure(){
-  const text=words.join(' ').trim();
-  if(!text){ stopRead(); return; }
-  clearReadTimers();
-  activeReadIndex=0;
-  document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
-  // مهم: لا نحرّك التأشير أثناء تجهيز الصوت.
-  try{
-    const cached=await prepareFullAudio(true);
-    if(!reading || pausedReading || !cached || cached.key!==fullAudioKey()) return;
-    if(azureAudioUrl){ try{URL.revokeObjectURL(azureAudioUrl);}catch(e){} }
-    azureAudioUrl=URL.createObjectURL(cached.blob);
-    try{azureAudio.pause();}catch(e){}
-    try{azureAudio.currentTime=0;}catch(e){}
-    azureAudio.src=azureAudioUrl;
-    azureAudio.playbackRate=1;
-    await new Promise((resolve,reject)=>{
-      let settled=false;
-      let metadataReady=false;
-      const finish=(ok,err)=>{ if(settled)return; settled=true; ok?resolve():reject(err||new Error('AUDIO_PLAY_FAILED')); };
-      const markReady=()=>{ metadataReady=true; fullAudioCache.duration=Number.isFinite(azureAudio.duration)?azureAudio.duration:0; };
-      azureAudio.onloadedmetadata=markReady;
-      azureAudio.onloadeddata=markReady;
-      azureAudio.oncanplay=markReady;
-      azureAudio.onerror=()=>finish(false,new Error('AUDIO_PLAY_FAILED'));
-      // تتبع المؤشر من زمن الصوت الفعلي (currentTime)، وليس من مؤقتات مسبقة.
-      // هذا يجعل حركة المؤشر مرتبطة بما تسمعينه فعليًا، سواء كان الصوت جديدًا أو محفوظًا.
-      const totalChars=Math.max(1,text.length);
-      const cumulative=[];
-      let usedChars=0;
-      words.forEach(w=>{
-        cumulative.push(usedChars/totalChars);
-        usedChars += w.length+1;
-      });
-      const updateHighlight=()=>{
-        if(!reading || pausedReading) return;
-        const total=Number.isFinite(azureAudio.duration) && azureAudio.duration>0 ? azureAudio.duration : 0;
-        if(!total) return;
-        const ratio=Math.max(0,Math.min(0.999999,azureAudio.currentTime/total));
-        let lo=0,hiIdx=words.length-1,ans=0;
-        while(lo<=hiIdx){
-          const mid=(lo+hiIdx)>>1;
-          if(cumulative[mid] <= ratio){ ans=mid; lo=mid+1; }
-          else hiIdx=mid-1;
-        }
-        hi(ans);
-      };
-      azureAudio.ontimeupdate=updateHighlight;
-      azureAudio.onplay=()=>{
-        if(!reading || pausedReading) return;
-        document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
-        hi(0);
-        updateHighlight();
-      };
-      azureAudio.onended=()=>{ clearReadTimers(); finish(true); if(reading && !pausedReading) stopRead(); };
-      azureAudio.play().then(()=>{ if(!metadataReady){} }).catch(err=>finish(false,err));
-    });
-  }catch(e){
-    if(reading) setAzureStatus('✕ '+azureUserError(e));
-    stopRead();
-  }
-}
-
-async function readAloud(from){
-  if(reading){ stopRead(); return; }
-
-  // Hard-stop every other browser audio engine before starting the single reader.
-  try{ speechSynthesis.cancel(); }catch(e){}
-  try{ gAudio.pause(); gAudio.currentTime=0; }catch(e){}
-  try{ recAudio.pause(); recAudio.currentTime=0; }catch(e){}
-
-  stopMic();
-  pausedReading=false;
-  clearReadTimers();
-  $('pauseBtn').textContent='⏸ إيقاف مؤقت';
-  reading=true;
-  $('readBtn').textContent='⏹ وقّف القراءة';
-  readSessionStartedAt=Date.now();
-  activeReadIndex=(readingMode==='full') ? 0 : (from!==undefined ? from : idx);
-
-  if(readingMode==='full'){
-    await readFullTextAzure();
-    return;
-  }
-  readWordOnly(activeReadIndex);
-}
-
-function readWords(i){
-  const BATCH_WORDS=8;
-  const batch=words.slice(i,i+BATCH_WORDS);
-  if(!reading || !batch.length){ stopRead(); return; }
-  activeReadIndex=i;
-  hi(i);
-  speak(batch.join(' '),rate,()=>{
-    if(!reading || pausedReading) return;
-    const next=i+batch.length;
-    activeReadIndex=next;
-    if(next>=words.length){ stopRead(); return; }
-    setTimeout(()=>readWords(next),pausePreset==='long'?420:pausePreset==='short'?80:160);
-  });
-}
-
-function stopRead(){
-  reading=false;
-  pausedReading=false;
-  clearReadTimers();
-  cancelAzure();
-  try{ speechSynthesis.cancel(); }catch(e){}
-  try{ if(gAudio){ gAudio.onended=null; gAudio.onerror=null; } }catch(e){}
-  try{ gAudio.pause(); gAudio.currentTime=0; }catch(e){}
-  try{ recAudio.pause(); recAudio.currentTime=0; }catch(e){}
-  try{ azureAudio.pause(); azureAudio.currentTime=0; azureAudio.src=''; azureAudio.ontimeupdate=null; }catch(e){}
-  document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
-  $('readBtn').textContent='📖 اقرأ لي النص';
-  $('pauseBtn').textContent='⏸ إيقاف مؤقت';
-  paint();
-}
-
-let mobileMicState={stream:null,recorder:null,chunks:[],timer:0,token:0,ctx:null,sourceNode:null,analyser:null,silenceTimer:0,monitorTimer:0,sawSpeech:false,startedAt:0};
-
-function stopMobileMicTracks(){
-  clearTimeout(mobileMicState.timer);
-  clearTimeout(mobileMicState.silenceTimer);
-  clearTimeout(mobileMicState.monitorTimer);
-  try{mobileMicState.sourceNode?.disconnect();}catch(e){}
-  try{mobileMicState.analyser?.disconnect();}catch(e){}
-  try{mobileMicState.ctx?.close();}catch(e){}
-  try{mobileMicState.stream?.getTracks().forEach(t=>t.stop());}catch(e){}
-  mobileMicState={stream:null,recorder:null,chunks:[],timer:0,token:mobileMicState.token,ctx:null,sourceNode:null,analyser:null,silenceTimer:0,monitorTimer:0,sawSpeech:false,startedAt:0};
-}
-
-function startMobileSpeechMonitor(stream, recorder, token){
-  const AC=window.AudioContext||window.webkitAudioContext;
-  if(!AC || !stream) return false;
-  try{
-    const ctx=new AC();
-    const source=ctx.createMediaStreamSource(stream);
-    const analyser=ctx.createAnalyser();
-    analyser.fftSize=1024;
-    analyser.smoothingTimeConstant=0.15;
-    source.connect(analyser);
-    mobileMicState.ctx=ctx;
-    mobileMicState.sourceNode=source;
-    mobileMicState.analyser=analyser;
-    mobileMicState.sawSpeech=false;
-    mobileMicState.startedAt=Date.now();
-    const data=new Uint8Array(analyser.fftSize);
-    const check=()=>{
-      if(token!==micStartToken || !listening || mobileMicState.recorder!==recorder) return;
-      analyser.getByteTimeDomainData(data);
-      let sum=0;
-      for(let i=0;i<data.length;i++){ const x=(data[i]-128)/128; sum+=x*x; }
-      const rms=Math.sqrt(sum/data.length);
-      const elapsed=Date.now()-mobileMicState.startedAt;
-      const speaking=rms>0.035;
-      if(speaking){
-        mobileMicState.sawSpeech=true;
-        clearTimeout(mobileMicState.silenceTimer);
-        mobileMicState.silenceTimer=0;
-      }else if(mobileMicState.sawSpeech && elapsed>1100 && !mobileMicState.silenceTimer){
-        mobileMicState.silenceTimer=setTimeout(()=>{
-          if(token!==micStartToken || !listening || mobileMicState.recorder!==recorder) return;
-          try{if(recorder.state!=='inactive') recorder.stop();}catch(e){}
-        },650);
-      }
-      mobileMicState.monitorTimer=setTimeout(check,120);
-    };
-    ctx.resume().catch(()=>{});
-    check();
-    return true;
-  }catch(e){ return false; }
-}
-
-function chooseRecordMime(){
-  const types=['audio/ogg;codecs=opus','audio/webm;codecs=opus','audio/webm','audio/mp4'];
-  return types.find(t=>window.MediaRecorder?.isTypeSupported?.(t))||'';
-}
-
-async function blobToWav16kMono(blob){
-  const AC=window.AudioContext||window.webkitAudioContext;
-  if(!AC) throw new Error('AUDIO_CONTEXT_UNSUPPORTED');
+async function blobToWav(blob){
+  const AC=window.AudioContext||window.webkitAudioContext;if(!AC)throw Error("AUDIO_CONTEXT_UNSUPPORTED");
   const ctx=new AC();
   try{
-    await ctx.resume().catch(()=>{});
-    const buf=await blob.arrayBuffer();
-    const decoded=await ctx.decodeAudioData(buf.slice(0));
-    const targetRate=16000;
-    const frames=Math.max(1,Math.ceil(decoded.duration*targetRate));
-    const offline=new OfflineAudioContext(1,frames,targetRate);
-    const src=offline.createBufferSource(); src.buffer=decoded; src.connect(offline.destination); src.start(0);
-    const rendered=await offline.startRendering();
-    const ch=rendered.getChannelData(0), dataLen=ch.length*2;
-    // Find peak amplitude and normalize so quiet recordings are boosted
-    let peak=0;
-    for(let i=0;i<ch.length;i++){ const v=Math.abs(ch[i]); if(v>peak) peak=v; }
-    const gain = peak > 0.01 ? Math.min(3, 0.9/peak) : 1; // cap boost at 3x
-    const out=new ArrayBuffer(44+dataLen),dv=new DataView(out);
-    const write=(o,str)=>{for(let i=0;i<str.length;i++)dv.setUint8(o+i,str.charCodeAt(i));};
-    write(0,'RIFF');dv.setUint32(4,36+dataLen,true);write(8,'WAVE');write(12,'fmt ');
-    dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,targetRate,true);
-    dv.setUint32(28,targetRate*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);write(36,'data');dv.setUint32(40,dataLen,true);
-    let off=44;for(let i=0;i<ch.length;i++){const x=Math.max(-1,Math.min(1,ch[i]*gain));dv.setInt16(off,x<0?x*0x8000:x*0x7fff,true);off+=2;}
-    return new Blob([out],{type:'audio/wav'});
-  }finally{try{await ctx.close();}catch(e){}}
+    const decoded=await ctx.decodeAudioData((await blob.arrayBuffer()).slice(0)),rate=16000,frames=Math.max(1,Math.ceil(decoded.duration*rate)),offctx=new OfflineAudioContext(1,frames,rate);
+    const src=offctx.createBufferSource();src.buffer=decoded;src.connect(offctx.destination);src.start(0);const rendered=await offctx.startRendering(),ch=rendered.getChannelData(0),dataLen=ch.length*2;
+    let peak=0;for(let i=0;i<ch.length;i++)peak=Math.max(peak,Math.abs(ch[i]));const gain=peak>.01?Math.min(3,.9/peak):1;
+    const out=new ArrayBuffer(44+dataLen),dv=new DataView(out),wr=(o,s)=>{for(let i=0;i<s.length;i++)dv.setUint8(o+i,s.charCodeAt(i))};
+    wr(0,"RIFF");dv.setUint32(4,36+dataLen,true);wr(8,"WAVE");wr(12,"fmt ");dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,rate,true);dv.setUint32(28,rate*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);wr(36,"data");dv.setUint32(40,dataLen,true);
+    let o=44;for(let i=0;i<ch.length;i++){const x=Math.max(-1,Math.min(1,ch[i]*gain));dv.setInt16(o,x<0?x*0x8000:x*0x7fff,true);o+=2}
+    return new Blob([out],{type:"audio/wav"});
+  }finally{try{await ctx.close()}catch(e){}}
 }
-
-async function transcribeWavWithAzure(wav,token){
-  const url=`https://${azureRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=ar-SA&format=detailed`;
-  const res=await fetch(url,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'audio/wav; codecs=audio/pcm; samplerate=16000','Accept':'application/json'},body:wav,cache:'no-store'});
-  const body=await res.text();
-  if(!res.ok) throw new Error('STT_HTTP_'+res.status+(body?' '+body.slice(0,180):''));
-  let data={};try{data=JSON.parse(body||'{}');}catch(e){throw new Error('STT_BAD_JSON');}
-  // TEMP DIAGNOSTIC: log the full Azure response to see RecognitionStatus
-  // (values like "Success", "NoMatch", "InitialSilenceTimeout" tell us the real cause)
-  console.log('Azure STT response:', data); // TEMP — remove after confirming fix
-  // Use DisplayText/Display only — Lexical can return Latin-script
-  // phonetic transliterations, which we don't want here.
-  let text=(data.DisplayText||data.NBest?.[0]?.Display||'').trim();
-  // Reject any result that contains Latin letters — treat as no match
-  // rather than accepting/showing an English word.
-  if(text && /[A-Za-z]/.test(text)){
-    console.log('Rejected non-Arabic STT result:', text);
-    text='';
-  }
+async function transcribe(wav,tok){
+  const url=`https://${CFG.REGION||"eastus"}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=ar-SA&format=detailed`;
+  const r=await fetch(url,{method:"POST",headers:{"Authorization":"Bearer "+tok,"Content-Type":"audio/wav; codecs=audio/pcm; samplerate=16000","Accept":"application/json"},body:wav,cache:"no-store"});
+  const body=await r.text();if(!r.ok)throw Error("STT_HTTP_"+r.status);
+  let data={};try{data=JSON.parse(body||"{}")}catch(e){throw Error("STT_BAD_JSON")}
+  let text=(data.DisplayText||data.NBest?.[0]?.Display||"").trim();if(text&&/[A-Za-z]/.test(text))text="";
   return {text,data};
 }
-
+function norm(s){return String(s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"").replace(/[أإآٱ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/ؤ/g,"و").replace(/ئ/g,"ي").replace(/[^\u0621-\u064A]/g,"")}
+function similarity(a,b){a=norm(a);b=norm(b);if(a===b)return 1;if(!a||!b)return 0;let m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>{const r=Array(n+1);r[0]=i;return r});for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return 1-d[m][n]/Math.max(m,n)}
 async function startMic(){
-  const token=++micStartToken;
-  if(!window.isSecureContext){say('🔒 يجب فتح الموقع عبر HTTPS حتى يعمل المايك.');return;}
-  if(listening)return;
-  stopRead();stopMobileMicTracks();
+  if(reading)stopReading();if(mode!=="word"){say("🎤 القراءة الصوتية هنا للكلمة الحالية. اختاري «كلمة».");return}
+  const token=++micToken;
+  if(!window.isSecureContext || location.protocol!=="https:"){
+    say("🔒 تشغيل المايك على iPad يحتاج فتح الصفحة من رابط HTTPS مثل GitHub Pages، وليس من ملف HTML محفوظ على الجهاز.");
+    return;
+  }
+  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){say("⚠️ المتصفح لا يدعم تسجيل المايك.");return}
+  resetMicState();
   try{
-    if(!navigator.mediaDevices?.getUserMedia) throw new Error('MIC_UNSUPPORTED');
-    if(!window.MediaRecorder) throw new Error('RECORDER_UNSUPPORTED');
-    say('🎤 جاري فتح المايك…');
-    const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
-    if(token!==micStartToken){stream.getTracks().forEach(t=>t.stop());return;}
-    const mime=chooseRecordMime();
-    const recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
-    mobileMicState.stream=stream;mobileMicState.recorder=recorder;mobileMicState.chunks=[];mobileMicState.token=token;
-    recorder.ondataavailable=e=>{if(e.data?.size)mobileMicState.chunks.push(e.data);};
-    recorder.onerror=e=>{if(token===micStartToken){say('⚠️ حدث خطأ أثناء تسجيل الصوت.');stopMic();}};
-    recorder.onstop=async()=>{
-      const myToken=token;
-      const chunks=mobileMicState.chunks.slice();
-      const mimeType=recorder.mimeType||mime||'audio/webm';
-      const blob=new Blob(chunks,{type:mimeType});
-      stopMobileMicTracks();
-      if(myToken!==micStartToken)return;
-      listening=false;$('micBtn').classList.remove('on');$('micBtn').textContent='🎤 ابدئي القراءة';
-      if(blob.size<1000){say('🎤 لم يتم تسجيل صوت واضح.');return;}
+    say("🎙 اقرئي الكلمة الآن: "+(words[idx]||""));
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    if(token!==micToken){stream.getTracks().forEach(t=>t.stop());return}
+    const mime=chooseMime(),rec=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);micState.stream=stream;micState.recorder=rec;
+    rec.ondataavailable=e=>{if(e.data?.size)micState.chunks.push(e.data)};
+    rec.onstop=async()=>{
+      const blob=new Blob(micState.chunks,{type:rec.mimeType||mime||"audio/webm"});resetMicState();$("micBtn").textContent="🎤 ابدئي القراءة";
+      if(token!==micToken)return;
       try{
-        say('☁️ أجهّز الصوت للتعرّف…');
-        const speechToken=await getAzureToken(false);if(myToken!==micStartToken)return;
-        const wav=await blobToWav16kMono(blob);if(myToken!==micStartToken)return;
-        console.log('WAV size:', wav.size, 'bytes');
-        if(wav.size<5000){say('🎤 التسجيل قصير جدًا. جرّبي أن تبدئي الكلام بعد ظهور الرسالة مباشرة.');return;}
-        say('☁️ أتعرّف على الكلمة…');
-        const r=await transcribeWavWithAzure(wav,speechToken);if(myToken!==micStartToken)return;
-        if(r.text){
-          handleT(r.text);
-        }else{
-          say('🎤 لم أفهم الكلمة بوضوح. جرّبي تحكيها ببطء وبصوت أعلى قليلاً.');
-        }
-      }catch(e){
-        console.error('Azure mobile STT',e);
-        if(myToken===micStartToken){
-          const m=String(e?.message||e||'');
-          if(m==='STT_BAD_JSON')say('⚠️ Azure أرسل استجابة غير متوقعة.');
-          else if(m.startsWith('STT_HTTP_401'))say('⚠️ رمز Azure غير صالح لهذا التعرف.');
-          else if(m.startsWith('STT_HTTP_403'))say('⚠️ Azure رفض طلب التعرف على الصوت.');
-          else if(m.startsWith('STT_HTTP_400'))say('⚠️ Azure رفض التسجيل الصوتي.');
-          else if(m==='AUDIO_CONTEXT_UNSUPPORTED')say('⚠️ المتصفح لا يدعم تحويل التسجيل الصوتي.');
-          else say('⚠️ تعذر التعرف على الكلام: '+m);
-        }
-      }
+        say("☁️ أتعرف على الكلمة…");const t=await getToken();const wav=await blobToWav(blob);const r=await transcribe(wav,t.token);
+        if(!r.text){say("🎤 لم أفهم الكلمة بوضوح. جرّبي تحكيها ببطء وبصوت أعلى قليلاً.");return}
+        const sim=similarity(r.text,words[idx]);if(sim>=.72){score++;idx=Math.min(idx+1,words.length-1);say("✅ ممتاز! فهمت: "+r.text);render()}else{say("🔁 سمعت: "+r.text+" — جرّبي الكلمة مرة أخرى.")}
+      }catch(e){console.error(e);say("⚠️ تعذر التعرف على الكلام.")}
     };
-    recorder.start();
-    listening=true;$('micBtn').classList.add('on');$('micBtn').textContent='⏹ إيقاف التسجيل';
-    say('🎙 اقرئي الكلمة الآن: '+(words[idx]||''));
-    // Smart mobile capture: up to 3800ms, but stop earlier after a detected
-    // spoken word followed by a short silence. Falls back to the full window
-    // on browsers where the analyser is unavailable.
-    startMobileSpeechMonitor(stream,recorder,token);
-    mobileMicState.timer=setTimeout(()=>{
-      if(token!==micStartToken)return;
-      try{if(recorder.state!=='inactive')recorder.stop();}catch(e){}
-    },3800);
+    rec.start();$("micBtn").textContent="⏹ إيقاف التسجيل";monitorSpeech(stream,rec,token);
+    micState.timer=setTimeout(()=>{try{if(rec.state!=="inactive")rec.stop()}catch(e){}},3800);
   }catch(e){
-    console.error('mobile mic start failed',e);listening=false;stopMobileMicTracks();$('micBtn').classList.remove('on');$('micBtn').textContent='🎤 ابدئي القراءة';
-    if(e?.name==='NotAllowedError')say('🎤 اسمحي للمتصفح باستخدام المايك ثم اضغطي مرة أخرى.');
-    else say('⚠️ تعذر تشغيل المايك: '+(e?.message||e));
+    resetMicState();
+    console.error("iPad microphone error",e);
+    if(e?.name==="NotAllowedError")say("🎤 Safari منع استخدام المايك. افتحي الصفحة في Safari من رابط HTTPS، ثم اسمحي للمايك من إعدادات الموقع.");
+    else if(e?.name==="SecurityError")say("🔒 Safari يمنع المايك في هذا السياق. استخدمي صفحة HTTPS مباشرة وليست معاينة أو ملفًا محليًا.");
+    else if(e?.name==="OverconstrainedError")say("🎤 إعدادات المايك غير مناسبة لهذا الجهاز. اضغطي مرة أخرى للمحاولة.");
+    else say("⚠️ تعذر تشغيل المايك: "+(e?.message||e));
   }
 }
-
-function stopMic(){
-  ++micStartToken;
-  listening=false;
-  try{if(mobileMicState.recorder && mobileMicState.recorder.state!=='inactive') mobileMicState.recorder.stop();}catch(e){}
-  stopMobileMicTracks();
-  try{rec && (rec.onend=null,rec.stop());}catch(e){}
-  $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
-}
-
-function stopAll(){stopMic();reading=false;try{if(azureSynth)azureSynth.stopSpeakingAsync(()=>{},()=>{});}catch(e){} $('readBtn').textContent='📖 اقرأ لي النص'; try{speechSynthesis.cancel();}catch(e){} }
-async function holdStart(ev){
-  ev.preventDefault();
-  const token=++holdStartToken;
-  if(!SR){ say('المتصفح ما بيدعم المايك.'); return; }
-  if(!(await primeMic()) || token!==holdStartToken) return;
-  stopMic();
-  if(token!==holdStartToken) return;
-  try{
-    holdRec=makeRec(false);
-    holdRec.onresult=e=>{ let h="";
-      for(let i=e.resultIndex;i<e.results.length;i++)
-        for(let a=0;a<e.results[i].length;a++) h+=" "+e.results[i][a].transcript;
-      handleT(h); };
-    holdRec.onend=()=>{ $('holdBtn').textContent='🎙 اضغطي واحكِ'; };
-    holdRec.start(); $('holdBtn').textContent='🔴 احكِ الآن…';
-  }catch(e){}
-}
-function holdEnd(){ ++holdStartToken; try{ holdRec && holdRec.stop(); }catch(e){} }
-async function runDiag(){
-  const rows=[]; const add=(k,v,g)=>rows.push('<div><span>'+k+'</span><b style="color:'+(g?'#2f8f5b':'#e2725b')+'">'+v+'</b></div>');
-  add('التعرّف على الصوت', SR?'مدعوم ✓':'غير مدعوم ✗', !!SR);
-  add('اتصال آمن https', window.isSecureContext?'نعم ✓':'لا ✗', window.isSecureContext);
-  const v=arVoice();
-  add('صوت عربي للقراءة', v? v.name : 'ما في صوت عربي ✗', !!v);
-  add('عدد الأصوات', speechSynthesis.getVoices().length, true);
-  let perm='غير معروف', good=true;
-  try{ const p=await navigator.permissions.query({name:'microphone'}); perm=p.state; good=p.state!=='denied'; }catch(e){}
-  add('إذن المايك', perm, good);
-  try{ const st=await navigator.mediaDevices.getUserMedia({audio:true});
-    st.getTracks().forEach(t=>t.stop()); add('فتح المايك','نجح ✓',true);
-  }catch(e){ add('فتح المايك','فشل: '+e.name,false); }
-  add('اللغة', LANGS[langI], true);
-  add('المحرك الحالي', engine==='azure'?'☁️ Azure Neural':(engine==='google'?'🌐 Google':'📱 الجهاز'), true);
-  add('Azure Neural', azureConfigured()?'Token endpoint ✓':'غير مُعد', azureConfigured());
-  if(engine==='google'){ const g=await new Promise(r=>gTest(r)); add('اختبار صوت Google', g.ok?('يعمل ✓ ('+Math.round(g.dur*10)/10+'ث)'):('فشل: '+g.why), g.ok); } else { add('اختبار صوت Google','تخطي — Azure هو المحرك الرئيسي',true); }
-  $('diag').innerHTML = rows.join('') +
-   '<p style="margin:10px 0 0;color:#7b8085">إذا «صوت عربي» أحمر: نزّلي صوت عربي من إعدادات الجهاز (Android: إعدادات ثم اللغة ثم تحويل النص لكلام ثم تنزيل العربية — iPhone: الإعدادات ثم إمكانية الوصول ثم المحتوى المنطوق ثم الأصوات ثم العربية).</p>';
-}
-async function exportTexts(){
-  const payload={version:1,exportedAt:new Date().toISOString(),texts:savedTexts,selectedId:currentText.id};
-  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='reading-texts-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
-  say('⬇️ تم تصدير النصوص المحفوظة.');
-}
-async function importTexts(file){
-  try{const obj=JSON.parse(await file.text()); if(!Array.isArray(obj.texts))throw new Error('bad'); const byName=new Map(savedTexts.map(t=>[t.name,t])); obj.texts.forEach(t=>{if(t&&t.text){if(byName.has(t.name)){const old=byName.get(t.name);old.text=t.text;}else{savedTexts.push({id:uid(),name:t.name,text:t.text});}}}); currentText=savedTexts[0]; saveTexts(); renderTextSelector(); build(currentText.text); resetLessonStats(); say('✅ تم استرجاع النصوص.'); }catch(e){say('❌ ملف النصوص غير صالح.');}
-}
-function shareCurrentText(){
-  const text=`${currentText.name}\n\n${currentText.text}`;
-  if(navigator.share){navigator.share({title:currentText.name||'نص قراءة',text}).catch(()=>{});}else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>say('📋 تم نسخ النص للمشاركة.')).catch(()=>say('انسخي النص من إدارة النصوص.'));}else say('📋 انسخي النص من إدارة النصوص لمشاركته.');
-}
-function exportProgress(){ const payload={version:1,exportedAt:new Date().toISOString(),history:progressHistory, current:appState}; const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='reading-progress.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
-window.getReadingReference=()=> readingMode==='full' ? words.join(' ') : (words[idx]||'');
-$('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView').classList.add('hide');
-  $('tabCard').classList.add('act'); $('tabFull').classList.remove('act'); };
-$('tabFull').onclick=()=>{ $('fullView').classList.remove('hide'); $('cardView').classList.add('hide');
-  $('tabFull').classList.add('act'); $('tabCard').classList.remove('act'); paint(); };
-$('micBtn').onclick=async()=>{
-  if(listening){ stopMic(); say('⏹ توقّف الاستماع.'); return; }
-  stopRead();
-  await startMic();
+function stopMic(){++micToken;try{if(micState.recorder&&micState.recorder.state!=="inactive")micState.recorder.stop()}catch(e){}resetMicState();$("micBtn").textContent="🎤 ابدئي القراءة"}
+$("savedTextSel").onchange=()=>{const t=saved.find(x=>x.id===$("savedTextSel").value);if(t){current=t;saveTexts();build(t.text);say("📖 تم اختيار: "+t.name)}};
+$("manageBtn").onclick=()=>{$("textName").value=current?.name||"";$("newText").value=current?.text||"";$("textDlg").showModal()};
+$("closeDlg").onclick=()=>$("textDlg").close();
+$("saveNewBtn").onclick=()=>{
+  const name=($("textName").value||"").trim()||`نص ${saved.length+1}`,text=cleanText($("newText").value);if(!text){say("اكتبي نصًا أولًا.");return}
+  current={id:uid(),name,text};saved.push(current);saveTexts();renderSelector();build(text);$("textDlg").close();say("✅ تم حفظ النص الجديد.");
 };
-$('sayBtn').onclick=()=>{ if(words[idx]){ stopRead(); azureSpeak(words[idx],null,{source:'single-word',playWhenActive:false}); } };
-$('okBtn').onclick=()=> idx<words.length && correct();
-$('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
-$('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
-$('readBtn').onclick=()=> readAloud();
-$('resetBtn').onclick=()=>{ invalidateFullAudioCache(); stopAll(); restart(); };
-$('editBtn').onclick=openTextManager;
-$('manageTextsBtn').onclick=openTextManager;
-$('savedTextSel').onchange=e=>{ invalidateFullAudioCache(); selectSavedText(e.target.value); };
-$('saveNewTextBtn').onclick=createSavedText;
-$('updateTextBtn').onclick=updateSavedText;
-$('deleteTextBtn').onclick=deleteSavedText;
-$('useTextBtn').onclick=useManagedText;
-$('progressBtn').onclick=()=>{renderDashboard();$('progressDlg').showModal();};
-$('backupTextsBtn').onclick=exportTexts;
-$('shareBtn').onclick=shareCurrentText;
-$('exportProgressBtn').onclick=exportProgress;
-$('repeatBtn').onclick=repeatCurrentWord;
-$('pauseBtn').onclick=pauseReading;
-$('exportTextsBtn2').onclick=exportTexts;
-$('importTextsBtn').onclick=()=>$('textsFile').click();
-$('textsFile').onchange=e=>{if(e.target.files[0])importTexts(e.target.files[0]);};
-document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
-  if(reading) stopRead();
-  readingMode=btn.dataset.mode==='full' ? 'full' : 'word';
-  document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===btn));
-  if(readingMode==='full'){
-    $('fullView').classList.remove('hide');
-    prepareFullAudio(false).catch(()=>{});
-    $('cardView').classList.add('hide');
-    $('tabFull').classList.add('act');
-    $('tabCard').classList.remove('act');
-    // نبدأ تجهيز الصوت في الخلفية؛ عند الضغط على التشغيل يكون غالبًا جاهزًا.
-    prepareFullAudio(false).catch(()=>{});
-  }else{
-    $('cardView').classList.remove('hide');
-    $('fullView').classList.add('hide');
-    $('tabCard').classList.add('act');
-    $('tabFull').classList.remove('act');
-  }
-  paint();
-}));
-$('diagBtn').onclick=()=>{ $('diag').innerHTML='جارٍ الفحص…'; $('diagDlg').showModal(); runDiag(); };
-const hb=$('holdBtn');
-hb.addEventListener('pointerdown',holdStart);
-hb.addEventListener('pointerup',holdEnd);
-hb.addEventListener('pointercancel',holdEnd);
-hb.addEventListener('pointerleave',holdEnd);
-let fmr=null, fmrChunks=[], fmrStream=null;
-async function refreshFull(){
-  const b = await recGet(FULL_KEY);
-  $('fState').textContent = b ? '✅ مسجّل — النص كامل جاهز' : '— مش مسجّل بعد';
-}
-async function fmrStart(ev){
-  ev.preventDefault();
-  const token=++fullRecToken;
-  if(!navigator.mediaDevices || !window.MediaRecorder){ $('fState').textContent='المتصفح ما بيدعم التسجيل'; return; }
-  try{
-    fmrStream = await navigator.mediaDevices.getUserMedia({audio:true});
-    if(token!==fullRecToken){ fmrStream.getTracks().forEach(t=>t.stop()); return; }
-    fmrChunks = [];
-    fmr = new MediaRecorder(fmrStream);
-    fmr.ondataavailable = e=>{ if(e.data && e.data.size) fmrChunks.push(e.data); };
-    fmr.onstop = async ()=>{
-      const blob = new Blob(fmrChunks, {type: (fmr && fmr.mimeType) || 'audio/webm'});
-      if(blob.size > 800) await recPut(FULL_KEY, blob);
-      try{ fmrStream.getTracks().forEach(t=>t.stop()); }catch(e){}
-      $('fRec').textContent='⏺ اضغطي واقرئي النص كامل';
-      await refreshFull();
-    };
-    fmr.start();
-    $('fRec').textContent='🔴 بسجّل… اقرئي النص، ارفعي إصبعك لما تخلّصي';
-    $('fState').textContent='بسجّل الآن 🎙';
-  }catch(e){ $('fState').textContent='المايك مرفوض ⛔'; }
-}
-function fmrStop(){ ++fullRecToken; try{ if(fmr && fmr.state!=='inactive') fmr.stop(); }catch(e){} try{ fmrStream && fmrStream.getTracks().forEach(t=>t.stop()); }catch(e){} }
-async function playFull(){
-  const b = await recGet(FULL_KEY);
-  if(!b){ $('fState').textContent='ما في تسجيل بعد'; return; }
-  const u = URL.createObjectURL(b);
-  recAudio.src = u; recAudio.onended = ()=> URL.revokeObjectURL(u);
-  try{ await recAudio.play(); }catch(e){}
-}
-async function readFullWithHighlight(){
-  const b = await recGet(FULL_KEY);
-  if(!b) return false;
-  reading = true; $('readBtn').textContent='⏹ وقّف القراءة';
-  const u = URL.createObjectURL(b);
-  recAudio.src = u;
-  await new Promise(res=>{
-    recAudio.onloadedmetadata = res;
-    recAudio.load();
-  });
-  const total = recAudio.duration || (words.join(' ').length * .09);
-  const totalChars = words.reduce((a,w)=>a+w.length+1,0);
-  const timers = [];
-  let t = 0;
-  words.forEach((w,i)=>{
-    const at = t;
-    timers.push(setTimeout(()=>{ if(reading) hi(i); }, at*1000));
-    t += total * ((w.length+1)/totalChars);
-  });
-  recAudio.onended = ()=>{ timers.forEach(x=>clearTimeout(x)); URL.revokeObjectURL(u); stopRead(); };
-  try{ await recAudio.play(); }
-  catch(e){ timers.forEach(x=>clearTimeout(x)); stopRead(); return true; }
-  return true;
-}
-function renderRec(){
-  $('rWord').textContent = words[recIdx] || '';
-  $('rNow').textContent = Math.min(recIdx+1, words.length);
-  $('rTot').textContent = words.length;
-  $('rDone').textContent = words.filter(w=>recSet.has(norm(w))).length;
-  $('rState').textContent = hasRec(words[recIdx]) ? '✅ مسجّلة' : '— مش مسجّلة';
-}
-async function mrStart(ev){
-  ev.preventDefault();
-  const token=++wordRecToken;
-  if(!navigator.mediaDevices || !window.MediaRecorder){ $('rState').textContent='المتصفح ما بيدعم التسجيل'; return; }
-  try{
-    mrStream = await navigator.mediaDevices.getUserMedia({audio:true});
-    if(token!==wordRecToken){ mrStream.getTracks().forEach(t=>t.stop()); return; }
-    mrChunks = [];
-    mr = new MediaRecorder(mrStream);
-    mr.ondataavailable = e=>{ if(e.data && e.data.size) mrChunks.push(e.data); };
-    mr.onstop = async ()=>{
-      const blob = new Blob(mrChunks, {type: (mr && mr.mimeType) || 'audio/webm'});
-      if(blob.size > 500){ await recPut(words[recIdx], blob); await refreshRecSet(); }
-      try{ mrStream.getTracks().forEach(t=>t.stop()); }catch(e){}
-      $('rRec').textContent='⏺ اضغطي واقرأي';
-      renderRec();
-      if(recIdx < words.length-1){ recIdx++; setTimeout(renderRec, 350); }
-    };
-    mr.start();
-    $('rRec').textContent='🔴 بسجّل… ارفعي إصبعك';
-    $('rState').textContent='اقرأي الكلمة الآن';
-  }catch(e){ $('rState').textContent='المايك مرفوض ⛔'; }
-}
-function mrStop(){ ++wordRecToken; try{ if(mr && mr.state!=='inactive') mr.stop(); }catch(e){} try{ mrStream && mrStream.getTracks().forEach(t=>t.stop()); }catch(e){} }
-function b64(blob){ return new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(blob); }); }
-async function exportRecs(){
-  const keys = await recKeys(); const out={};
-  for(const k of keys){ const b=await recGet(k); if(b) out[k]= await b64(b); }
-  const blob = new Blob([JSON.stringify(out)], {type:'application/json'});
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(blob); a.download='my-recordings.json'; a.click();
-}
-async function importRecs(file){
-  try{
-    const obj = JSON.parse(await file.text());
-    for(const k in obj){
-      const r = await fetch(obj[k]); const b = await r.blob();
-      const d = await idb();
-      await new Promise(res=>{ const q=d.transaction('recs','readwrite').objectStore('recs').put(b,k); q.onsuccess=res; q.onerror=res; });
-    }
-    await refreshRecSet(); renderRec(); $('rState').textContent='✅ تم الاسترجاع';
-  }catch(e){ $('rState').textContent='الملف مش مظبوط'; }
-}
-$('recBtn').onclick = async ()=>{ recIdx = idx; await refreshRecSet(); renderRec(); await refreshFull(); $('recDlg').showModal(); };
-$('fRec').addEventListener('pointerdown', fmrStart);
-$('fRec').addEventListener('pointerup', fmrStop);
-$('fRec').addEventListener('pointercancel', fmrStop);
-$('fRec').addEventListener('pointerleave', fmrStop);
-$('fPlay').onclick = playFull;
-$('fDel').onclick = async ()=>{ await recDelete(FULL_KEY); await refreshFull(); };
-const rr = $('rRec');
-rr.addEventListener('pointerdown', mrStart);
-rr.addEventListener('pointerup', mrStop);
-rr.addEventListener('pointercancel', mrStop);
-rr.addEventListener('pointerleave', mrStop);
-$('rPlay').onclick = ()=> speak(words[recIdx], rate);
-$('rPrev').onclick = ()=>{ if(recIdx>0){ recIdx--; renderRec(); } };
-$('rNext').onclick = ()=>{ if(recIdx<words.length-1){ recIdx++; renderRec(); } };
-$('rDel').onclick = async ()=>{ await recDelete(words[recIdx]); await refreshRecSet(); renderRec(); };
-$('rExp').onclick = exportRecs;
-$('rImp').onclick = ()=> $('rFile').click();
-$('rFile').onchange = e=>{ if(e.target.files[0]) importRecs(e.target.files[0]); };
-
-$('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
-$('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
-$('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); };
-document.querySelectorAll('[data-speed]').forEach(btn=>btn.addEventListener('click',()=>{const v=parseFloat(btn.dataset.speed);rate=v;$('rateSel').value=v;$('rateVal').textContent=v.toFixed(2);}));
-$('noTash').onchange=e=>{ stripTash=e.target.checked; };
-$('engineSel').onchange=e=>{
-  engine=e.target.value;
-  if(engine==='azure'){saveAzureConfig(); say(azureConfigured()?'Azure Neural مفعّل ☁️':'⚙️ اختاري Region وSpeech Key ثم جرّبي الصوت.');}
-  else if(engine==='google'){say('صوت Google الاحتياطي مفعّل 🌐');}
-  else {checkVoice(); say('صوت الجهاز الاحتياطي مفعّل 📱');}
+$("updateBtn").onclick=()=>{
+  const text=cleanText($("newText").value);if(!text){say("اكتبي نصًا أولًا.");return}
+  const i=saved.findIndex(x=>x.id===current.id);if(i<0)return;current={...current,name:($("textName").value||"").trim()||current.name,text};saved[i]=current;saveTexts();renderSelector();build(text);$("textDlg").close();say("✅ تم تحديث النص.");
 };
-$('azureVoiceSel').onchange=e=>{azureVoice=e.target.value;saveAzureConfig();};
-
-$('pausePreset').onchange=e=>{pausePreset=e.target.value;};
-loadAzureConfig();
-engine='azure';
-if($('engineSel')) $('engineSel').value='azure';
-loadTexts();
-if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); }; setTimeout(fillVoices,600); }
-build(currentText.text);
-$('reviewBtn').onclick=()=>{ $('win').classList.remove('show'); renderMistakes(); const first=Object.keys(appState.mistakes||{})[0]; if(first){const i=words.findIndex(w=>norm(w)===first); if(i>=0){idx=i;paint();}} };
-window.addEventListener('beforeunload',saveState);
-setInterval(tickDashboard,1000);
-restoreDashboard();
-renderDashboard();
-renderTextMeta();
-
-
+$("deleteBtn").onclick=()=>{
+  if(saved.length<=1){say("يجب أن يبقى نص واحد على الأقل.");return}
+  const i=saved.findIndex(x=>x.id===current.id);saved.splice(i,1);current=saved[Math.max(0,i-1)];saveTexts();renderSelector();build(current.text);$("textDlg").close();say("🗑 تم حذف النص.");
+};
+document.querySelectorAll("[data-mode]").forEach(b=>b.onclick=()=>setMode(b.dataset.mode));
+$("listenBtn").onclick=()=>mode==="word"?readWord():speakText(words.join(" "));
+$("readFullBtn").onclick=readFull;
+$("pauseBtn").onclick=()=>{if(!audio)return;if(audio.paused){audio.play();$("pauseBtn").textContent="⏸ إيقاف مؤقت"}else{audio.pause();$("pauseBtn").textContent="▶️ متابعة"}};
+$("okBtn").onclick=()=>{if(!words.length)return;score++;idx=Math.min(idx+1,words.length-1);say("✓ أحسنتِ!");render()};
+$("prevBtn").onclick=()=>{idx=Math.max(0,idx-1);render();say("الكلمة السابقة")};
+$("nextBtn").onclick=()=>{idx=Math.min(words.length-1,idx+1);render();say("الكلمة التالية")};
+$("micBtn").onclick=()=>{if(micState.recorder)stopMic();else startMic()};
+$("advancedBtn").onclick=()=>{location.href="reading_app.html"};
+loadTexts();setMode("word");
+})();
 </script>
 </body>
 </html>
