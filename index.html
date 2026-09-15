@@ -320,7 +320,6 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 </div>
 <div class="row">
 <button class="read" id="readBtn">📖 اقرأ لي النص</button>
-<button id="echoBtn">🔁 رددي ورايي</button>
 </div>
 <div class="row">
 <button class="ghost" id="recBtn">🎙 سجّل بصوتك</button>
@@ -721,8 +720,8 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 
   async function runPron(){
     // Read current sentence/word from the existing reading page.
-    const words = []; const currentText = (document.getElementById('bigword')?.textContent || '').trim();
-    const ref = currentText;
+    const currentText = (document.getElementById('bigword')?.textContent || '').trim();
+    const ref = (typeof window.getReadingReference==='function' ? window.getReadingReference() : currentText);
     if(!ref){ showPanel("قيّم نطقي","لا توجد كلمة حالية."); return; }
     showPanel("🎤 تقييم النطق", `<p>اقرأ: <strong>${escapeHtml(ref)}</strong></p><p>ابدأ الكلام الآن…</p>`);
     try{
@@ -819,7 +818,7 @@ const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform 
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const LANGS = ['ar-JO','ar-SA','ar-EG','ar'];
 let langI=0, words=[], idx=0, score=0, listening=false, rec=null, micOK=false;
-let reading=false, echo=false, holdRec=null;
+let reading=false, holdRec=null;
 let currentText={id:'',name:'',text:DEFAULT_TEXT};
 let savedTexts=[];
 let appState = {correct:0, wrong:0, streak:0, best:0, startedAt:null, mistakes:{}, attempts:0, finished:false, wordCount:0};
@@ -1333,138 +1332,88 @@ function hi(i){
     $('prevw').textContent=i>0?words[i-1]:''; $('nextw').textContent=i<words.length-1?words[i+1]:'';
   }
 }
-async function readAloud(from){
-  if(reading){ if(pausedReading) {pauseReading();} else stopRead(); return; }
-  stopMic(); echo=false; pausedReading=false; $('pauseBtn').textContent='⏸ إيقاف مؤقت';
-  const startIdx=(from!==undefined?from:idx); activeReadIndex=startIdx; readSessionStartedAt=Date.now();
-  say('🎧 بقرا…');
-  if(startIdx===0 || from===undefined){ const hadFull=await recGet(FULL_KEY); if(hadFull && readingMode==='full'){ await readFullWithHighlight(); return; } }
-  reading=true; $('readBtn').textContent='⏹ وقّف القراءة';
-  if(readingMode==='word') readWords(startIdx); else readSentence(startIdx);
+function getSentenceBounds(i){
+  let start=i, end=i;
+  while(start>0 && !/[.!؟؛]$/.test(words[start-1])) start--;
+  while(end<words.length-1 && !/[.!؟؛]$/.test(words[end])) end++;
+  return {start,end};
 }
-function readWords(i){
-  // Azure works much more smoothly when we synthesize a group of words at once
-  // instead of making one network/synthesis request per word.
-  const BATCH_WORDS = 8;
-  const batch = words.slice(i, i + BATCH_WORDS);
-  if(!reading || !batch.length){ stopRead(); return; }
-  activeReadIndex = i;
+
+function readWordOnly(i){
+  const text=words[i]||'';
+  if(!text){ stopRead(); return; }
+  activeReadIndex=i;
   hi(i);
-  const text = batch.join(' ');
-  speak(text, rate, ()=>{
+  speak(text,rate,()=>{ if(reading && !pausedReading) stopRead(); });
+}
+
+function readSentenceOnly(i){
+  const b=getSentenceBounds(i);
+  const text=words.slice(b.start,b.end+1).join(' ');
+  activeReadIndex=b.start;
+  hi(b.start);
+  speak(text,rate,()=>{ if(reading && !pausedReading) stopRead(); });
+}
+
+async function readAloud(from){
+  if(reading){ stopRead(); return; }
+  stopMic();
+  pausedReading=false;
+  $('pauseBtn').textContent='⏸ إيقاف مؤقت';
+  reading=true;
+  $('readBtn').textContent='⏹ وقّف القراءة';
+  readSessionStartedAt=Date.now();
+
+  activeReadIndex=(readingMode==='full') ? 0 : (from!==undefined ? from : idx);
+
+  if(readingMode==='full'){
+    const hadFull=await recGet(FULL_KEY);
+    if(!reading) return;
+    if(hadFull){
+      await readFullWithHighlight();
+      return;
+    }
+    readWords(0);
+    return;
+  }
+
+  if(readingMode==='word') readWordOnly(activeReadIndex);
+  else readSentenceOnly(activeReadIndex);
+}
+
+function readWords(i){
+  const BATCH_WORDS=8;
+  const batch=words.slice(i,i+BATCH_WORDS);
+  if(!reading || !batch.length){ stopRead(); return; }
+  activeReadIndex=i;
+  hi(i);
+  speak(batch.join(' '),rate,()=>{
     if(!reading || pausedReading) return;
-    const next = i + batch.length;
-    activeReadIndex = next;
-    if(next >= words.length){ stopRead(); return; }
-    setTimeout(()=>readWords(next), pausePreset==='long'?420:pausePreset==='short'?80:160);
+    const next=i+batch.length;
+    activeReadIndex=next;
+    if(next>=words.length){ stopRead(); return; }
+    setTimeout(()=>readWords(next),pausePreset==='long'?420:pausePreset==='short'?80:160);
   });
 }
-function readSentence(start){
-  const slice=words.slice(start); const chunks=[]; let cur=[],len=0,ci=start;
-  slice.forEach((w,i)=>{const ends=/[.!؟]$/.test(w); if((len+w.length+1>220||ends)&&cur.length){chunks.push({from:ci,ws:cur});ci=start+i;cur=[];len=0;} cur.push(w);len+=w.length+1;if(ends){chunks.push({from:ci,ws:cur});ci=start+i+1;cur=[];len=0;}});
-  if(cur.length)chunks.push({from:ci,ws:cur}); let k=0; activeReadIndex=start;
-  const play=()=>{
-    if(!reading||pausedReading){if(k<chunks.length)activeReadIndex=chunks[k]?.from??start;return;}
-    if(k>=chunks.length){stopRead();return;}
-    const c=chunks[k]; activeReadIndex=c.from; hi(c.from); const text=c.ws.join(' ');
-    if(engine==='azure'){
-      speak(text,rate,()=>{
-        if(!reading||pausedReading)return;
-        k++;
-        setTimeout(play,pausePreset==='long'?420:pausePreset==='short'?80:160);
-      });
-    }else{
-      speak(text,rate,()=>{
-        if(!reading||pausedReading)return;
-        k++;
-        setTimeout(play,pausePreset==='long'?420:pausePreset==='short'?80:160);
-      });
-    }
-  };
-  play();
-}
+
 function stopRead(){
-  reading=false; cancelAzure(); try{speechSynthesis.cancel();}catch(e){}
-  try{ gAudio.pause(); }catch(e){}
+  reading=false;
+  pausedReading=false;
+  cancelAzure();
+  try{ speechSynthesis.cancel(); }catch(e){}
+  try{ gAudio.pause(); gAudio.currentTime=0; }catch(e){}
+  try{ recAudio.pause(); recAudio.currentTime=0; }catch(e){}
   document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
   $('readBtn').textContent='📖 اقرأ لي النص';
-  paint(); say('خلصت القراءة ✨ جرّبي تقرئي إنتِ هلأ.');
-}
-function echoMode(){
-  if(echo){ echo=false; $('echoBtn').textContent='🔁 رددي ورايي'; stopMic(); try{speechSynthesis.cancel();}catch(e){} say('وقّفنا وضع الترديد.'); return; }
-  if(!SR){ say('المتصفح ما بيدعم المايك — بس بقدر أقرالك 📖'); return; }
-  echo=true; $('echoBtn').textContent='⏹ وقّف الترديد';
-  echoStep();
-}
-async function echoStep(){
-  if(!echo || idx>=words.length) return;
-  if(!(await primeMic())){ echo=false; $('echoBtn').textContent='🔁 رددي ورايي'; return; }
-  paint(); say('🎧 اسمعي: '+words[idx]);
-  speak(words[idx], rate, ()=>{
-    if(!echo) return;
-    say('🎤 دورك… رددي الكلمة');
-    listenOnce(ok=>{
-      if(!echo) return;
-      if(ok){ correct(); setTimeout(echoStep, 500); }
-      else { wrong(); say('مش مضبوط، بعيدها 🔁'); setTimeout(echoStep, 500); }
-    });
-  });
-}
-function listenOnce(cb){
-  let done=false;
-  const r = makeRec(false);
-  r.onresult = e=>{
-    let h="";
-    for(let i=e.resultIndex;i<e.results.length;i++)
-      for(let a=0;a<e.results[i].length;a++) h += " " + e.results[i][a].transcript;
-    say('سمعت: '+h.trim());
-    if(done) return;
-    const hit = h.trim().split(/\s+/).some(t=>accept(t, words[idx]));
-    if(hit){ done=true; try{r.stop();}catch(e){} cb(true); }
-  };
-  r.onend = ()=>{ if(!done){ done=true; cb(false); } };
-  try{ r.start(); }catch(e){ cb(false); }
-  setTimeout(()=>{ try{ r.stop(); }catch(e){} }, 6000);
-}
-async function primeMic(){
-  if(!window.isSecureContext){ say('🔒 لازم https.'); return false; }
-  if(micOK) return true;
-  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){ micOK=true; return true; }
-  try{
-    const st = await navigator.mediaDevices.getUserMedia({audio:true});
-    st.getTracks().forEach(t=>t.stop()); micOK=true; return true;
-  }catch(e){
-    say('⛔ المايك مرفوض ('+e.name+'). اسمحي للموقع بالمايك أو استخدمي ✓ صح.');
-    return false;
-  }
-}
-function makeRec(continuous){
-  const r=new SR();
-  r.lang=LANGS[langI]; r.continuous=continuous && !IOS; r.interimResults=!IOS; r.maxAlternatives=3;
-  r.onerror = ev=>{
-    if(ev.error==='language-not-supported' && langI<LANGS.length-1){ langI++; say('بجرّب لغة ثانية: '+LANGS[langI]); return; }
-    if(ev.error==='not-allowed'||ev.error==='service-not-allowed'){ say('⛔ المتصفح رافض المايك.'); stopMic(); return; }
-    if(ev.error==='network'){ say('🌐 التعرّف على الصوت محتاج إنترنت.'); return; }
-    if(ev.error!=='no-speech'&&ev.error!=='aborted') say('خطأ: '+ev.error);
-  };
-  return r;
-}
-function handleT(h){
-  say('سمعت: '+h.trim());
-  let guard=0;
-  for(const tk of h.trim().split(/\s+/)){
-    if(idx>=words.length) break;
-    if(accept(tk,words[idx])){ correct(); guard++; }
-    else if(idx+1<words.length && accept(tk,words[idx+1])){ correct(); correct(); guard++; }
-    if(guard>25) break;
-  }
+  $('pauseBtn').textContent='⏸ إيقاف مؤقت';
+  paint();
 }
 async function startMic(){
   const token=++micStartToken;
   if(!SR){ say('😕 المتصفح ما بيدعم التعرّف على الصوت. استخدمي ✓ صح.'); return; }
   if(!window.isSecureContext){ say('🔒 لازم https.'); return; }
   if(!(await primeMic()) || token!==micStartToken) return;
-  reading=false; echo=false;
+  reading=false;
   try{
     rec=makeRec(true);
     rec.onresult=e=>{ let h="";
@@ -1483,8 +1432,8 @@ function stopMic(){
   try{ rec && (rec.onend=null, rec.stop()); }catch(e){}
   $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
 }
-function stopAll(){ stopMic(); reading=false; echo=false; try{ if(azureSynth) azureSynth.stopSpeakingAsync(()=>{},()=>{}); }catch(e){}
-  $('echoBtn').textContent='🔁 رددي ورايي'; $('readBtn').textContent='📖 اقرأ لي النص';
+function stopAll(){ stopMic(); reading=false; try{ if(azureSynth) azureSynth.stopSpeakingAsync(()=>{},()=>{}); }catch(e){}
+  $('readBtn').textContent='📖 اقرأ لي النص';
   try{speechSynthesis.cancel();}catch(e){} }
 async function holdStart(ev){
   ev.preventDefault();
@@ -1537,17 +1486,29 @@ function shareCurrentText(){
   if(navigator.share){navigator.share({title:currentText.name||'نص قراءة',text}).catch(()=>{});}else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>say('📋 تم نسخ النص للمشاركة.')).catch(()=>say('انسخي النص من إدارة النصوص.'));}else say('📋 انسخي النص من إدارة النصوص لمشاركته.');
 }
 function exportProgress(){ const payload={version:1,exportedAt:new Date().toISOString(),history:progressHistory, current:appState}; const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='reading-progress.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
+window.getReadingReference=()=>{
+  if(readingMode==='word') return words[idx]||'';
+  if(readingMode==='sentence'){
+    const b=getSentenceBounds(idx);
+    return words.slice(b.start,b.end+1).join(' ');
+  }
+  return words.join(' ');
+};
 $('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView').classList.add('hide');
   $('tabCard').classList.add('act'); $('tabFull').classList.remove('act'); };
 $('tabFull').onclick=()=>{ $('fullView').classList.remove('hide'); $('cardView').classList.add('hide');
   $('tabFull').classList.add('act'); $('tabCard').classList.remove('act'); paint(); };
-$('micBtn').onclick=()=> listening?stopMic():startMic();
+$('micBtn').onclick=()=>{
+  if(window.getReadingReference) window.getReadingReference();
+  const pron=$('v10Pron');
+  if(pron) pron.click();
+  else say('⚠️ تقييم النطق غير متاح حاليًا.');
+};
 $('sayBtn').onclick=()=> words[idx] && speak(words[idx], rate);
 $('okBtn').onclick=()=> idx<words.length && correct();
 $('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
 $('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
 $('readBtn').onclick=()=> readAloud();
-$('echoBtn').onclick=()=> echoMode();
 $('resetBtn').onclick=()=>{ stopAll(); restart(); };
 $('editBtn').onclick=openTextManager;
 $('manageTextsBtn').onclick=openTextManager;
@@ -1565,7 +1526,23 @@ $('pauseBtn').onclick=pauseReading;
 $('exportTextsBtn2').onclick=exportTexts;
 $('importTextsBtn').onclick=()=>$('textsFile').click();
 $('textsFile').onchange=e=>{if(e.target.files[0])importTexts(e.target.files[0]);};
-document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{readingMode=btn.dataset.mode;document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===btn));say('وضع القراءة: '+(readingMode==='word'?'كلمة كلمة':readingMode==='sentence'?'جملة': 'النص كامل'));}));
+document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
+  if(reading) stopRead();
+  readingMode=btn.dataset.mode;
+  document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===btn));
+  if(readingMode==='full'){
+    $('fullView').classList.remove('hide');
+    $('cardView').classList.add('hide');
+    $('tabFull').classList.add('act');
+    $('tabCard').classList.remove('act');
+  }else{
+    $('cardView').classList.remove('hide');
+    $('fullView').classList.add('hide');
+    $('tabCard').classList.add('act');
+    $('tabFull').classList.remove('act');
+  }
+  paint();
+}));
 $('diagBtn').onclick=()=>{ $('diag').innerHTML='جارٍ الفحص…'; $('diagDlg').showModal(); runDiag(); };
 const hb=$('holdBtn');
 hb.addEventListener('pointerdown',holdStart);
