@@ -1617,110 +1617,159 @@ function stopRead(){
   paint();
 }
 
-let azureMicRecognizer=null;
-let azureMicAudioConfig=null;
-let azureMicStopping=false;
+let mobileMicState={stream:null,recorder:null,chunks:[],audioCtx:null,source:null,analyser:null,raf:0,stopTimer:0,silenceSince:0,heardSpeech:false,token:0};
 
-async function stopAzureMicRecognizer(){
-  azureMicStopping=true;
-  const r=azureMicRecognizer;
-  const acfg=azureMicAudioConfig;
-  azureMicRecognizer=null;
-  azureMicAudioConfig=null;
+function stopMobileMicTracks(){
+  try{ mobileMicState.stream?.getTracks().forEach(t=>t.stop()); }catch(e){}
+  try{ mobileMicState.source?.disconnect(); }catch(e){}
+  try{ mobileMicState.analyser?.disconnect(); }catch(e){}
+  try{ mobileMicState.audioCtx?.close(); }catch(e){}
+  if(mobileMicState.raf) cancelAnimationFrame(mobileMicState.raf);
+  clearTimeout(mobileMicState.stopTimer);
+  mobileMicState={stream:null,recorder:null,chunks:[],audioCtx:null,source:null,analyser:null,raf:0,stopTimer:0,silenceSince:0,heardSpeech:false,token:mobileMicState.token};
+}
+
+function chooseRecordMime(){
+  const types=['audio/webm;codecs=opus','audio/webm','audio/mp4','audio/ogg;codecs=opus'];
+  return types.find(t=>window.MediaRecorder?.isTypeSupported?.(t))||'';
+}
+
+async function blobToWav16kMono(blob){
+  const AC=window.AudioContext||window.webkitAudioContext;
+  if(!AC) throw new Error('AUDIO_CONTEXT_UNSUPPORTED');
+  const ctx=new AC();
   try{
-    if(r){
-      await new Promise(resolve=>{
-        try{ r.stopContinuousRecognitionAsync(resolve,resolve); }catch(e){ resolve(); }
-      });
-      try{ r.close(); }catch(e){}
+    const buf=await blob.arrayBuffer();
+    const decoded=await ctx.decodeAudioData(buf.slice(0));
+    const targetRate=16000;
+    const offline=new OfflineAudioContext(1,Math.max(1,Math.ceil(decoded.duration*targetRate)),targetRate);
+    const src=offline.createBufferSource(); src.buffer=decoded;
+    src.connect(offline.destination); src.start();
+    const rendered=await offline.startRendering();
+    const ch=rendered.getChannelData(0);
+    const dataLen=ch.length*2;
+    const out=new ArrayBuffer(44+dataLen); const dv=new DataView(out);
+    const write=(o,str)=>{for(let i=0;i<str.length;i++)dv.setUint8(o+i,str.charCodeAt(i));};
+    write(0,'RIFF'); dv.setUint32(4,36+dataLen,true); write(8,'WAVE'); write(12,'fmt ');
+    dv.setUint32(16,16,true); dv.setUint16(20,1,true); dv.setUint16(22,1,true);
+    dv.setUint32(24,targetRate,true); dv.setUint32(28,targetRate*2,true); dv.setUint16(32,2,true); dv.setUint16(34,16,true);
+    write(36,'data'); dv.setUint32(40,dataLen,true);
+    let off=44;
+    for(let i=0;i<ch.length;i++){
+      const x=Math.max(-1,Math.min(1,ch[i]));
+      dv.setInt16(off,x<0?x*0x8000:x*0x7fff,true); off+=2;
     }
-  }finally{
-    try{ acfg?.close?.(); }catch(e){}
-    azureMicStopping=false;
+    return new Blob([out],{type:'audio/wav'});
+  }finally{ try{await ctx.close();}catch(e){} }
+}
+
+async function transcribeWavWithAzure(wav, token){
+  const url=`https://${azureRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=ar-JO&format=detailed`;
+  const res=await fetch(url,{method:'POST',headers:{
+    'Authorization':'Bearer '+token,
+    'Content-Type':'audio/wav; codecs=audio/pcm; samplerate=16000',
+    'Accept':'application/json'
+  },body:wav,cache:'no-store'});
+  if(!res.ok){
+    let detail=''; try{detail=await res.text();}catch(e){}
+    throw new Error('STT_HTTP_'+res.status+(detail?' '+detail.slice(0,160):''));
   }
+  const data=await res.json();
+  const text=(data.DisplayText||data.NBest?.[0]?.Display||'').trim();
+  return {text,data};
+}
+
+function sttUserError(e){
+  const m=String(e?.message||e||'');
+  if(m==='AUDIO_CONTEXT_UNSUPPORTED') return 'هذا المتصفح لا يدعم معالجة الصوت المطلوبة.';
+  if(m.startsWith('STT_HTTP_401')) return 'رمز Azure غير صالح أو المنطقة غير مطابقة.';
+  if(m.startsWith('STT_HTTP_403')) return 'Azure رفض طلب التعرف على الصوت.';
+  if(m.startsWith('STT_HTTP_400')) return 'Azure رفض التسجيل الصوتي. جرّبي القراءة بوضوح ولمدة قصيرة.';
+  if(m.startsWith('STT_HTTP_')) return 'تعذر إرسال التسجيل إلى Azure.';
+  return m||'تعذر التعرف على الكلام.';
 }
 
 async function startMic(){
   const token=++micStartToken;
-  if(!window.isSecureContext){ say('🔒 يجب فتح الموقع عبر HTTPS حتى يعمل المايك.'); return; }
+  if(!window.isSecureContext){say('🔒 يجب فتح الموقع عبر HTTPS حتى يعمل المايك.');return;}
   if(listening) return;
-  reading=false;
+  stopRead();
+  stopMobileMicTracks();
   try{
-    // Load Azure Speech SDK and request microphone permission from the current user gesture.
-    const SDK=await loadAzureSdk();
-    if(token!==micStartToken) return;
-    if(!(await primeMic()) || token!==micStartToken) return;
-    await stopAzureMicRecognizer();
-    if(token!==micStartToken) return;
-
-    const speechToken=await getAzureToken(false);
-    if(token!==micStartToken) return;
-    const speechConfig=SDK.SpeechConfig.fromAuthorizationToken(speechToken, azureRegion || 'eastus');
-    speechConfig.speechRecognitionLanguage='ar-JO';
-    azureMicAudioConfig=SDK.AudioConfig.fromDefaultMicrophoneInput();
-    azureMicRecognizer=new SDK.SpeechRecognizer(speechConfig, azureMicAudioConfig);
-    const r=azureMicRecognizer;
-
-    r.recognizing=(s,e)=>{
-      if(token!==micStartToken || !listening) return;
-      const text=String(e.result?.text||'').trim();
-      if(text) $('heard').innerHTML=`أستمع: <b>${escapeHtml(text)}</b>`;
-    };
-    r.recognized=(s,e)=>{
-      if(token!==micStartToken || !listening) return;
-      const reason=e.result?.reason;
-      if(reason===SDK.ResultReason.RecognizedSpeech){
-        const text=String(e.result?.text||'').trim();
-        if(text) handleT(text);
-      }else if(reason===SDK.ResultReason.NoMatch){
-        say('🎧 لم أتعرف على الكلمة. حاولي مرة أخرى.');
+    if(!navigator.mediaDevices?.getUserMedia) throw new Error('MIC_UNSUPPORTED');
+    if(!window.MediaRecorder) throw new Error('RECORDER_UNSUPPORTED');
+    say('🎧 جاري فتح المايك…');
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    if(token!==micStartToken){stream.getTracks().forEach(t=>t.stop());return;}
+    const mime=chooseRecordMime();
+    const recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+    mobileMicState.stream=stream; mobileMicState.recorder=recorder; mobileMicState.chunks=[]; mobileMicState.token=token;
+    const AC=window.AudioContext||window.webkitAudioContext;
+    const ctx=AC?new AC():null;
+    if(ctx){
+      await ctx.resume();
+      const source=ctx.createMediaStreamSource(stream); const analyser=ctx.createAnalyser();
+      analyser.fftSize=1024; analyser.smoothingTimeConstant=.72; source.connect(analyser);
+      mobileMicState.audioCtx=ctx; mobileMicState.source=source; mobileMicState.analyser=analyser;
+    }
+    recorder.ondataavailable=e=>{if(e.data?.size)mobileMicState.chunks.push(e.data);};
+    recorder.onstop=async()=>{
+      const myToken=token;
+      const blob=new Blob(mobileMicState.chunks,{type:recorder.mimeType||'audio/webm'});
+      stopMobileMicTracks();
+      if(myToken!==micStartToken)return;
+      listening=false; $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
+      if(blob.size<800){say('🎧 لم يصل تسجيل واضح. حاولي التحدث بقرب المايك.');return;}
+      try{
+        say('☁️ أحلل قراءتك…');
+        const speechToken=await getAzureToken(false); if(myToken!==micStartToken)return;
+        const wav=await blobToWav16kMono(blob); if(myToken!==micStartToken)return;
+        const r=await transcribeWavWithAzure(wav,speechToken); if(myToken!==micStartToken)return;
+        if(r.text) handleT(r.text); else say('🎧 سمعت الصوت لكن لم أستطع تحويله إلى كلمات.');
+      }catch(e){
+        console.error('Mobile Azure STT failed',e);
+        if(myToken===micStartToken) say('⚠️ '+sttUserError(e));
       }
     };
-    r.canceled=(s,e)=>{
-      if(token!==micStartToken) return;
-      console.error('Azure SpeechRecognizer canceled', e?.errorDetails || e?.reason || e);
-      listening=false;
-      $('micBtn').classList.remove('on');
-      $('micBtn').textContent='🎤 ابدئي القراءة';
-      say('⚠️ تعذر التعرف على الكلام. تأكدي من السماح بالمايك والإنترنت.');
-    };
-    r.sessionStopped=()=>{
-      if(token!==micStartToken || azureMicStopping) return;
-      listening=false;
-      $('micBtn').classList.remove('on');
-      $('micBtn').textContent='🎤 ابدئي القراءة';
-    };
+    recorder.onerror=()=>{ if(token===micStartToken){say('⚠️ حدث خطأ أثناء تسجيل المايك.');stopMic();} };
+    recorder.start(100);
+    listening=true; $('micBtn').classList.add('on'); $('micBtn').textContent='⏹ إيقاف الاستماع';
+    say('🎧 أستمع… اقرئي الكلمة: '+(words[idx]||''));
 
-    await new Promise((resolve,reject)=>{
-      r.startContinuousRecognitionAsync(resolve,reject);
-    });
-    if(token!==micStartToken){ await stopAzureMicRecognizer(); return; }
-    listening=true;
-    $('micBtn').classList.add('on');
-    $('micBtn').textContent='⏹ إيقاف';
-    say('🎧 أستمع الآن… اقرئي: '+(words[idx]||''));
+    const startedAt=performance.now();
+    const loop=()=>{
+      if(!listening || token!==micStartToken || !mobileMicState.analyser)return;
+      const a=mobileMicState.analyser; const arr=new Uint8Array(a.fftSize); a.getByteTimeDomainData(arr);
+      let sum=0; for(let i=0;i<arr.length;i++){const v=(arr[i]-128)/128;sum+=v*v;} const rms=Math.sqrt(sum/arr.length);
+      const now=performance.now();
+      if(rms>.025){mobileMicState.heardSpeech=true; mobileMicState.silenceSince=0; $('heard').innerHTML='أستمع… <b>تحدثي الآن</b>';} 
+      else if(mobileMicState.heardSpeech){ if(!mobileMicState.silenceSince) mobileMicState.silenceSince=now; }
+      const silentLong=mobileMicState.heardSpeech && mobileMicState.silenceSince && now-mobileMicState.silenceSince>850;
+      const tooLong=now-startedAt>4500;
+      if(silentLong||tooLong){try{recorder.stop();}catch(e){}return;}
+      mobileMicState.raf=requestAnimationFrame(loop);
+    };
+    mobileMicState.raf=requestAnimationFrame(loop);
   }catch(e){
-    console.error('Azure microphone start failed',e);
-    listening=false;
-    $('micBtn').classList.remove('on');
-    $('micBtn').textContent='🎤 ابدئي القراءة';
-    say('⚠️ تعذر تشغيل التعرف على الكلام. '+(e?.message||''));
-    await stopAzureMicRecognizer();
+    console.error('mobile mic start failed',e);
+    listening=false; stopMobileMicTracks(); $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
+    const m=String(e?.message||e||'');
+    if(e?.name==='NotAllowedError') say('🎤 اسمحي للمتصفح باستخدام المايك ثم اضغطي مرة أخرى.');
+    else if(m==='MIC_UNSUPPORTED'||m==='RECORDER_UNSUPPORTED') say('📱 هذا المتصفح لا يدعم تسجيل المايك بالطريقة المطلوبة.');
+    else say('⚠️ تعذر تشغيل المايك. '+m);
   }
 }
 
 function stopMic(){
   ++micStartToken;
   listening=false;
-  try{ rec && (rec.onend=null, rec.stop()); }catch(e){}
-  stopAzureMicRecognizer();
-  $('micBtn').classList.remove('on');
-  $('micBtn').textContent='🎤 ابدئي القراءة';
+  try{if(mobileMicState.recorder && mobileMicState.recorder.state!=='inactive') mobileMicState.recorder.stop();}catch(e){}
+  stopMobileMicTracks();
+  try{rec && (rec.onend=null,rec.stop());}catch(e){}
+  $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
 }
 
-function stopAll(){ stopMic(); reading=false; try{ if(azureSynth) azureSynth.stopSpeakingAsync(()=>{},()=>{}); }catch(e){}
-  $('readBtn').textContent='📖 اقرأ لي النص';
-  try{speechSynthesis.cancel();}catch(e){} }
+function stopAll(){stopMic();reading=false;try{if(azureSynth)azureSynth.stopSpeakingAsync(()=>{},()=>{});}catch(e){} $('readBtn').textContent='📖 اقرأ لي النص'; try{speechSynthesis.cancel();}catch(e){} }
 async function holdStart(ev){
   ev.preventDefault();
   const token=++holdStartToken;
