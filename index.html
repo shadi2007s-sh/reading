@@ -348,7 +348,9 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 </div>
 <dialog id="dlg">
 <h3 style="margin-top:0">📚 إدارة النصوص</h3>
+<label for="textName" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">اسم النص</label>
 <input id="textName" placeholder="اسم النص، مثل: درس المدرسة" type="text"/>
+<label for="ta" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap">نص القراءة</label>
 <textarea id="ta" placeholder="اكتبي النص هنا..."></textarea>
 <div class="row" style="margin-top:10px">
 <button id="saveNewTextBtn">💾 حفظ كنص جديد</button>
@@ -405,38 +407,38 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <dialog id="voiceDlg">
 <h3 style="margin-top:0">🎚 إعدادات الصوت</h3>
 <div class="set">
-<label>محرك النطق</label>
+<label for="engineSel">محرك النطق</label>
 <select id="engineSel">
 <option value="azure">☁️ Azure Neural — الموصى به</option>
 <option value="device">📱 صوت الجهاز (احتياطي)</option>
 <option value="google">🌐 Google (احتياطي)</option>
 </select>
-<label>الصوت العربي</label>
+<label for="azureVoiceSel">الصوت العربي</label>
 <select id="azureVoiceSel">
 <option value="ar-JO-SanaNeural">🇯🇴 Sana — أنثى أردنية</option>
 <option value="ar-JO-TaimNeural">🇯🇴 Taim — ذكر أردني</option>
 </select>
-<label>منطقة Azure (Region)</label>
+<label for="azureRegion">منطقة Azure (Region)</label>
 <input id="azureRegion" readonly="" value="eastus"/>
 <div style="font-size:.78rem;color:#7b8085;background:#fff3cf;border:1px solid #f0b429;border-radius:10px;padding:8px;margin-top:8px">🔐 مفتاح Azure محفوظ داخل الخادم ولا يتم وضعه داخل GitHub.</div>
 <small style="display:block;color:#8b9096;margin-top:5px;line-height:1.5">🔐 للاستخدام المحلي فقط. لتطبيق منشور، ضع الاستدعاء في خادم وسيط ولا تضع المفتاح داخل الموقع.</small>
-<label>الصوت المستخدم (عند اختيار صوت الجهاز)</label>
+<label for="voiceSel">الصوت المستخدم (عند اختيار صوت الجهاز)</label>
 <select id="voiceSel"></select>
-<label>سرعة القراءة: <span id="rateVal">0.70</span></label>
+<label for="rateSel">سرعة القراءة: <span id="rateVal">0.70</span></label>
 <input id="rateSel" max="1.1" min="0.4" step="0.05" type="range" value="0.7"/>
 <div class="row" style="margin-top:7px">
 <button class="ghost" data-speed="0.60" type="button">🐢 بطيء</button>
 <button class="ghost" data-speed="0.75" type="button">🙂 تعليمي</button>
 <button class="ghost" data-speed="0.90" type="button">📖 طبيعي</button>
 </div>
-<label>نمط الوقفات</label>
+<label for="pausePreset">نمط الوقفات</label>
 <select id="pausePreset">
 <option value="short">⚡ قصيرة</option>
 <option selected="" value="normal">🙂 طبيعية</option>
 <option value="long">🐢 طويلة</option>
 </select>
 
-<div class="chk"><input id="noTash" type="checkbox"/> <span>انطق بدون تشكيل (جرّبيها إذا اللفظ غريب)</span></div>
+<div class="chk"><input id="noTash" type="checkbox"/> <label for="noTash">انطق بدون تشكيل (جرّبيها إذا اللفظ غريب)</label></div>
 <div class="row" style="margin-top:12px">
 <button onclick="testVoice()">🔊 جرّبي الصوت</button>
 <button class="ghost" onclick="document.getElementById('voiceDlg').close()">تمام</button>
@@ -596,10 +598,14 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
   }
 
   function updateLabels(){
-    $("v10RateValue").textContent=Number(s.rate).toFixed(2);
-    $("v10PitchValue").textContent=String(s.pitch);
-    $("v10VolumeValue").textContent=String(s.volume)+"%";
-    $("v10Rate").value=s.rate; $("v10Pitch").value=s.pitch; $("v10Volume").value=s.volume;
+    const rateVal=$("v10RateValue"), pitchVal=$("v10PitchValue"), volVal=$("v10VolumeValue");
+    const rateEl=$("v10Rate"), pitchEl=$("v10Pitch"), volEl=$("v10Volume");
+    if(rateVal) rateVal.textContent=Number(s.rate).toFixed(2);
+    if(pitchVal) pitchVal.textContent=String(s.pitch);
+    if(volVal) volVal.textContent=String(s.volume)+"%";
+    if(rateEl) rateEl.value=s.rate;
+    if(pitchEl) pitchEl.value=s.pitch;
+    if(volEl) volEl.value=s.volume;
   }
 
   async function speakSana(text){
