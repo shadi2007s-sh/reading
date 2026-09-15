@@ -282,16 +282,11 @@ function norm(s){return String(s||"").replace(/[\u064B-\u0652\u0670\u0640]/g,"")
 function similarity(a,b){a=norm(a);b=norm(b);if(a===b)return 1;if(!a||!b)return 0;let m=a.length,n=b.length,d=Array.from({length:m+1},(_,i)=>{const r=Array(n+1);r[0]=i;return r});for(let j=1;j<=n;j++)d[0][j]=j;for(let i=1;i<=m;i++)for(let j=1;j<=n;j++)d[i][j]=Math.min(d[i-1][j]+1,d[i][j-1]+1,d[i-1][j-1]+(a[i-1]===b[j-1]?0:1));return 1-d[m][n]/Math.max(m,n)}
 async function startMic(){
   if(reading)stopReading();if(mode!=="word"){say("🎤 القراءة الصوتية هنا للكلمة الحالية. اختاري «كلمة».");return}
-  const token=++micToken;
-  if(!window.isSecureContext || location.protocol!=="https:"){
-    say("🔒 تشغيل المايك على iPad يحتاج فتح الصفحة من رابط HTTPS مثل GitHub Pages، وليس من ملف HTML محفوظ على الجهاز.");
-    return;
-  }
-  if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){say("⚠️ المتصفح لا يدعم تسجيل المايك.");return}
+  const token=++micToken;if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){say("⚠️ المتصفح لا يدعم تسجيل المايك.");return}
   resetMicState();
   try{
     say("🎙 اقرئي الكلمة الآن: "+(words[idx]||""));
-    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
     if(token!==micToken){stream.getTracks().forEach(t=>t.stop());return}
     const mime=chooseMime(),rec=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);micState.stream=stream;micState.recorder=rec;
     rec.ondataavailable=e=>{if(e.data?.size)micState.chunks.push(e.data)};
@@ -306,14 +301,7 @@ async function startMic(){
     };
     rec.start();$("micBtn").textContent="⏹ إيقاف التسجيل";monitorSpeech(stream,rec,token);
     micState.timer=setTimeout(()=>{try{if(rec.state!=="inactive")rec.stop()}catch(e){}},3800);
-  }catch(e){
-    resetMicState();
-    console.error("iPad microphone error",e);
-    if(e?.name==="NotAllowedError")say("🎤 Safari منع استخدام المايك. افتحي الصفحة في Safari من رابط HTTPS، ثم اسمحي للمايك من إعدادات الموقع.");
-    else if(e?.name==="SecurityError")say("🔒 Safari يمنع المايك في هذا السياق. استخدمي صفحة HTTPS مباشرة وليست معاينة أو ملفًا محليًا.");
-    else if(e?.name==="OverconstrainedError")say("🎤 إعدادات المايك غير مناسبة لهذا الجهاز. اضغطي مرة أخرى للمحاولة.");
-    else say("⚠️ تعذر تشغيل المايك: "+(e?.message||e));
-  }
+  }catch(e){resetMicState();if(e?.name==="NotAllowedError")say("🎤 اسمحي للمتصفح باستخدام المايك ثم اضغطي مرة أخرى.");else say("⚠️ تعذر تشغيل المايك.")}
 }
 function stopMic(){++micToken;try{if(micState.recorder&&micState.recorder.state!=="inactive")micState.recorder.stop()}catch(e){}resetMicState();$("micBtn").textContent="🎤 ابدئي القراءة"}
 $("savedTextSel").onchange=()=>{const t=saved.find(x=>x.id===$("savedTextSel").value);if(t){current=t;saveTexts();build(t.text);say("📖 تم اختيار: "+t.name)}};
