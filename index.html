@@ -938,6 +938,47 @@ function accept(said,target){
   const th = t.length<=3 ? .95 : (t.length<=5 ? .75 : .68);
   return sim(s,t) >= th;
 }
+
+function primeMic(){
+  return new Promise(async resolve=>{
+    try{
+      if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){ resolve(false); return; }
+      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+      stream.getTracks().forEach(t=>t.stop());
+      micOK=true; resolve(true);
+    }catch(e){
+      micOK=false; say(e?.name==='NotAllowedError'?'🎤 اسمحي للمتصفح باستخدام المايك ثم اضغطي مرة أخرى.':'🎤 تعذر فتح المايك.');
+      resolve(false);
+    }
+  });
+}
+function makeRec(continuous=true){
+  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
+  if(!R) throw new Error('SpeechRecognition unsupported');
+  const r=new R();
+  r.lang=LANGS[langI]||'ar-JO';
+  r.interimResults=true;
+  r.continuous=!!continuous;
+  r.maxAlternatives=3;
+  return r;
+}
+function handleT(said){
+  const heard=String(said||'').trim();
+  $('heard').innerHTML=heard?`سمعت: <b>${escapeHtml(heard)}</b>`:'استمع…';
+  const target=words[idx]||'';
+  if(!target) return;
+  if(accept(heard,target)){
+    score++;
+    recordCorrect(target);
+    $('bigword').classList.add('ok','pop');
+    setTimeout(()=>$('bigword').classList.remove('pop','ok'),450);
+    beep(880,.12);
+    idx++;
+    stopMic();
+    if(idx>=words.length){paint();finish();}
+    else {paint();say('✅ ممتاز! الكلمة التالية.');}
+  }
+}
 function build(txt){
   invalidateFullAudioCache();
   const box=$('text'); box.innerHTML="";
@@ -1647,11 +1688,10 @@ $('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView')
   $('tabCard').classList.add('act'); $('tabFull').classList.remove('act'); };
 $('tabFull').onclick=()=>{ $('fullView').classList.remove('hide'); $('cardView').classList.add('hide');
   $('tabFull').classList.add('act'); $('tabCard').classList.remove('act'); paint(); };
-$('micBtn').onclick=()=>{
-  if(window.getReadingReference) window.getReadingReference();
-  const pron=$('v10Pron');
-  if(pron) pron.click();
-  else say('⚠️ تقييم النطق غير متاح حاليًا.');
+$('micBtn').onclick=async()=>{
+  if(listening){ stopMic(); say('⏹ توقّف الاستماع.'); return; }
+  stopRead();
+  await startMic();
 };
 $('sayBtn').onclick=()=>{ if(words[idx]){ stopRead(); azureSpeak(words[idx],null,{source:'single-word',playWhenActive:false}); } };
 $('okBtn').onclick=()=> idx<words.length && correct();
