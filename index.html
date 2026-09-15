@@ -748,79 +748,145 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
   async function runFullTextPron(){
     const ref = words.join(' ').trim();
     if(!ref){ showPanel("تقييم القراءة","لا يوجد نص حالي."); return; }
+
+    // Stop any TTS/reading activity before opening the microphone.
+    try{ if(typeof stopRead === 'function') stopRead(); }catch(e){}
+
     showPanel("🎤 تقييم قراءة النص الكامل",
-      `<p>اقرئي النص كاملاً بصوتك الآن. اضغطي "إيقاف" لما تخلّصي.</p>
-       <div id="fullPronLive" class="v10-small">جارٍ الاستماع…</div>
-       <button class="v10-btn" id="v10StopFullPron">⏹ خلصت — قيّمي قرائتي</button>`);
+      `<p>اقرئي النص كاملاً بصوتك الآن. اضغطي "خلصت — قيّمي قراءتي" عندما تنتهين.</p>
+       <div id="fullPronLive" class="v10-small">جارٍ تجهيز المايك…</div>
+       <button class="v10-btn" id="v10StopFullPron" disabled>⏳ تجهيز الاستماع…</button>`);
 
-    const SDK = await loadSdk();
-    const t = await token();
-    const speechConfig = SDK.SpeechConfig.fromAuthorizationToken(t.token, t.region || cfg.REGION || "eastus");
-    speechConfig.speechRecognitionLanguage = "ar-SA";
-    const audioConfig = SDK.AudioConfig.fromDefaultMicrophoneInput();
-    const rec = new SDK.SpeechRecognizer(speechConfig, audioConfig);
-    const pac = new SDK.PronunciationAssessmentConfig(
-      ref,
-      SDK.PronunciationAssessmentGradingSystem.HundredMark,
-      SDK.PronunciationAssessmentGranularity.Word,
-      true
-    );
-    pac.applyTo(rec);
-
+    let rec = null;
+    let stopping = false;
     let wordScores = [];
     let recognizedPieces = [];
 
-    rec.recognized = (s, e) => {
-      try{
-        const json = e.result.properties.getProperty(
-          SDK.PropertyId.SpeechServiceResponse_JsonResult
-        );
-        const data = JSON.parse(json || "{}");
-        const pa = data.NBest?.[0]?.PronunciationAssessment || {};
-        const words = data.NBest?.[0]?.Words || [];
-        if(e.result.text) recognizedPieces.push(e.result.text);
-        words.forEach(w => {
-          const wp = w.PronunciationAssessment;
-          if(wp) wordScores.push({ word: w.Word, score: wp.AccuracyScore ?? 0 });
-        });
-        const live = document.getElementById('fullPronLive');
-        if(live) live.textContent = 'سمعت حتى الآن: ' + recognizedPieces.join(' ');
-      }catch(err){ console.error('recognized handler error', err); }
+    const setLive = msg => {
+      const el=document.getElementById('fullPronLive');
+      if(el) el.textContent=msg;
     };
 
-    const stopBtn = () => document.getElementById('v10StopFullPron');
-    let stopping = false;
     const finishAssessment = () => {
-      if(stopping) return;
+      if(stopping || !rec) return;
       stopping = true;
-      rec.stopContinuousRecognitionAsync(() => {
-        rec.close();
-        const avg = wordScores.length
-          ? Math.round(wordScores.reduce((a,w)=>a+w.score,0)/wordScores.length)
-          : 0;
-        const weakWords = wordScores.filter(w => w.score < 70);
-        showPanel("نتيجة قراءة النص الكامل", `
-          <div class="v10-row"><strong>الدقة العامة</strong><strong>${avg}%</strong></div>
-          <div class="v10-meter"><i style="width:${Math.max(0,Math.min(100,avg))}%"></i></div>
-          <p class="v10-small">النص المسموع: ${escapeHtml(recognizedPieces.join(' ') || '—')}</p>
-          ${weakWords.length ? `<h4>🎯 كلمات تحتاج تدريب</h4>
-            <div>${weakWords.map(w=>`<span class="v10-chip">${escapeHtml(w.word)} (${Math.round(w.score)}%)</span>`).join('')}</div>`
-            : ''}
-        `);
-        state.sessions += 1;
-        state.words += wordScores.length;
-        state.bestAccuracy = Math.max(state.bestAccuracy, avg);
-        state.history.push({type:"reading-full",at:new Date().toISOString(),accuracy:avg,words:wordScores.length});
-        state.history = state.history.slice(-50);
-        weakWords.forEach(w => { state.hard[w.word] = (state.hard[w.word]||0)+1; });
-        persist();
-      }, err => { rec.close(); showPanel("تعذر التقييم", `<p>${escapeHtml(err)}</p>`); });
+      const btn=document.getElementById('v10StopFullPron');
+      if(btn){ btn.disabled=true; btn.textContent='⏳ جارٍ حساب النتيجة…'; }
+      try{
+        rec.stopContinuousRecognitionAsync(
+          () => finishResult(),
+          err => finishError(err)
+        );
+      }catch(err){ finishError(err); }
     };
 
-    rec.startContinuousRecognitionAsync(
-      () => { const btn = stopBtn(); if(btn) btn.onclick = finishAssessment; },
-      err => { showPanel("تعذر التقييم", `<p>${escapeHtml(err)}</p>`); }
-    );
+    const finishResult = () => {
+      try{ rec && rec.close(); }catch(e){}
+      const avg = wordScores.length
+        ? Math.round(wordScores.reduce((a,w)=>a+w.score,0)/wordScores.length)
+        : 0;
+      const weakWords = wordScores.filter(w => w.score < 70);
+      showPanel("نتيجة قراءة النص الكامل", `
+        <div class="v10-row"><strong>الدقة العامة</strong><strong>${avg}%</strong></div>
+        <div class="v10-meter"><i style="width:${Math.max(0,Math.min(100,avg))}%"></i></div>
+        <p class="v10-small">النص المسموع: ${escapeHtml(recognizedPieces.join(' ') || '—')}</p>
+        ${wordScores.length ? `<p class="v10-small">تم تقييم ${wordScores.length} كلمة.</p>` : `<p class="v10-small">لم يتم الحصول على درجات للكلمات.</p>`}
+        ${weakWords.length ? `<h4>🎯 كلمات تحتاج تدريب</h4>
+          <div>${weakWords.map(w=>`<span class="v10-chip">${escapeHtml(w.word)} (${Math.round(w.score)}%)</span>`).join('')}</div>` : ''}
+      `);
+      state.sessions += 1;
+      state.words += wordScores.length;
+      state.bestAccuracy = Math.max(state.bestAccuracy, avg);
+      state.history.push({type:"reading-full",at:new Date().toISOString(),accuracy:avg,words:wordScores.length});
+      state.history = state.history.slice(-50);
+      weakWords.forEach(w => { state.hard[w.word] = (state.hard[w.word]||0)+1; });
+      persist();
+    };
+
+    const finishError = err => {
+      try{ rec && rec.close(); }catch(e){}
+      const msg = String(err?.message || err || 'تعذر إيقاف التقييم.');
+      console.error('Full-text pronunciation stop error:', err);
+      showPanel("تعذر التقييم", `<p>${escapeHtml(msg)}</p>`);
+    };
+
+    try{
+      const SDK = await loadSdk();
+      const t = await token();
+      if(!t || !t.token) throw new Error('لم يتم الحصول على Speech token.');
+
+      const speechConfig = SDK.SpeechConfig.fromAuthorizationToken(
+        t.token, t.region || cfg.REGION || "eastus"
+      );
+      // STT/Pronunciation Assessment uses ar-SA; TTS voice remains unchanged.
+      speechConfig.speechRecognitionLanguage = "ar-SA";
+
+      const audioConfig = SDK.AudioConfig.fromDefaultMicrophoneInput();
+      rec = new SDK.SpeechRecognizer(speechConfig, audioConfig);
+
+      const pac = new SDK.PronunciationAssessmentConfig(
+        ref,
+        SDK.PronunciationAssessmentGradingSystem.HundredMark,
+        SDK.PronunciationAssessmentGranularity.Word,
+        true
+      );
+      pac.applyTo(rec);
+
+      rec.recognizing = (s,e) => {
+        try{
+          const live=document.getElementById('fullPronLive');
+          if(live && e.result?.text) live.textContent='أسمع: '+e.result.text;
+        }catch(err){}
+      };
+
+      rec.recognized = (s, e) => {
+        try{
+          const json=e.result?.properties?.getProperty(
+            SDK.PropertyId.SpeechServiceResponse_JsonResult
+          );
+          const data=JSON.parse(json || '{}');
+          console.log('Full-text pronunciation response:', data);
+          const wordsResult=data.NBest?.[0]?.Words || [];
+          if(e.result?.text) recognizedPieces.push(e.result.text);
+          wordsResult.forEach(w=>{
+            const wp=w.PronunciationAssessment;
+            if(wp) wordScores.push({word:w.Word,score:Number(wp.AccuracyScore ?? 0)});
+          });
+          const live=document.getElementById('fullPronLive');
+          if(live) live.textContent='سمعت حتى الآن: '+(recognizedPieces.join(' ')||'—');
+        }catch(err){ console.error('recognized handler error:',err); }
+      };
+
+      rec.canceled = (s,e) => {
+        console.error('Full-text pronunciation canceled:', e);
+        if(!stopping){
+          stopping=true;
+          try{rec.close();}catch(x){}
+          showPanel("تعذر التقييم", `<p>${escapeHtml(e?.errorDetails || e?.reason || 'تم إيقاف التعرف على الكلام.')}</p>`);
+        }
+      };
+
+      rec.sessionStopped = () => {
+        console.log('Full-text pronunciation session stopped.');
+      };
+
+      const btn=document.getElementById('v10StopFullPron');
+      if(btn){ btn.disabled=false; btn.textContent='⏹ خلصت — قيّمي قراءتي'; btn.onclick=finishAssessment; }
+      setLive('🎙 اقرئي النص كاملاً الآن…');
+
+      rec.startContinuousRecognitionAsync(
+        () => { setLive('🎙 أسمعك الآن… اقرئي النص كاملاً.'); },
+        err => {
+          console.error('Full-text pronunciation start error:',err);
+          try{rec.close();}catch(x){}
+          showPanel("تعذر التقييم", `<p>${escapeHtml(err?.message || err || 'تعذر تشغيل المايك.')}</p>`);
+        }
+      );
+    }catch(err){
+      console.error('Full-text pronunciation setup error:',err);
+      try{rec && rec.close();}catch(e){}
+      showPanel("تعذر التقييم", `<p>${escapeHtml(err?.message || err || 'تعذر تشغيل تقييم القراءة.')}</p>`);
+    }
   }
 
   // Expose the function for the existing page-level button wiring.
