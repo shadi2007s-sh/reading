@@ -1617,64 +1617,107 @@ function stopRead(){
   paint();
 }
 
-async function startMic(){
-  const token=++micStartToken;
-  if(!SR){ say('😕 المتصفح لا يدعم التعرف على الصوت.'); return; }
-  if(!window.isSecureContext){ say('🔒 يجب فتح الموقع عبر https.'); return; }
-  if(!(await primeMic()) || token!==micStartToken) return;
-  reading=false;
+let azureMicRecognizer=null;
+let azureMicAudioConfig=null;
+let azureMicStopping=false;
+
+async function stopAzureMicRecognizer(){
+  azureMicStopping=true;
+  const r=azureMicRecognizer;
+  const acfg=azureMicAudioConfig;
+  azureMicRecognizer=null;
+  azureMicAudioConfig=null;
   try{
-    rec=makeRec(true);
-    rec.onstart=()=>{
-      if(token!==micStartToken) return;
-      listening=true;
-      $('micBtn').classList.add('on');
-      $('micBtn').textContent='⏹ إيقاف';
-      say('🎧 أسمعك الآن… اقرئي: '+(words[idx]||''));
-    };
-    rec.onresult=e=>{
-      if(!listening || token!==micStartToken) return;
-      for(let i=e.resultIndex;i<e.results.length;i++){
-        const result=e.results[i];
-        const texts=[];
-        for(let a=0;a<result.length;a++) texts.push(String(result[a].transcript||'').trim());
-        const heard=texts.join(' ').trim();
-        if(heard) $('heard').innerHTML=`سمعت: <b>${escapeHtml(heard)}</b>`;
-        if(!result.isFinal || !heard) continue;
-        // Check each alternative separately; Arabic recognition may return punctuation or an extra word.
-        const target=words[idx]||'';
-        const matched=texts.some(t=>accept(t,target)) || texts.some(t=>norm(t).includes(norm(target)));
-        if(matched){ handleT(target); }
-        else { say('سمعت: '+heard+' — حاولي مرة أخرى.'); }
-      }
-    };
-    rec.onerror=e=>{
-      if(token!==micStartToken) return;
-      if(e.error==='aborted' && !listening) return;
-      say('⚠️ '+recognitionErrorMessage(e.error));
-    };
-    rec.onend=()=>{
-      if(token!==micStartToken) return;
-      // Keep the button active and restart recognition when Chrome ends an otherwise healthy continuous session.
-      if(listening){
-        setTimeout(()=>{
-          if(token!==micStartToken || !listening) return;
-          try{ rec.start(); }catch(e){}
-        },180);
-      }
-    };
-    rec.start();
-  }catch(e){
-    listening=false;
-    say('⚠️ ما قدرت أشغّل التعرف على الصوت: '+(e.message||'خطأ غير معروف'));
+    if(r){
+      await new Promise(resolve=>{
+        try{ r.stopContinuousRecognitionAsync(resolve,resolve); }catch(e){ resolve(); }
+      });
+      try{ r.close(); }catch(e){}
+    }
+  }finally{
+    try{ acfg?.close?.(); }catch(e){}
+    azureMicStopping=false;
   }
 }
+
+async function startMic(){
+  const token=++micStartToken;
+  if(!window.isSecureContext){ say('🔒 يجب فتح الموقع عبر HTTPS حتى يعمل المايك.'); return; }
+  if(listening) return;
+  reading=false;
+  try{
+    // Load Azure Speech SDK and request microphone permission from the current user gesture.
+    const SDK=await loadAzureSdk();
+    if(token!==micStartToken) return;
+    if(!(await primeMic()) || token!==micStartToken) return;
+    await stopAzureMicRecognizer();
+    if(token!==micStartToken) return;
+
+    const speechToken=await getAzureToken(false);
+    if(token!==micStartToken) return;
+    const speechConfig=SDK.SpeechConfig.fromAuthorizationToken(speechToken, azureRegion || 'eastus');
+    speechConfig.speechRecognitionLanguage='ar-JO';
+    azureMicAudioConfig=SDK.AudioConfig.fromDefaultMicrophoneInput();
+    azureMicRecognizer=new SDK.SpeechRecognizer(speechConfig, azureMicAudioConfig);
+    const r=azureMicRecognizer;
+
+    r.recognizing=(s,e)=>{
+      if(token!==micStartToken || !listening) return;
+      const text=String(e.result?.text||'').trim();
+      if(text) $('heard').innerHTML=`أستمع: <b>${escapeHtml(text)}</b>`;
+    };
+    r.recognized=(s,e)=>{
+      if(token!==micStartToken || !listening) return;
+      const reason=e.result?.reason;
+      if(reason===SDK.ResultReason.RecognizedSpeech){
+        const text=String(e.result?.text||'').trim();
+        if(text) handleT(text);
+      }else if(reason===SDK.ResultReason.NoMatch){
+        say('🎧 لم أتعرف على الكلمة. حاولي مرة أخرى.');
+      }
+    };
+    r.canceled=(s,e)=>{
+      if(token!==micStartToken) return;
+      console.error('Azure SpeechRecognizer canceled', e?.errorDetails || e?.reason || e);
+      listening=false;
+      $('micBtn').classList.remove('on');
+      $('micBtn').textContent='🎤 ابدئي القراءة';
+      say('⚠️ تعذر التعرف على الكلام. تأكدي من السماح بالمايك والإنترنت.');
+    };
+    r.sessionStopped=()=>{
+      if(token!==micStartToken || azureMicStopping) return;
+      listening=false;
+      $('micBtn').classList.remove('on');
+      $('micBtn').textContent='🎤 ابدئي القراءة';
+    };
+
+    await new Promise((resolve,reject)=>{
+      r.startContinuousRecognitionAsync(resolve,reject);
+    });
+    if(token!==micStartToken){ await stopAzureMicRecognizer(); return; }
+    listening=true;
+    $('micBtn').classList.add('on');
+    $('micBtn').textContent='⏹ إيقاف';
+    say('🎧 أستمع الآن… اقرئي: '+(words[idx]||''));
+  }catch(e){
+    console.error('Azure microphone start failed',e);
+    listening=false;
+    $('micBtn').classList.remove('on');
+    $('micBtn').textContent='🎤 ابدئي القراءة';
+    say('⚠️ تعذر تشغيل التعرف على الكلام. '+(e?.message||''));
+    await stopAzureMicRecognizer();
+  }
+}
+
 function stopMic(){
   ++micStartToken;
   listening=false;
   try{ rec && (rec.onend=null, rec.stop()); }catch(e){}
-  $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
+  stopAzureMicRecognizer();
+  $('micBtn').classList.remove('on');
+  $('micBtn').textContent='🎤 ابدئي القراءة';
 }
+
 function stopAll(){ stopMic(); reading=false; try{ if(azureSynth) azureSynth.stopSpeakingAsync(()=>{},()=>{}); }catch(e){}
   $('readBtn').textContent='📖 اقرأ لي النص';
   try{speechSynthesis.cancel();}catch(e){} }
