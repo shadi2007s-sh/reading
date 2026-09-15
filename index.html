@@ -1698,35 +1698,31 @@ async function blobToWav16kMono(blob){
     const src=offline.createBufferSource(); src.buffer=decoded; src.connect(offline.destination); src.start(0);
     const rendered=await offline.startRendering();
     const ch=rendered.getChannelData(0), dataLen=ch.length*2;
+    // Find peak amplitude and normalize so quiet recordings are boosted
+    let peak=0;
+    for(let i=0;i<ch.length;i++){ const v=Math.abs(ch[i]); if(v>peak) peak=v; }
+    const gain = peak > 0.01 ? Math.min(3, 0.9/peak) : 1; // cap boost at 3x
     const out=new ArrayBuffer(44+dataLen),dv=new DataView(out);
     const write=(o,str)=>{for(let i=0;i<str.length;i++)dv.setUint8(o+i,str.charCodeAt(i));};
     write(0,'RIFF');dv.setUint32(4,36+dataLen,true);write(8,'WAVE');write(12,'fmt ');
     dv.setUint32(16,16,true);dv.setUint16(20,1,true);dv.setUint16(22,1,true);dv.setUint32(24,targetRate,true);
     dv.setUint32(28,targetRate*2,true);dv.setUint16(32,2,true);dv.setUint16(34,16,true);write(36,'data');dv.setUint32(40,dataLen,true);
-    let off=44;for(let i=0;i<ch.length;i++){const x=Math.max(-1,Math.min(1,ch[i]));dv.setInt16(off,x<0?x*0x8000:x*0x7fff,true);off+=2;}
+    let off=44;for(let i=0;i<ch.length;i++){const x=Math.max(-1,Math.min(1,ch[i]*gain));dv.setInt16(off,x<0?x*0x8000:x*0x7fff,true);off+=2;}
     return new Blob([out],{type:'audio/wav'});
   }finally{try{await ctx.close();}catch(e){}}
 }
 
 async function transcribeWavWithAzure(wav,token){
-  const base=`https://${azureRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=ar-JO`;
-  const headers={
-    'Authorization':'Bearer '+token,
-    'Content-Type':'audio/wav; codecs=audio/pcm; samplerate=16000',
-    'Accept':'application/json'
-  };
-  async function request(format){
-    const res=await fetch(base+'&format='+format,{method:'POST',headers,body:wav,cache:'no-store'});
-    const body=await res.text();
-    if(!res.ok) throw new Error('STT_HTTP_'+res.status+(body?' '+body.slice(0,180):''));
-    let data={};try{data=JSON.parse(body||'{}');}catch(e){throw new Error('STT_BAD_JSON');}
-    const text=(data.DisplayText||data.NBest?.[0]?.Display||data.NBest?.[0]?.Lexical||data.RecognitionStatus==='Success'&&data.DisplayText||'').trim();
-    return {text,data};
-  }
-  // First use detailed results; if Azure returns no text, retry once with simple format.
-  const first=await request('detailed');
-  if(first.text) return first;
-  return await request('simple');
+  const url=`https://${azureRegion}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=ar-SA&format=detailed`;
+  const res=await fetch(url,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'audio/wav; codecs=audio/pcm; samplerate=16000','Accept':'application/json'},body:wav,cache:'no-store'});
+  const body=await res.text();
+  if(!res.ok) throw new Error('STT_HTTP_'+res.status+(body?' '+body.slice(0,180):''));
+  let data={};try{data=JSON.parse(body||'{}');}catch(e){throw new Error('STT_BAD_JSON');}
+  // TEMP DIAGNOSTIC: log the full Azure response to see RecognitionStatus
+  // (values like "Success", "NoMatch", "InitialSilenceTimeout" tell us the real cause)
+  console.log('Azure STT full response:', data);
+  const text=(data.DisplayText||data.NBest?.[0]?.Display||data.NBest?.[0]?.Lexical||'').trim();
+  return {text,data};
 }
 
 async function startMic(){
