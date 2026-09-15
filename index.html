@@ -1468,20 +1468,34 @@ async function readFullTextAzure(){
       const finish=(ok,err)=>{ if(settled)return; settled=true; ok?resolve():reject(err||new Error('AUDIO_PLAY_FAILED')); };
       azureAudio.onloadedmetadata=()=>{ metadataReady=true; fullAudioCache.duration=Number.isFinite(azureAudio.duration)?azureAudio.duration:0; };
       azureAudio.onerror=()=>finish(false,new Error('AUDIO_PLAY_FAILED'));
+      // تتبع المؤشر من زمن الصوت الفعلي (currentTime)، وليس من مؤقتات مسبقة.
+      // هذا يجعل حركة المؤشر مرتبطة بما تسمعينه فعليًا، سواء كان الصوت جديدًا أو محفوظًا.
+      const totalChars=Math.max(1,text.length);
+      const cumulative=[];
+      let usedChars=0;
+      words.forEach(w=>{
+        cumulative.push(usedChars/totalChars);
+        usedChars += w.length+1;
+      });
+      const updateHighlight=()=>{
+        if(!reading || pausedReading) return;
+        const total=Number.isFinite(azureAudio.duration) && azureAudio.duration>0 ? azureAudio.duration : 0;
+        if(!total) return;
+        const ratio=Math.max(0,Math.min(0.999999,azureAudio.currentTime/total));
+        let lo=0,hiIdx=words.length-1,ans=0;
+        while(lo<=hiIdx){
+          const mid=(lo+hiIdx)>>1;
+          if(cumulative[mid] <= ratio){ ans=mid; lo=mid+1; }
+          else hiIdx=mid-1;
+        }
+        hi(ans);
+      };
+      azureAudio.ontimeupdate=updateHighlight;
       azureAudio.onplay=()=>{
         if(!reading || pausedReading) return;
-        // يبدأ التأشير فقط لحظة بدء الصوت فعليًا.
         document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
         hi(0);
-        clearReadTimers();
-        const total=azureAudio.duration||0;
-        const totalChars=Math.max(1,text.length);
-        let used=0;
-        words.forEach((w,i)=>{
-          const at=total*(used/totalChars)*1000;
-          readTimers.push(setTimeout(()=>{ if(reading && !pausedReading) hi(i); },at));
-          used+=w.length+1;
-        });
+        updateHighlight();
       };
       azureAudio.onended=()=>{ clearReadTimers(); finish(true); if(reading && !pausedReading) stopRead(); };
       azureAudio.play().then(()=>{ if(!metadataReady){} }).catch(err=>finish(false,err));
@@ -1540,7 +1554,7 @@ function stopRead(){
   try{ if(gAudio){ gAudio.onended=null; gAudio.onerror=null; } }catch(e){}
   try{ gAudio.pause(); gAudio.currentTime=0; }catch(e){}
   try{ recAudio.pause(); recAudio.currentTime=0; }catch(e){}
-  try{ azureAudio.pause(); azureAudio.currentTime=0; azureAudio.src=''; }catch(e){}
+  try{ azureAudio.pause(); azureAudio.currentTime=0; azureAudio.src=''; azureAudio.ontimeupdate=null; }catch(e){}
   document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
   $('readBtn').textContent='📖 اقرأ لي النص';
   $('pauseBtn').textContent='⏸ إيقاف مؤقت';
