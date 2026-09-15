@@ -289,7 +289,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <div class="bar"><i id="fill"></i></div>
 <div aria-label="وضع القراءة" class="mode-strip">
 <button class="active" data-mode="word">🔠 كلمة</button>
-<button data-mode="sentence">🧩 جملة</button>
+
 <button data-mode="full">📖 النص كامل</button>
 </div>
 <div class="pause-bar">
@@ -297,7 +297,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <button id="pauseBtn">⏸ إيقاف مؤقت</button>
 </div>
 <div class="heard" id="heard">اضغطي 🔊 لتسمعي الكلمة، وبعدين 🎤 لتقرئيها.</div>
-<small class="note">🎧 Sana تقرأ لك — يمكنك التبديل بين كلمة/جملة/نص كامل، وإيقاف القراءة مؤقتًا أو إعادة الكلمة.</small>
+<small class="note">🎧 Sana تقرأ لك — يمكنك التبديل بين كلمة/نص كامل، وإيقاف القراءة مؤقتًا أو إعادة الكلمة.</small>
 <div id="azureSecureStatus" style="margin-top:8px;font-size:.78rem;color:#2f8f5b;font-weight:700;text-align:center">☁️ Azure Neural: Sana — صوت تعليمي عبر Token</div>
 </div>
 <div class="mistakes" id="mistakesBox">
@@ -434,7 +434,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <option selected="" value="normal">🙂 طبيعية</option>
 <option value="long">🐢 طويلة</option>
 </select>
-<div class="chk"><input checked="" id="sentMode" type="checkbox"/> <span>اقرأ الجملة كاملة (نطق أصح من الكلمة لحالها)</span></div>
+
 <div class="chk"><input id="noTash" type="checkbox"/> <span>انطق بدون تشكيل (جرّبيها إذا اللفظ غريب)</span></div>
 <div class="row" style="margin-top:12px">
 <button onclick="testVoice()">🔊 جرّبي الصوت</button>
@@ -823,7 +823,7 @@ let currentText={id:'',name:'',text:DEFAULT_TEXT};
 let savedTexts=[];
 let appState = {correct:0, wrong:0, streak:0, best:0, startedAt:null, mistakes:{}, attempts:0, finished:false, wordCount:0};
 let progressHistory=[];
-let readingMode='sentence';
+let readingMode='word';
 let pausedReading=false;
 let activeReadIndex=0;
 let readSessionStartedAt=null;
@@ -992,7 +992,7 @@ function fillVoices(){
 function checkVoice(){
   const bn=$('banner');
   if(bn) bn.classList.add('hide');
-}let engine='azure', sentenceMode=true;
+}let engine='azure';
 const azureAudio = new Audio(); azureAudio.preload='auto';
 const AZURE_TOKEN_ENDPOINT = (window.READING_APP_CONFIG||{}).TOKEN_ENDPOINT || 'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token';
 const AZURE_SDK_URL = (window.READING_APP_CONFIG||{}).SDK_URL || 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js';
@@ -1099,19 +1099,11 @@ function unlockAzureAudio(){
 document.addEventListener('pointerdown',unlockAzureAudio,{once:false,passive:true});
 document.addEventListener('touchstart',unlockAzureAudio,{once:false,passive:true});
 async function ensureAzureSynth(force=false){
-  const SDK=await loadAzureSdk();
-  const token=await getAzureToken(force);
-  const key=token+'|'+azureRegion+'|'+azureVoice;
-  if(!force && azureSynth && azureSynthTokenKey===key) return azureSynth;
-  try{ if(azureSynth) azureSynth.close(); }catch(e){}
-  const cfg=SDK.SpeechConfig.fromAuthorizationToken(token, azureRegion);
-  cfg.speechSynthesisVoiceName=azureVoice;
-  cfg.speechSynthesisLanguage='ar-JO';
-  azureSynth=new SDK.SpeechSynthesizer(cfg, null);
-  
-  azureSynthTokenKey=key;
-  return azureSynth;
+  // Reading playback uses Azure TTS REST audio, not the SpeechSynthesizer speaker output.
+  // This prevents the SDK from playing a second voice and avoids disposed synthesizer reuse.
+  return true;
 }
+let azureSpeakAbort=null;
 async function azureSpeak(t,cb,options={}){
   const generation=++azureSpeakGeneration;
   const text=String(t||'').trim();
@@ -1119,73 +1111,74 @@ async function azureSpeak(t,cb,options={}){
   try{
     saveAzureConfig();
     setAzureStatus('جارٍ تجهيز صوت Sana…');
-    const synth=await ensureAzureSynth(false);
-    if(generation!==azureSpeakGeneration) return;
-    const ssml=buildAzureSSML(text);
+    if(azureSpeakAbort){ try{azureSpeakAbort.abort();}catch(e){} }
+    azureSpeakAbort=new AbortController();
+    const controller=azureSpeakAbort;
+    const token=await getAzureToken(false);
+    if(generation!==azureSpeakGeneration || controller.signal.aborted) return;
+    if(!token) throw new Error('TOKEN_MISSING');
+    const res=await fetch(`https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`,{
+      method:'POST',
+      headers:{
+        'Authorization':'Bearer '+token,
+        'Content-Type':'application/ssml+xml',
+        'X-Microsoft-OutputFormat':'riff-24khz-16bit-mono-pcm'
+      },
+      body:buildAzureSSML(text),
+      signal:controller.signal,
+      cache:'no-store'
+    });
+    if(generation!==azureSpeakGeneration || controller.signal.aborted) return;
+    if(!res.ok){
+      const e=new Error('TTS_HTTP_'+res.status);
+      throw e;
+    }
+    const data=await res.arrayBuffer();
+    if(generation!==azureSpeakGeneration || controller.signal.aborted) return;
+    if(!data || !data.byteLength) throw new Error('TTS_EMPTY_AUDIO');
+
+    if(options.playWhenActive && (!reading || pausedReading)) return;
+    if(azureAudioUrl){ try{URL.revokeObjectURL(azureAudioUrl);}catch(e){} }
+    azureAudioUrl=URL.createObjectURL(new Blob([data],{type:'audio/wav'}));
+    try{azureAudio.pause();}catch(e){}
+    try{azureAudio.currentTime=0;}catch(e){}
+    azureAudio.src=azureAudioUrl;
+    azureAudio.playbackRate=1;
     await new Promise((resolve,reject)=>{
       let settled=false;
-      const done=(fn,arg)=>{ if(settled)return; settled=true; try{fn&&fn(arg);}catch(e){} };
-      synth.speakSsmlAsync(ssml,
-        async result=>{
-          if(generation!==azureSpeakGeneration){ done(resolve); return; }
-          const reason=String(result?.reason||'');
-          if(window.SpeechSDK && result.reason===window.SpeechSDK.ResultReason.SynthesizingAudioCompleted){
-            const data=result.audioData;
-            if(!data || !data.byteLength){
-              setAzureStatus('✕ لم يصل ملف صوتي من Azure');
-              done(reject,new Error('TTS_EMPTY_AUDIO'));
-              return;
-            }
-            try{
-              if(azureAudioUrl) URL.revokeObjectURL(azureAudioUrl);
-              const blob=new Blob([data],{type:'audio/wav'});
-              azureAudioUrl=URL.createObjectURL(blob);
-              azureAudio.pause();
-              azureAudio.currentTime=0;
-              azureAudio.src=azureAudioUrl;
-              azureAudio.playbackRate=1;
-              azureAudio.onended=()=>{
-                if(generation!==azureSpeakGeneration){ done(resolve); return; }
-                setAzureStatus('✓ تم تشغيل Sana');
-                cb&&cb();
-                done(resolve);
-              };
-              azureAudio.onerror=()=>{
-                if(generation===azureSpeakGeneration) setAzureStatus('✕ تعذر تشغيل ملف Sana');
-                done(reject,new Error('AUDIO_PLAY_FAILED'));
-              };
-              if(generation!==azureSpeakGeneration){ done(resolve); return; }
-              await azureAudio.play();
-            }catch(e){
-              console.error('Azure audio playback error',e);
-              done(reject,e);
-            }
-          }else{
-            const details=String(result?.errorDetails||'');
-            console.error('Azure synth result',reason,details,result);
-            setAzureStatus('✕ '+(details||'تعذر تشغيل Azure'));
-            done(reject,new Error('TTS_SYNTH_'+(reason||'FAILED')));
-          }
-        },
-        err=>{
-          console.error('Azure synth error',err);
-          if(generation===azureSpeakGeneration) setAzureStatus('✕ تعذر تشغيل Azure');
-          done(reject,err instanceof Error?err:new Error(String(err||'TTS_SYNTH_FAILED')));
-        }
-      );
+      const finish=(ok,err)=>{ if(settled)return; settled=true; if(generation!==azureSpeakGeneration) return resolve(); ok?resolve():reject(err||new Error('AUDIO_PLAY_FAILED')); };
+      azureAudio.onended=()=>{
+        if(generation!==azureSpeakGeneration) return finish(true);
+        setAzureStatus('✓ تم تشغيل Sana');
+        cb&&cb();
+        finish(true);
+      };
+      azureAudio.onerror=()=>{
+        if(generation===azureSpeakGeneration) setAzureStatus('✕ تعذر تشغيل ملف Sana');
+        finish(false,new Error('AUDIO_PLAY_FAILED'));
+      };
+      if(generation!==azureSpeakGeneration || controller.signal.aborted) return finish(true);
+      azureAudio.play().then(()=>setAzureStatus('✓ Sana تعمل')).catch(err=>finish(false,err));
     });
   }catch(e){
-    if(generation!==azureSpeakGeneration)return;
+    if(e?.name==='AbortError' || generation!==azureSpeakGeneration) return;
     console.error('azureSpeak failed',e);
     setAzureStatus('✕ '+azureUserError(e));
     cb&&cb();
+  }finally{
+    if(generation===azureSpeakGeneration) azureSpeakAbort=null;
   }
 }
 function cancelAzure(){
   azureSpeakGeneration++;
-  try{if(azureSynth)azureSynth.close();}catch(e){}
+  try{ if(azureSpeakAbort) azureSpeakAbort.abort(); }catch(e){}
+  azureSpeakAbort=null;
+  try{ if(azureSynth){ azureSynth.close(); } }catch(e){}
+  azureSynth=null;
+  azureSynthTokenKey='';
   try{azureAudio.pause();azureAudio.currentTime=0;}catch(e){}
   try{if(azureAudioUrl){URL.revokeObjectURL(azureAudioUrl);azureAudioUrl='';}}catch(e){}
+  try{azureAudio.removeAttribute('src');azureAudio.load();}catch(e){}
   try{azureAudio.onended=null;azureAudio.onerror=null;}catch(e){}
 }
 async function testAzureSana(){
@@ -1276,7 +1269,7 @@ async function refreshRecSet(){
 }
 function hasRec(w){ return recSet.has(norm(w)); }
 async function speak(t, r, cb){
-  return azureSpeak(t, cb, {fallback:false, source:'reading'});
+  return azureSpeak(t, cb, {fallback:false, source:'reading', playWhenActive:true});
 }
 function speakDevice(t, r, cb){
   try{
@@ -1294,19 +1287,22 @@ function speakDevice(t, r, cb){
   }catch(e){ cb&&cb(); }
 }
 function testVoice(){ testAzureSana(); }
-function repeatCurrentWord(){ if(!words[idx])return; say('🔁 أعيد الكلمة: '+words[idx]); speak(words[idx],rate); }
+function repeatCurrentWord(){ if(!words[idx])return; stopRead(); azureSpeak(words[idx],null,{source:'repeat-word',playWhenActive:false}); }
 function pauseReading(){
-  if(!reading){say('لا توجد قراءة جارية الآن.');return;}
+  if(!reading){ say('لا توجد قراءة جارية الآن.'); return; }
   if(pausedReading){
-    pausedReading=false; $('pauseBtn').textContent='⏸ إيقاف مؤقت';
+    pausedReading=false;
+    $('pauseBtn').textContent='⏸ إيقاف مؤقت';
     try{ if(azureAudio.src) azureAudio.play().catch(()=>{}); }catch(e){}
     return;
   }
-  pausedReading=true; $('pauseBtn').textContent='▶️ استئناف';
+  pausedReading=true;
+  $('pauseBtn').textContent='▶️ استئناف';
   try{ azureAudio.pause(); }catch(e){}
 }
+
 function stopSpeechEngines(){try{if(azureSynth)azureSynth.stopSpeakingAsync(()=>{},()=>{});}catch(e){} try{speechSynthesis.cancel();}catch(e){} try{gAudio.pause();}catch(e){}}
-function continueReadingFrom(start){ if(!reading||pausedReading)return; activeReadIndex=start; if(readingMode==='word')readWords(start); else if(readingMode==='sentence')readSentence(start); else readSentence(start); }
+function continueReadingFrom(start){ if(!reading||pausedReading)return; activeReadIndex=start; if(readingMode==='word')readWords(start); else readFullTextAzure(); }
 
 window.loadAzureSdk=loadAzureSdk;
 function arVoice(){ return chosenVoice || arVoices()[0] || null; }
@@ -1347,13 +1343,6 @@ function hi(i){
     $('prevw').textContent=i>0?words[i-1]:''; $('nextw').textContent=i<words.length-1?words[i+1]:'';
   }
 }
-function getSentenceBounds(i){
-  let start=i, end=i;
-  while(start>0 && !/[.!؟؛]$/.test(words[start-1])) start--;
-  while(end<words.length-1 && !/[.!؟؛]$/.test(words[end])) end++;
-  return {start,end};
-}
-
 let readTimers=[];
 function clearReadTimers(){ readTimers.forEach(t=>clearTimeout(t)); readTimers=[]; }
 
@@ -1363,18 +1352,7 @@ function readWordOnly(i){
   activeReadIndex=i;
   hi(i);
   const done=()=>{ if(reading && !pausedReading) stopRead(); };
-  if(engine==='azure') azureSpeak(text,done,{source:'word'});
-  else speak(text,rate,done);
-}
-
-function readSentenceOnly(i){
-  const b=getSentenceBounds(i);
-  const text=words.slice(b.start,b.end+1).join(' ');
-  activeReadIndex=b.start;
-  hi(b.start);
-  const done=()=>{ if(reading && !pausedReading) stopRead(); };
-  if(engine==='azure') azureSpeak(text,done,{source:'sentence'});
-  else speak(text,rate,done);
+  azureSpeak(text,done,{source:'word',playWhenActive:true});
 }
 
 async function readFullTextAzure(){
@@ -1383,28 +1361,33 @@ async function readFullTextAzure(){
   clearReadTimers();
   activeReadIndex=0;
   hi(0);
-  let durationSec=Math.max(2, text.length*0.075/Math.max(.65,Math.min(1.35,azureRate(rate))));
-  try{
-    const t0=Date.now();
-    await new Promise((resolve,reject)=>{
-      azureSpeak(text,()=>resolve(),{source:'full'});
-      // Highlight timing is approximate because Azure audio duration is only known after synthesis.
-      const totalChars=Math.max(1,text.length);
-      words.forEach((w,i)=>{
-        const before=words.slice(0,i).join(' ');
-        const at=durationSec*(before.length/totalChars)*1000;
-        readTimers.push(setTimeout(()=>{if(reading&&!pausedReading)hi(i);},at));
-      });
-      setTimeout(()=>{ if(reading && !pausedReading && Date.now()-t0>(durationSec*1000+2500)) resolve(); },durationSec*1000+2600);
-    });
-  }catch(e){
-    if(reading) setAzureStatus('✕ تعذر تشغيل النص كاملًا');
-  }
+
+  // Highlight words approximately while one Azure WAV is playing.
+  const approxSec=Math.max(2, text.length*0.075/Math.max(.65,Math.min(1.35,azureRate(rate))));
+  const totalChars=Math.max(1,text.length);
+  let used=0;
+  words.forEach((w,i)=>{
+    const at=approxSec*(used/totalChars)*1000;
+    readTimers.push(setTimeout(()=>{ if(reading && !pausedReading) hi(i); },at));
+    used += w.length+1;
+  });
+
+  await new Promise(resolve=>{
+    let finished=false;
+    const done=()=>{ if(finished)return; finished=true; resolve(); };
+    azureSpeak(text,done,{source:'full-reading',playWhenActive:true});
+  });
   if(reading && !pausedReading) stopRead();
 }
 
 async function readAloud(from){
   if(reading){ stopRead(); return; }
+
+  // Hard-stop every other browser audio engine before starting the single reader.
+  try{ speechSynthesis.cancel(); }catch(e){}
+  try{ gAudio.pause(); gAudio.currentTime=0; }catch(e){}
+  try{ recAudio.pause(); recAudio.currentTime=0; }catch(e){}
+
   stopMic();
   pausedReading=false;
   clearReadTimers();
@@ -1412,16 +1395,13 @@ async function readAloud(from){
   reading=true;
   $('readBtn').textContent='⏹ وقّف القراءة';
   readSessionStartedAt=Date.now();
-
   activeReadIndex=(readingMode==='full') ? 0 : (from!==undefined ? from : idx);
 
   if(readingMode==='full'){
-    readFullTextAzure();
+    await readFullTextAzure();
     return;
   }
-
-  if(readingMode==='word') readWordOnly(activeReadIndex);
-  else readSentenceOnly(activeReadIndex);
+  readWordOnly(activeReadIndex);
 }
 
 function readWords(i){
@@ -1445,13 +1425,16 @@ function stopRead(){
   clearReadTimers();
   cancelAzure();
   try{ speechSynthesis.cancel(); }catch(e){}
-  try{ gAudio.pause(); gAudio.currentTime=0; gAudio.onended=null; gAudio.onerror=null; }catch(e){}
-  try{ recAudio.pause(); recAudio.currentTime=0; recAudio.onended=null; recAudio.onerror=null; }catch(e){}
+  try{ if(gAudio){ gAudio.onended=null; gAudio.onerror=null; } }catch(e){}
+  try{ gAudio.pause(); gAudio.currentTime=0; }catch(e){}
+  try{ recAudio.pause(); recAudio.currentTime=0; }catch(e){}
+  try{ azureAudio.pause(); azureAudio.currentTime=0; azureAudio.src=''; }catch(e){}
   document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
   $('readBtn').textContent='📖 اقرأ لي النص';
   $('pauseBtn').textContent='⏸ إيقاف مؤقت';
   paint();
 }
+
 async function startMic(){
   const token=++micStartToken;
   if(!SR){ say('😕 المتصفح ما بيدعم التعرّف على الصوت. استخدمي ✓ صح.'); return; }
@@ -1530,14 +1513,7 @@ function shareCurrentText(){
   if(navigator.share){navigator.share({title:currentText.name||'نص قراءة',text}).catch(()=>{});}else if(navigator.clipboard){navigator.clipboard.writeText(text).then(()=>say('📋 تم نسخ النص للمشاركة.')).catch(()=>say('انسخي النص من إدارة النصوص.'));}else say('📋 انسخي النص من إدارة النصوص لمشاركته.');
 }
 function exportProgress(){ const payload={version:1,exportedAt:new Date().toISOString(),history:progressHistory, current:appState}; const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='reading-progress.json';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000); }
-window.getReadingReference=()=>{
-  if(readingMode==='word') return words[idx]||'';
-  if(readingMode==='sentence'){
-    const b=getSentenceBounds(idx);
-    return words.slice(b.start,b.end+1).join(' ');
-  }
-  return words.join(' ');
-};
+window.getReadingReference=()=> readingMode==='full' ? words.join(' ') : (words[idx]||'');
 $('tabCard').onclick=()=>{ $('cardView').classList.remove('hide'); $('fullView').classList.add('hide');
   $('tabCard').classList.add('act'); $('tabFull').classList.remove('act'); };
 $('tabFull').onclick=()=>{ $('fullView').classList.remove('hide'); $('cardView').classList.add('hide');
@@ -1548,7 +1524,7 @@ $('micBtn').onclick=()=>{
   if(pron) pron.click();
   else say('⚠️ تقييم النطق غير متاح حاليًا.');
 };
-$('sayBtn').onclick=()=> words[idx] && speak(words[idx], rate);
+$('sayBtn').onclick=()=>{ if(words[idx]){ stopRead(); azureSpeak(words[idx],null,{source:'single-word',playWhenActive:false}); } };
 $('okBtn').onclick=()=> idx<words.length && correct();
 $('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
 $('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
@@ -1572,7 +1548,7 @@ $('importTextsBtn').onclick=()=>$('textsFile').click();
 $('textsFile').onchange=e=>{if(e.target.files[0])importTexts(e.target.files[0]);};
 document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('click',()=>{
   if(reading) stopRead();
-  readingMode=btn.dataset.mode;
+  readingMode=btn.dataset.mode==='full' ? 'full' : 'word';
   document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===btn));
   if(readingMode==='full'){
     $('fullView').classList.remove('hide');
@@ -1735,7 +1711,6 @@ $('engineSel').onchange=e=>{
 };
 $('azureVoiceSel').onchange=e=>{azureVoice=e.target.value;saveAzureConfig();};
 
-$('sentMode').onchange=e=>{ sentenceMode=e.target.checked; };
 $('pausePreset').onchange=e=>{pausePreset=e.target.value;};
 loadAzureConfig();
 engine='azure';
