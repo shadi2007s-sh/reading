@@ -959,15 +959,27 @@ function makeRec(continuous=true){
   r.lang=LANGS[langI]||'ar-JO';
   r.interimResults=true;
   r.continuous=!!continuous;
-  r.maxAlternatives=3;
+  r.maxAlternatives=5;
   return r;
+}
+
+function recognitionErrorMessage(code){
+  const m={
+    'no-speech':'لم أسمع كلامًا. قرّبي الميكروفون وتكلمي بوضوح ثم حاولي مرة أخرى.',
+    'audio-capture':'لم أستطع الوصول إلى الميكروفون.',
+    'not-allowed':'اسمحي للمتصفح باستخدام الميكروفون.',
+    'service-not-allowed':'المتصفح منع خدمة التعرف على الصوت.',
+    'network':'تعذر الاتصال بخدمة التعرف على الصوت.',
+    'aborted':'تم إيقاف الاستماع.'
+  };
+  return m[code]||('تعذر التعرف على الصوت: '+code);
 }
 function handleT(said){
   const heard=String(said||'').trim();
-  $('heard').innerHTML=heard?`سمعت: <b>${escapeHtml(heard)}</b>`:'استمع…';
   const target=words[idx]||'';
   if(!target) return;
-  if(accept(heard,target)){
+  $('heard').innerHTML=heard?`سمعت: <b>${escapeHtml(heard)}</b>`:'استمع…';
+  if(accept(heard,target) || norm(heard).includes(norm(target))){
     score++;
     recordCorrect(target);
     $('bigword').classList.add('ok','pop');
@@ -976,7 +988,7 @@ function handleT(said){
     idx++;
     stopMic();
     if(idx>=words.length){paint();finish();}
-    else {paint();say('✅ ممتاز! الكلمة التالية.');}
+    else {paint();say('✅ ممتاز! الكلمة التالية: '+words[idx]);}
   }
 }
 function build(txt){
@@ -1607,21 +1619,55 @@ function stopRead(){
 
 async function startMic(){
   const token=++micStartToken;
-  if(!SR){ say('😕 المتصفح ما بيدعم التعرّف على الصوت. استخدمي ✓ صح.'); return; }
-  if(!window.isSecureContext){ say('🔒 لازم https.'); return; }
+  if(!SR){ say('😕 المتصفح لا يدعم التعرف على الصوت.'); return; }
+  if(!window.isSecureContext){ say('🔒 يجب فتح الموقع عبر https.'); return; }
   if(!(await primeMic()) || token!==micStartToken) return;
   reading=false;
   try{
     rec=makeRec(true);
-    rec.onresult=e=>{ let h="";
-      for(let i=e.resultIndex;i<e.results.length;i++)
-        for(let a=0;a<e.results[i].length;a++) h+=" "+e.results[i][a].transcript;
-      handleT(h); };
-    rec.onend=()=>{ if(listening){ try{rec.start();}catch(e){} } };
-    rec.start(); listening=true;
-    $('micBtn').classList.add('on'); $('micBtn').textContent='⏹ إيقاف';
-    say('🎧 أنا أسمعك… اقرئي الكلمة الكبيرة.');
-  }catch(e){ say('ما قدرت أشغّل المايك.'); }
+    rec.onstart=()=>{
+      if(token!==micStartToken) return;
+      listening=true;
+      $('micBtn').classList.add('on');
+      $('micBtn').textContent='⏹ إيقاف';
+      say('🎧 أسمعك الآن… اقرئي: '+(words[idx]||''));
+    };
+    rec.onresult=e=>{
+      if(!listening || token!==micStartToken) return;
+      for(let i=e.resultIndex;i<e.results.length;i++){
+        const result=e.results[i];
+        const texts=[];
+        for(let a=0;a<result.length;a++) texts.push(String(result[a].transcript||'').trim());
+        const heard=texts.join(' ').trim();
+        if(heard) $('heard').innerHTML=`سمعت: <b>${escapeHtml(heard)}</b>`;
+        if(!result.isFinal || !heard) continue;
+        // Check each alternative separately; Arabic recognition may return punctuation or an extra word.
+        const target=words[idx]||'';
+        const matched=texts.some(t=>accept(t,target)) || texts.some(t=>norm(t).includes(norm(target)));
+        if(matched){ handleT(target); }
+        else { say('سمعت: '+heard+' — حاولي مرة أخرى.'); }
+      }
+    };
+    rec.onerror=e=>{
+      if(token!==micStartToken) return;
+      if(e.error==='aborted' && !listening) return;
+      say('⚠️ '+recognitionErrorMessage(e.error));
+    };
+    rec.onend=()=>{
+      if(token!==micStartToken) return;
+      // Keep the button active and restart recognition when Chrome ends an otherwise healthy continuous session.
+      if(listening){
+        setTimeout(()=>{
+          if(token!==micStartToken || !listening) return;
+          try{ rec.start(); }catch(e){}
+        },180);
+      }
+    };
+    rec.start();
+  }catch(e){
+    listening=false;
+    say('⚠️ ما قدرت أشغّل التعرف على الصوت: '+(e.message||'خطأ غير معروف'));
+  }
 }
 function stopMic(){
   ++micStartToken;
