@@ -1391,7 +1391,7 @@ async function prepareFullAudio(showStatus=true){
   const text=words.join(' ').trim();
   if(!text) return null;
   const key=fullAudioKey();
-  if(fullAudioCache.key===key && fullAudioCache.ready && fullAudioCache.url) return fullAudioCache;
+  if(fullAudioCache.key===key && fullAudioCache.ready && fullAudioCache.blob) return fullAudioCache;
   if(fullAudioCache.key===key && fullAudioCache.loading && fullAudioCache.promise) return fullAudioCache.promise;
   if(fullAudioCache.key!==key) invalidateFullAudioCache();
   const myKey=key;
@@ -1402,7 +1402,7 @@ async function prepareFullAudio(showStatus=true){
       if(stored && stored.size>800){
         const url=URL.createObjectURL(stored);
         if(myKey!==fullAudioKey()){ try{URL.revokeObjectURL(url);}catch(e){}; return null; }
-        fullAudioCache={key:myKey,blob:stored,url,text,duration:0,ready:true,loading:false,promise:null};
+        fullAudioCache={key:myKey,blob:stored,url:'',text,duration:0,ready:true,loading:false,promise:null};
         if(showStatus) setAzureStatus('✓ الصوت المحفوظ جاهز — بدون إعادة تحميل');
         return fullAudioCache;
       }
@@ -1424,7 +1424,7 @@ async function prepareFullAudio(showStatus=true){
       await fullAudioDBPut(myKey,blob);
       if(myKey!==fullAudioKey()) return null;
       const url=URL.createObjectURL(blob);
-      fullAudioCache={key:myKey,blob,url,text,duration:0,ready:true,loading:false,promise:null};
+      fullAudioCache={key:myKey,blob,url:'',text,duration:0,ready:true,loading:false,promise:null};
       if(showStatus) setAzureStatus('✓ صوت النص الكامل جاهز ومحفوظ على الجهاز');
       return fullAudioCache;
     }catch(e){
@@ -1457,16 +1457,19 @@ async function readFullTextAzure(){
     const cached=await prepareFullAudio(true);
     if(!reading || pausedReading || !cached || cached.key!==fullAudioKey()) return;
     if(azureAudioUrl){ try{URL.revokeObjectURL(azureAudioUrl);}catch(e){} }
-    azureAudioUrl=cached.url;
+    azureAudioUrl=URL.createObjectURL(cached.blob);
     try{azureAudio.pause();}catch(e){}
     try{azureAudio.currentTime=0;}catch(e){}
-    azureAudio.src=cached.url;
+    azureAudio.src=azureAudioUrl;
     azureAudio.playbackRate=1;
     await new Promise((resolve,reject)=>{
       let settled=false;
       let metadataReady=false;
       const finish=(ok,err)=>{ if(settled)return; settled=true; ok?resolve():reject(err||new Error('AUDIO_PLAY_FAILED')); };
-      azureAudio.onloadedmetadata=()=>{ metadataReady=true; fullAudioCache.duration=Number.isFinite(azureAudio.duration)?azureAudio.duration:0; };
+      const markReady=()=>{ metadataReady=true; fullAudioCache.duration=Number.isFinite(azureAudio.duration)?azureAudio.duration:0; };
+      azureAudio.onloadedmetadata=markReady;
+      azureAudio.onloadeddata=markReady;
+      azureAudio.oncanplay=markReady;
       azureAudio.onerror=()=>finish(false,new Error('AUDIO_PLAY_FAILED'));
       // تتبع المؤشر من زمن الصوت الفعلي (currentTime)، وليس من مؤقتات مسبقة.
       // هذا يجعل حركة المؤشر مرتبطة بما تسمعينه فعليًا، سواء كان الصوت جديدًا أو محفوظًا.
