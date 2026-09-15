@@ -1721,7 +1721,15 @@ async function transcribeWavWithAzure(wav,token){
   // TEMP DIAGNOSTIC: log the full Azure response to see RecognitionStatus
   // (values like "Success", "NoMatch", "InitialSilenceTimeout" tell us the real cause)
   console.log('Azure STT response:', data); // TEMP — remove after confirming fix
-  const text=(data.DisplayText||data.NBest?.[0]?.Display||data.NBest?.[0]?.Lexical||'').trim();
+  // Use DisplayText/Display only — Lexical can return Latin-script
+  // phonetic transliterations, which we don't want here.
+  let text=(data.DisplayText||data.NBest?.[0]?.Display||'').trim();
+  // Reject any result that contains Latin letters — treat as no match
+  // rather than accepting/showing an English word.
+  if(text && /[A-Za-z]/.test(text)){
+    console.log('Rejected non-Arabic STT result:', text);
+    text='';
+  }
   return {text,data};
 }
 
@@ -1758,7 +1766,11 @@ async function startMic(){
         if(wav.size<5000){say('🎤 التسجيل قصير جدًا. جرّبي أن تبدئي الكلام بعد ظهور الرسالة مباشرة.');return;}
         say('☁️ أتعرّف على الكلمة…');
         const r=await transcribeWavWithAzure(wav,speechToken);if(myToken!==micStartToken)return;
-        if(r.text){handleT(r.text);}else{say('🎤 تم تسجيل صوتك، لكن Azure لم يفهم الكلمة. جرّبي نطقها بوضوح من مسافة قريبة.');}
+        if(r.text){
+          handleT(r.text);
+        }else{
+          say('🎤 لم أفهم الكلمة بوضوح. جرّبي تحكيها ببطء وبصوت أعلى قليلاً.');
+        }
       }catch(e){
         console.error('Azure mobile STT',e);
         if(myToken===micStartToken){
