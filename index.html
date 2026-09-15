@@ -1720,7 +1720,7 @@ async function transcribeWavWithAzure(wav,token){
   let data={};try{data=JSON.parse(body||'{}');}catch(e){throw new Error('STT_BAD_JSON');}
   // TEMP DIAGNOSTIC: log the full Azure response to see RecognitionStatus
   // (values like "Success", "NoMatch", "InitialSilenceTimeout" tell us the real cause)
-  console.log('Azure STT full response:', data);
+  console.log('Azure STT response:', data); // TEMP — remove after confirming fix
   const text=(data.DisplayText||data.NBest?.[0]?.Display||data.NBest?.[0]?.Lexical||'').trim();
   return {text,data};
 }
