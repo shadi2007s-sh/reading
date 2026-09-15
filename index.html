@@ -886,7 +886,7 @@ function updateSavedText(){
   const name=($('textName').value||'').trim()||currentText.name||'نص بدون اسم';
   const i=savedTexts.findIndex(x=>x.id===currentText.id);
   if(i<0)return;
-  savedTexts[i]={...savedTexts[i],name,text}; currentText=savedTexts[i]; saveTexts(); renderTextSelector(); build(text); resetLessonStats(); say('✅ تم تحديث النص: '+name);
+  savedTexts[i]={...savedTexts[i],name,text}; currentText=savedTexts[i]; saveTexts(); renderTextSelector(); invalidateFullAudioCache(); build(text); resetLessonStats(); say('✅ تم تحديث النص: '+name);
 }
 function deleteSavedText(){
   if(savedTexts.length<=1){say('يجب أن يبقى نص واحد على الأقل.');return;}
@@ -939,6 +939,7 @@ function accept(said,target){
   return sim(s,t) >= th;
 }
 function build(txt){
+  invalidateFullAudioCache();
   const box=$('text'); box.innerHTML="";
   words = txt.trim().split(/\s+/).filter(Boolean);
   words.forEach((w,i)=>{
@@ -948,6 +949,8 @@ function build(txt){
   });
   idx=0; score=0; pausedReading=false; activeReadIndex=0; readSessionStartedAt=Date.now(); paint(); refreshRecSet();
   renderDashboard();
+  // جهّز صوت النص الكامل في الخلفية واحفظه على الجهاز. لا يبدأ التشغيل أو التأشير هنا.
+  setTimeout(()=>{ if(readingMode==='full') prepareFullAudio(false).catch(()=>{}); },120);
 }
 function paint(){
   document.querySelectorAll('.w').forEach((el,i)=>{
@@ -1344,7 +1347,95 @@ function hi(i){
   }
 }
 let readTimers=[];
+let fullAudioCache={key:'',blob:null,url:'',text:'',duration:0,ready:false,loading:false,promise:null};
+const FULL_AUDIO_DB='readingFullAudioCacheV1';
+const FULL_AUDIO_STORE='audio';
 function clearReadTimers(){ readTimers.forEach(t=>clearTimeout(t)); readTimers=[]; }
+function invalidateFullAudioCache(){
+  try{ if(fullAudioCache.url) URL.revokeObjectURL(fullAudioCache.url); }catch(e){}
+  fullAudioCache={key:'',blob:null,url:'',text:'',duration:0,ready:false,loading:false,promise:null};
+}
+function fullAudioKey(){
+  return [currentText.id||'', words.join(' '), azureVoice, rate, pausePreset, stripTash?'1':'0'].join('||');
+}
+function openFullAudioDB(){
+  return new Promise((resolve,reject)=>{
+    try{
+      const r=indexedDB.open(FULL_AUDIO_DB,1);
+      r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains(FULL_AUDIO_STORE)) r.result.createObjectStore(FULL_AUDIO_STORE); };
+      r.onsuccess=()=>resolve(r.result);
+      r.onerror=()=>reject(r.error||new Error('AUDIO_DB_OPEN_FAILED'));
+    }catch(e){ reject(e); }
+  });
+}
+async function fullAudioDBGet(key){
+  try{
+    const db=await openFullAudioDB();
+    return await new Promise(resolve=>{
+      const q=db.transaction(FULL_AUDIO_STORE,'readonly').objectStore(FULL_AUDIO_STORE).get(key);
+      q.onsuccess=()=>resolve(q.result||null);
+      q.onerror=()=>resolve(null);
+    });
+  }catch(e){ return null; }
+}
+async function fullAudioDBPut(key,blob){
+  try{
+    const db=await openFullAudioDB();
+    await new Promise(resolve=>{
+      const q=db.transaction(FULL_AUDIO_STORE,'readwrite').objectStore(FULL_AUDIO_STORE).put(blob,key);
+      q.onsuccess=()=>resolve(); q.onerror=()=>resolve();
+    });
+  }catch(e){}
+}
+async function prepareFullAudio(showStatus=true){
+  const text=words.join(' ').trim();
+  if(!text) return null;
+  const key=fullAudioKey();
+  if(fullAudioCache.key===key && fullAudioCache.ready && fullAudioCache.url) return fullAudioCache;
+  if(fullAudioCache.key===key && fullAudioCache.loading && fullAudioCache.promise) return fullAudioCache.promise;
+  if(fullAudioCache.key!==key) invalidateFullAudioCache();
+  const myKey=key;
+  const promise=(async()=>{
+    try{
+      if(showStatus) setAzureStatus('☁️ التحقق من صوت النص المحفوظ…');
+      const stored=await fullAudioDBGet(myKey);
+      if(stored && stored.size>800){
+        const url=URL.createObjectURL(stored);
+        if(myKey!==fullAudioKey()){ try{URL.revokeObjectURL(url);}catch(e){}; return null; }
+        fullAudioCache={key:myKey,blob:stored,url,text,duration:0,ready:true,loading:false,promise:null};
+        if(showStatus) setAzureStatus('✓ الصوت المحفوظ جاهز — بدون إعادة تحميل');
+        return fullAudioCache;
+      }
+      if(showStatus) setAzureStatus('☁️ تجهيز صوت النص الكامل لأول مرة…');
+      saveAzureConfig();
+      const token=await getAzureToken(false);
+      if(myKey!==fullAudioKey()) return null;
+      const controller=new AbortController();
+      const res=await fetch(`https://${azureRegion}.tts.speech.microsoft.com/cognitiveservices/v1`,{
+        method:'POST',
+        headers:{'Authorization':'Bearer '+token,'Content-Type':'application/ssml+xml','X-Microsoft-OutputFormat':'riff-24khz-16bit-mono-pcm'},
+        body:buildAzureSSML(text), signal:controller.signal, cache:'no-store'
+      });
+      if(!res.ok) throw new Error('TTS_HTTP_'+res.status);
+      const data=await res.arrayBuffer();
+      if(!data || !data.byteLength) throw new Error('TTS_EMPTY_AUDIO');
+      if(myKey!==fullAudioKey()) return null;
+      const blob=new Blob([data],{type:'audio/wav'});
+      await fullAudioDBPut(myKey,blob);
+      if(myKey!==fullAudioKey()) return null;
+      const url=URL.createObjectURL(blob);
+      fullAudioCache={key:myKey,blob,url,text,duration:0,ready:true,loading:false,promise:null};
+      if(showStatus) setAzureStatus('✓ صوت النص الكامل جاهز ومحفوظ على الجهاز');
+      return fullAudioCache;
+    }catch(e){
+      if(showStatus) setAzureStatus('✕ '+azureUserError(e));
+      if(fullAudioCache.key===myKey) fullAudioCache.loading=false;
+      throw e;
+    }
+  })();
+  fullAudioCache={key,blob:null,url:'',text,duration:0,ready:false,loading:true,promise};
+  return promise;
+}
 
 function readWordOnly(i){
   const text=words[i]||'';
@@ -1360,24 +1451,45 @@ async function readFullTextAzure(){
   if(!text){ stopRead(); return; }
   clearReadTimers();
   activeReadIndex=0;
-  hi(0);
-
-  // Highlight words approximately while one Azure WAV is playing.
-  const approxSec=Math.max(2, text.length*0.075/Math.max(.65,Math.min(1.35,azureRate(rate))));
-  const totalChars=Math.max(1,text.length);
-  let used=0;
-  words.forEach((w,i)=>{
-    const at=approxSec*(used/totalChars)*1000;
-    readTimers.push(setTimeout(()=>{ if(reading && !pausedReading) hi(i); },at));
-    used += w.length+1;
-  });
-
-  await new Promise(resolve=>{
-    let finished=false;
-    const done=()=>{ if(finished)return; finished=true; resolve(); };
-    azureSpeak(text,done,{source:'full-reading',playWhenActive:true});
-  });
-  if(reading && !pausedReading) stopRead();
+  document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
+  // مهم: لا نحرّك التأشير أثناء تجهيز الصوت.
+  try{
+    const cached=await prepareFullAudio(true);
+    if(!reading || pausedReading || !cached || cached.key!==fullAudioKey()) return;
+    if(azureAudioUrl){ try{URL.revokeObjectURL(azureAudioUrl);}catch(e){} }
+    azureAudioUrl=cached.url;
+    try{azureAudio.pause();}catch(e){}
+    try{azureAudio.currentTime=0;}catch(e){}
+    azureAudio.src=cached.url;
+    azureAudio.playbackRate=1;
+    await new Promise((resolve,reject)=>{
+      let settled=false;
+      let metadataReady=false;
+      const finish=(ok,err)=>{ if(settled)return; settled=true; ok?resolve():reject(err||new Error('AUDIO_PLAY_FAILED')); };
+      azureAudio.onloadedmetadata=()=>{ metadataReady=true; fullAudioCache.duration=Number.isFinite(azureAudio.duration)?azureAudio.duration:0; };
+      azureAudio.onerror=()=>finish(false,new Error('AUDIO_PLAY_FAILED'));
+      azureAudio.onplay=()=>{
+        if(!reading || pausedReading) return;
+        // يبدأ التأشير فقط لحظة بدء الصوت فعليًا.
+        document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
+        hi(0);
+        clearReadTimers();
+        const total=azureAudio.duration||0;
+        const totalChars=Math.max(1,text.length);
+        let used=0;
+        words.forEach((w,i)=>{
+          const at=total*(used/totalChars)*1000;
+          readTimers.push(setTimeout(()=>{ if(reading && !pausedReading) hi(i); },at));
+          used+=w.length+1;
+        });
+      };
+      azureAudio.onended=()=>{ clearReadTimers(); finish(true); if(reading && !pausedReading) stopRead(); };
+      azureAudio.play().then(()=>{ if(!metadataReady){} }).catch(err=>finish(false,err));
+    });
+  }catch(e){
+    if(reading) setAzureStatus('✕ '+azureUserError(e));
+    stopRead();
+  }
 }
 
 async function readAloud(from){
@@ -1529,10 +1641,10 @@ $('okBtn').onclick=()=> idx<words.length && correct();
 $('prevBtn').onclick=()=>{ if(idx>0){ idx--; paint(); } };
 $('nextBtn').onclick=()=>{ if(idx<words.length){ wrong(); idx++; paint(); if(idx>=words.length) finish(); } };
 $('readBtn').onclick=()=> readAloud();
-$('resetBtn').onclick=()=>{ stopAll(); restart(); };
+$('resetBtn').onclick=()=>{ invalidateFullAudioCache(); stopAll(); restart(); };
 $('editBtn').onclick=openTextManager;
 $('manageTextsBtn').onclick=openTextManager;
-$('savedTextSel').onchange=e=>selectSavedText(e.target.value);
+$('savedTextSel').onchange=e=>{ invalidateFullAudioCache(); selectSavedText(e.target.value); };
 $('saveNewTextBtn').onclick=createSavedText;
 $('updateTextBtn').onclick=updateSavedText;
 $('deleteTextBtn').onclick=deleteSavedText;
@@ -1552,9 +1664,12 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('clic
   document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===btn));
   if(readingMode==='full'){
     $('fullView').classList.remove('hide');
+    prepareFullAudio(false).catch(()=>{});
     $('cardView').classList.add('hide');
     $('tabFull').classList.add('act');
     $('tabCard').classList.remove('act');
+    // نبدأ تجهيز الصوت في الخلفية؛ عند الضغط على التشغيل يكون غالبًا جاهزًا.
+    prepareFullAudio(false).catch(()=>{});
   }else{
     $('cardView').classList.remove('hide');
     $('fullView').classList.add('hide');
