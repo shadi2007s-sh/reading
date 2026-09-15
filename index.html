@@ -29,10 +29,6 @@
   .stats{display:flex;gap:6px}
   .pill{background:#fff;border:2px solid #e6dcc6;border-radius:999px;padding:4px 10px;
     font-size:.8rem;font-weight:700;box-shadow:0 2px 0 #e6dcc6;white-space:nowrap}
-  .tabs{display:flex;gap:6px;margin-bottom:10px}
-  .tabs button{flex:1;padding:9px;font-size:.9rem;border-radius:12px;border:2px solid #d9cdb2;
-    background:#fff;box-shadow:none;font-weight:700}
-  .tabs button.act{background:var(--ink);color:#fff;border-color:var(--ink)}
   .card{background:var(--paper);border-radius:22px;border:1px solid #e6dcc6;box-shadow:var(--shadow);
     padding:18px;text-align:center;position:relative;overflow:hidden}
   .counter{font-size:.85rem;color:#8b9096;font-weight:700}
@@ -93,17 +89,12 @@
   .set select,.set input[type=range]{width:100%;font-family:var(--font-ui);font-size:1rem;
     padding:8px;border:2px solid #d9cdb2;border-radius:10px;background:#fff}
   .set .chk{display:flex;align-items:center;gap:8px;margin-top:12px;font-weight:700;font-size:.9rem}
-  .mini-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:8px}
-  .mini{background:#fbf6e9;border:1px solid #e6dcc6;border-radius:12px;padding:7px;text-align:center}
-  .mini b{display:block;font-size:1rem}.mini span{font-size:.7rem;color:#8b9096;font-weight:700}
-  .streak{margin-top:8px;font-size:.78rem;color:#7b8085;text-align:center}
   .mistakes{margin:10px 0 0;background:#fff3cf;border:2px solid #f0b429;border-radius:14px;padding:10px;display:none}
   .mistakes.show{display:block}.mistakes-title{font-weight:800;margin-bottom:6px}.mistake-list{display:flex;gap:6px;flex-wrap:wrap}
   .mistake-chip{border:2px solid #d9cdb2;background:#fff;border-radius:999px;padding:4px 9px;font:700 .82rem var(--font-ui);cursor:pointer}
   .home-btn{margin-top:8px;background:#fff;box-shadow:none;border-color:#d9cdb2;font-size:.82rem;padding:8px}
   .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.result-box{background:#fbf6e9;border-radius:12px;padding:8px}.result-box b{font-size:1.2rem}.result-box span{display:block;font-size:.7rem;color:#7b8085}
   @media(max-width:700px){body{padding-bottom:320px}}
-  @media(max-width:560px){.mini-stats{grid-template-columns:repeat(2,1fr)}}
 
 
   .text-manager{display:grid;grid-template-columns:1fr;gap:8px;margin:0 0 14px}
@@ -127,8 +118,6 @@
   .mode-strip button{box-shadow:none;font-size:.78rem;padding:7px 10px;border-color:#d9cdb2}
   .mode-strip button.active{background:var(--ink);color:#fff;border-color:var(--ink)}
   .pause-bar{display:flex;gap:6px;justify-content:center;margin:7px 0}.pause-bar button{box-shadow:none;font-size:.78rem;padding:7px 9px;border-color:#d9cdb2}
-  .smart-tip{background:#eef7fb;border:1px solid #b7dce9;border-radius:12px;padding:8px;font-size:.76rem;color:#4d6872;margin-top:8px;line-height:1.6}
-  .danger-note{background:#fff1ed;border:1px solid #efb1a3;color:#8c3a26;border-radius:10px;padding:7px;font-size:.75rem}
   @media(max-width:560px){.top-actions{grid-template-columns:1fr 1fr 1fr}.progress-grid{grid-template-columns:repeat(2,1fr)}}
 
 </style>
@@ -140,25 +129,6 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
   SDK_URL: 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'
 };
 </script>
-<style id="v8-shell-style">
-  .v8-tabs{
-    display:flex;gap:7px;margin:0 auto 12px;max-width:760px;
-  }
-  .v8-tab{
-    flex:1;padding:11px 10px;border:2px solid #d9cdb2;border-radius:14px;
-    background:#fff;color:#2f3437;font-family:"Baloo Bhaijaan 2","Noto Naskh Arabic",sans-serif;
-    font-weight:800;font-size:1rem;cursor:pointer;box-shadow:0 3px 0 #d9cdb2;
-  }
-  .v8-tab.act{background:#2f3437;color:#fff;border-color:#2f3437;box-shadow:0 3px 0 #2f3437}
-  .v8-section.hide{display:none!important}
-  #dictationFrame{
-    width:100%;height:min(900px,calc(100vh - 125px));min-height:720px;
-    border:0;border-radius:22px;background:#efe7d4;display:block;
-  }
-  @media (max-width:700px){
-    #dictationFrame{min-height:780px;height:calc(100vh - 105px)}
-  }
-</style>
 <style id="v9-css">
   .v9-dashboard{
     max-width:760px;margin:0 auto 12px;padding:12px;background:#fbf6e9;
@@ -193,18 +163,6 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
   .v10-small{font-size:.75rem;color:#7b8085}
   @media(max-width:600px){.v10-grid{grid-template-columns:repeat(2,1fr)}}
 </style>
-<style id="v10-voice-clean-css">
-.v10-voice-card{margin-top:9px;padding:10px;border:2px solid #e6dcc6;border-radius:14px;background:#fff}
-.v10-voice-card h4{margin:0 0 8px}
-.v10-voice-line{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:7px 0}
-.v10-voice-select,.v10-voice-input{width:100%;padding:10px;border:2px solid #d9cdb2;border-radius:12px;background:#fff;font:inherit}
-.v10-voice-btn{padding:9px 12px;border:2px solid #d9cdb2;border-radius:12px;background:#fff;font-weight:800;cursor:pointer}
-.v10-voice-btn.primary{background:#2f3437;color:#fff;border-color:#2f3437}
-.v10-voice-note{font-size:.74rem;color:#777;line-height:1.5}
-.v10-voice-status{font-weight:800;margin-top:6px}
-.v10-voice-ok{color:#27824b}.v10-voice-warn{color:#b36a00}.v10-voice-error{color:#c44536}
-</style>
-
 <style id="child-friendly-redesign">
 :root{--kid-blue:#67b8e9;--kid-green:#61c391;--kid-yellow:#ffd568;--kid-coral:#ff8b78;--kid-ink:#253844;--kid-soft:#f4fbff;--kid-line:#d8e8f0}
 body{background:linear-gradient(180deg,#edf8ff 0,#fffaf1 62%,#f3fff8 100%);color:var(--kid-ink)}
@@ -525,102 +483,6 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
   render();
 })();
 </script>
-<script id="v10-voice-controller">
-(() => {
-  const KEY="readingCoachV10Voice";
-  const defaults={engine:"azure",azureVoice:"ar-JO-SanaNeural",deviceVoice:"",rate:0.7,pitch:0,volume:100};
-  let s=Object.assign({},defaults,JSON.parse(localStorage.getItem(KEY)||"{}"));
-  const save=()=>localStorage.setItem(KEY,JSON.stringify(s));
-  const $=id=>document.getElementById(id);
-  const status=(text,cls="")=>{
-    const el=$("v10VoiceStatus"); if(!el)return;
-    el.textContent=text; el.className="v10-voice-status "+cls;
-  };
-
-  function populateVoices(){
-    const sel=$("v10DeviceVoice"); if(!sel)return;
-    const voices=window.speechSynthesis?.getVoices?.()||[];
-    sel.innerHTML="";
-    const preferred=voices.filter(v=>/^ar(-|_)/i.test(v.lang)||/arab|Arabic|عربي/i.test(v.name));
-    const list=preferred.length?preferred:voices;
-    list.forEach(v=>{
-      const o=document.createElement("option");
-      o.value=v.name; o.textContent=`${v.name} (${v.lang})`;
-      sel.appendChild(o);
-    });
-    if(!list.length){
-      const o=document.createElement("option"); o.value=""; o.textContent="لا توجد أصوات جهاز متاحة"; sel.appendChild(o);
-    }
-    if(s.deviceVoice && [...sel.options].some(o=>o.value===s.deviceVoice)) sel.value=s.deviceVoice;
-  }
-
-  function updateLabels(){
-    const rateVal=$("v10RateValue"), pitchVal=$("v10PitchValue"), volVal=$("v10VolumeValue");
-    const rateEl=$("v10Rate"), pitchEl=$("v10Pitch"), volEl=$("v10Volume");
-    if(rateVal) rateVal.textContent=Number(s.rate).toFixed(2);
-    if(pitchVal) pitchVal.textContent=String(s.pitch);
-    if(volVal) volVal.textContent=String(s.volume)+"%";
-    if(rateEl) rateEl.value=s.rate;
-    if(pitchEl) pitchEl.value=s.pitch;
-    if(volEl) volEl.value=s.volume;
-  }
-
-  async function speakSana(text){
-    if(!text) return;
-    if(typeof window.azureSpeak === "function"){
-      status("جارٍ تشغيل Sana…","v10-voice-warn");
-      return window.azureSpeak(text,null,{fallback:false, source:"voice-panel"});
-    }
-    status("محرك Azure لم يجهز بعد. جرّب مرة أخرى.","v10-voice-error");
-  }
-
-  function speakDevice(text){
-    if(!("speechSynthesis" in window)){status("المتصفح لا يدعم صوت الجهاز.","v10-voice-error");return;}
-    const voices=speechSynthesis.getVoices();
-    const v=voices.find(x=>x.name===s.deviceVoice)||voices.find(x=>/^ar/i.test(x.lang))||voices[0];
-    if(!v){status("لا يوجد صوت جهاز متاح.","v10-voice-warn");return;}
-    speechSynthesis.cancel();
-    const u=new SpeechSynthesisUtterance(text);
-    u.voice=v; u.lang=v.lang||"ar-JO"; u.rate=Number(s.rate); u.pitch=1+(Number(s.pitch)/20); u.volume=Number(s.volume)/100;
-    speechSynthesis.speak(u);
-    status(`📱 تم استخدام صوت الجهاز: ${v.name}`,"v10-voice-ok");
-  }
-
-  function currentSample(){
-    return (document.getElementById("bigword")?.textContent||"مرحبًا بك في تدريب القراءة").trim();
-  }
-
-  $("v10TestSana")?.addEventListener("click",()=>{
-    if(typeof window.azureSpeak === "function") window.azureSpeak(currentSample(),null,{fallback:false});
-    else speakSana(currentSample());
-  });
-  $("v10UseSana")?.addEventListener("click",()=>{
-    s.engine="azure"; save();
-    status("✓ Sana هي الصوت الافتراضي للتطبيق.","v10-voice-ok");
-  });
-  $("v10DeviceVoice")?.addEventListener("change",e=>{s.deviceVoice=e.target.value;save();});
-  $("v10Rate")?.addEventListener("input",e=>{s.rate=Number(e.target.value);updateLabels();save();});
-  $("v10Pitch")?.addEventListener("input",e=>{s.pitch=Number(e.target.value);updateLabels();save();});
-  $("v10Volume")?.addEventListener("input",e=>{s.volume=Number(e.target.value);updateLabels();save();});
-
-  window.v10Voice={
-    speak(text,mode){
-      const t=String(text||'').trim(); if(!t)return;
-      if(mode==="azure" && typeof window.azureSpeak === "function") {
-        window.azureSpeak(t,null,{fallback:false});
-        return;
-      }
-      (mode||s.engine)==="device" ? speakDevice(t) : speakSana(t);
-    },
-    getSettings:()=>({...s}),
-    setEngine:engine=>{s.engine=engine;save();}
-  };
-
-  updateLabels();
-  populateVoices();
-  if(window.speechSynthesis) speechSynthesis.onvoiceschanged=populateVoices;
-})();
-</script>
 <script id="v10-js">
 (() => {
   const SDK_URL = (window.READING_APP_CONFIG||{}).SDK_URL;
@@ -649,6 +511,17 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
     if(window.SpeechSDK) return window.SpeechSDK;
     throw new Error("Azure SDK loader unavailable");
   }
+  window.v10Voice={
+    speak(text,mode){
+      const t=String(text||'').trim(); if(!t)return;
+      if(mode==="azure" && typeof window.azureSpeak === "function") {
+        window.azureSpeak(t,null,{fallback:false});
+        return;
+      }
+      const btn=document.getElementById("sayBtn");
+      if(btn) btn.click();
+    }
+  };
   async function assessPronunciation(referenceText){
     const SDK = await loadSdk();
     const t = await token();
@@ -929,10 +802,15 @@ window.escapeHtml = window.escapeHtml || function(s){
   }[c]));
 };
 
+function azureConfigured(){
+  return !!(window.READING_APP_CONFIG && window.READING_APP_CONFIG.TOKEN_ENDPOINT
+    && !String(window.READING_APP_CONFIG.TOKEN_ENDPOINT).includes('YOUR-FUNCTION-APP'));
+}
+const gAudio = new Audio();
+
 const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟";
 const TEXTS_STORAGE='readingSavedTextsV1';
 const SELECTED_TEXT_STORAGE='readingSelectedTextV1';
-const IOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 const LANGS = ['ar-JO','ar-SA','ar-EG','ar'];
 let langI=0, words=[], idx=0, score=0, listening=false, rec=null, micOK=false;
@@ -970,7 +848,6 @@ function renderDashboard(){
   $('score').textContent=score; $('prog').textContent=words.length?Math.round(idx/words.length*100):0;
   const acc=accuracy(); const wordsRead=appState.wordCount||appState.correct||0;
   const s=$('pTextName'); if(s)s.textContent=currentText.name||'النص الحالي';
-  ['pAcc','pBest','pAttempts','pWords'].forEach(()=>{});
   if($('pAcc'))$('pAcc').textContent=acc+'%'; if($('pBest'))$('pBest').textContent=appState.best||0; if($('pAttempts'))$('pAttempts').textContent=appState.attempts||0; if($('pWords'))$('pWords').textContent=wordsRead;
   const list=$('historyList'); if(list){ list.innerHTML=''; const hist=progressHistory.filter(h=>h.textId===currentText.id).slice().reverse().slice(0,12); hist.forEach(h=>{const d=document.createElement('div');d.className='history-item';d.innerHTML=`<span>${new Date(h.at).toLocaleString('ar-JO',{dateStyle:'short',timeStyle:'short'})}</span><b>${h.accuracy}% · ${h.correct}/${h.total}</b>`;list.appendChild(d);}); if(!hist.length)list.innerHTML='<div class="history-item">لا توجد محاولات محفوظة بعد.</div>'; }
   renderMistakes(); renderTextMeta();
@@ -980,7 +857,7 @@ function renderTextSelector(){
   sel.innerHTML='';
   savedTexts.forEach(t=>{const o=document.createElement('option');o.value=t.id;o.textContent=t.name;sel.appendChild(o);});
   if(currentText?.id) sel.value=currentText.id;
-  const c=$('savedCount'); if(c)c.textContent=`${savedTexts.length} نص محفوظ` + (savedTexts.length===1?'':'نصوص');
+  const c=$('savedCount'); if(c)c.textContent = savedTexts.length===1 ? 'نص واحد محفوظ' : `${savedTexts.length} نصوص محفوظة`;
 }
 function selectSavedText(id, autoStart=true){
   const t=savedTexts.find(x=>x.id===id); if(!t)return;
@@ -1174,14 +1051,10 @@ let azureVoice='ar-JO-SanaNeural';
 let azureRegion=(window.READING_APP_CONFIG||{}).REGION || 'eastus';
 let azureSpeechToken='';
 let azureTokenExpires=0;
-let azureSpeaking=false;
 let azureSpeakGeneration=0;
 let azureSdkPromise=null;
-let azureSynth=null;
-let azureSynthTokenKey="";
 azureAudio.preload='auto';
 let azureAudioUrl='';
-let azureQueueBusy=false;
 
 
 function loadAzureConfig(){
@@ -1272,11 +1145,6 @@ function unlockAzureAudio(){
 }
 document.addEventListener('pointerdown',unlockAzureAudio,{once:false,passive:true});
 document.addEventListener('touchstart',unlockAzureAudio,{once:false,passive:true});
-async function ensureAzureSynth(force=false){
-  // Reading playback uses Azure TTS REST audio, not the SpeechSynthesizer speaker output.
-  // This prevents the SDK from playing a second voice and avoids disposed synthesizer reuse.
-  return true;
-}
 let azureSpeakAbort=null;
 async function azureSpeak(t,cb,options={}){
   const generation=++azureSpeakGeneration;
@@ -1347,9 +1215,6 @@ function cancelAzure(){
   azureSpeakGeneration++;
   try{ if(azureSpeakAbort) azureSpeakAbort.abort(); }catch(e){}
   azureSpeakAbort=null;
-  try{ if(azureSynth){ azureSynth.close(); } }catch(e){}
-  azureSynth=null;
-  azureSynthTokenKey='';
   try{azureAudio.pause();azureAudio.currentTime=0;}catch(e){}
   try{if(azureAudioUrl){URL.revokeObjectURL(azureAudioUrl);azureAudioUrl='';}}catch(e){}
   try{azureAudio.removeAttribute('src');azureAudio.load();}catch(e){}
@@ -1475,11 +1340,7 @@ function pauseReading(){
   try{ azureAudio.pause(); }catch(e){}
 }
 
-function stopSpeechEngines(){try{if(azureSynth)azureSynth.stopSpeakingAsync(()=>{},()=>{});}catch(e){} try{speechSynthesis.cancel();}catch(e){} try{gAudio.pause();}catch(e){}}
-function continueReadingFrom(start){ if(!reading||pausedReading)return; activeReadIndex=start; if(readingMode==='word')readWords(start); else readFullTextAzure(); }
 
-window.loadAzureSdk=loadAzureSdk;
-function arVoice(){ return chosenVoice || arVoices()[0] || null; }
 
 function correct(){
   const target=words[idx]||''; const b=$('bigword'); b.classList.add('ok','pop'); setTimeout(()=>b.classList.remove('pop'),450);
@@ -1518,13 +1379,12 @@ function hi(i){
   }
 }
 let readTimers=[];
-let fullAudioCache={key:'',blob:null,url:'',text:'',duration:0,ready:false,loading:false,promise:null};
+let fullAudioCache={key:'',blob:null,text:'',duration:0,ready:false,loading:false,promise:null};
 const FULL_AUDIO_DB='readingFullAudioCacheV1';
 const FULL_AUDIO_STORE='audio';
 function clearReadTimers(){ readTimers.forEach(t=>clearTimeout(t)); readTimers=[]; }
 function invalidateFullAudioCache(){
-  try{ if(fullAudioCache.url) URL.revokeObjectURL(fullAudioCache.url); }catch(e){}
-  fullAudioCache={key:'',blob:null,url:'',text:'',duration:0,ready:false,loading:false,promise:null};
+  fullAudioCache={key:'',blob:null,text:'',duration:0,ready:false,loading:false,promise:null};
 }
 function fullAudioKey(){
   return [currentText.id||'', words.join(' '), azureVoice, rate, pausePreset, stripTash?'1':'0'].join('||');
@@ -1571,9 +1431,8 @@ async function prepareFullAudio(showStatus=true){
       if(showStatus) setAzureStatus('☁️ التحقق من صوت النص المحفوظ…');
       const stored=await fullAudioDBGet(myKey);
       if(stored && stored.size>800){
-        const url=URL.createObjectURL(stored);
-        if(myKey!==fullAudioKey()){ try{URL.revokeObjectURL(url);}catch(e){}; return null; }
-        fullAudioCache={key:myKey,blob:stored,url:'',text,duration:0,ready:true,loading:false,promise:null};
+        if(myKey!==fullAudioKey()) return null;
+        fullAudioCache={key:myKey,blob:stored,text,duration:0,ready:true,loading:false,promise:null};
         if(showStatus) setAzureStatus('✓ الصوت المحفوظ جاهز — بدون إعادة تحميل');
         return fullAudioCache;
       }
@@ -1594,8 +1453,7 @@ async function prepareFullAudio(showStatus=true){
       const blob=new Blob([data],{type:'audio/wav'});
       await fullAudioDBPut(myKey,blob);
       if(myKey!==fullAudioKey()) return null;
-      const url=URL.createObjectURL(blob);
-      fullAudioCache={key:myKey,blob,url:'',text,duration:0,ready:true,loading:false,promise:null};
+      fullAudioCache={key:myKey,blob,text,duration:0,ready:true,loading:false,promise:null};
       if(showStatus) setAzureStatus('✓ صوت النص الكامل جاهز ومحفوظ على الجهاز');
       return fullAudioCache;
     }catch(e){
@@ -1604,7 +1462,7 @@ async function prepareFullAudio(showStatus=true){
       throw e;
     }
   })();
-  fullAudioCache={key,blob:null,url:'',text,duration:0,ready:false,loading:true,promise};
+  fullAudioCache={key,blob:null,text,duration:0,ready:false,loading:true,promise};
   return promise;
 }
 
@@ -1831,7 +1689,6 @@ async function transcribeWavWithAzure(wav,token){
   let data={};try{data=JSON.parse(body||'{}');}catch(e){throw new Error('STT_BAD_JSON');}
   // TEMP DIAGNOSTIC: log the full Azure response to see RecognitionStatus
   // (values like "Success", "NoMatch", "InitialSilenceTimeout" tell us the real cause)
-  console.log('Azure STT response:', data); // TEMP — remove after confirming fix
   // Use DisplayText/Display only — Lexical can return Latin-script
   // phonetic transliterations, which we don't want here.
   let text=(data.DisplayText||data.NBest?.[0]?.Display||'').trim();
@@ -1873,7 +1730,6 @@ async function startMic(){
         say('☁️ أجهّز الصوت للتعرّف…');
         const speechToken=await getAzureToken(false);if(myToken!==micStartToken)return;
         const wav=await blobToWav16kMono(blob);if(myToken!==micStartToken)return;
-        console.log('WAV size:', wav.size, 'bytes');
         if(wav.size<5000){say('🎤 التسجيل قصير جدًا. جرّبي أن تبدئي الكلام بعد ظهور الرسالة مباشرة.');return;}
         say('☁️ أتعرّف على الكلمة…');
         const r=await transcribeWavWithAzure(wav,speechToken);if(myToken!==micStartToken)return;
@@ -1922,7 +1778,7 @@ function stopMic(){
   $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
 }
 
-function stopAll(){stopMic();reading=false;try{if(azureSynth)azureSynth.stopSpeakingAsync(()=>{},()=>{});}catch(e){} $('readBtn').textContent='📖 اقرأ لي النص'; try{speechSynthesis.cancel();}catch(e){} }
+function stopAll(){stopMic();reading=false;$('readBtn').textContent='📖 اقرأ لي النص'; try{speechSynthesis.cancel();}catch(e){} }
 async function holdStart(ev){
   ev.preventDefault();
   const token=++holdStartToken;
@@ -2030,8 +1886,6 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('clic
   }else{
     $('cardView').classList.remove('hide');
     $('fullView').classList.add('hide');
-    $('tabCard').classList.add('act');
-    $('tabFull').classList.remove('act');
     $('readAndAssessBtn').classList.add('hide');
   }
   paint();
