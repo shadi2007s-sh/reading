@@ -811,6 +811,13 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 </script>
 
 <script>
+// Global helper for the main reading/microphone script.
+window.escapeHtml = window.escapeHtml || function(s){
+  return String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+};
+
 const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التقنياتِ التي دعتِ الحاجةُ إليها، نظرًا لكثرةِ وسائلِ الاتصالِ، فلمَ لا تبادرُ إلى استخدامِ هذه التقنية في دراسِتك؟";
 const TEXTS_STORAGE='readingSavedTextsV1';
 const SELECTED_TEXT_STORAGE='readingSelectedTextV1';
@@ -978,7 +985,7 @@ function handleT(said){
   const heard=String(said||'').trim();
   const target=words[idx]||'';
   if(!target) return;
-  $('heard').innerHTML=heard?`سمعت: <b>${escapeHtml(heard)}</b>`:'استمع…';
+  $('heard').innerHTML=heard?`سمعت: <b>${window.escapeHtml(heard)}</b>`:'استمع…';
   if(accept(heard,target) || norm(heard).includes(norm(target))){
     score++;
     recordCorrect(target);
@@ -1743,8 +1750,6 @@ async function startMic(){
       const chunks=mobileMicState.chunks.slice();
       const mimeType=recorder.mimeType||mime||'audio/webm';
       const blob=new Blob(chunks,{type:mimeType});
-      const recordedMs=Math.max(0,Date.now()-mobileMicState.startedAt);
-      console.log('Recorded duration:', recordedMs, 'ms');
       stopMobileMicTracks();
       if(myToken!==micStartToken)return;
       listening=false;$('micBtn').classList.remove('on');$('micBtn').textContent='🎤 ابدئي القراءة';
@@ -1754,20 +1759,10 @@ async function startMic(){
         const speechToken=await getAzureToken(false);if(myToken!==micStartToken)return;
         const wav=await blobToWav16kMono(blob);if(myToken!==micStartToken)return;
         console.log('WAV size:', wav.size, 'bytes');
-        console.log('Recording blob:', blob.size, 'bytes', 'type:', blob.type);
         if(wav.size<5000){say('🎤 التسجيل قصير جدًا. جرّبي أن تبدئي الكلام بعد ظهور الرسالة مباشرة.');return;}
         say('☁️ أتعرّف على الكلمة…');
         const r=await transcribeWavWithAzure(wav,speechToken);if(myToken!==micStartToken)return;
-        console.log('Azure STT response:', r.data);
-        const status=r.data?.RecognitionStatus || 'Unknown';
-        if(r.text){
-          $('heard').innerHTML='سمعت: <b>'+escapeHtml(r.text)+'</b> <span style="opacity:.7">('+escapeHtml(status)+')</span>';
-          handleT(r.text);
-        }else{
-          const detail=status==='NoMatch'?'لم يتم التعرف على كلام واضح.':status==='InitialSilenceTimeout'?'لم يبدأ الكلام خلال التسجيل.':status==='BabbleTimeout'?'تعذر تحديد الكلام المسجل.':'تم التسجيل لكن Azure لم يُرجع كلمة.';
-          $('heard').textContent='حالة Azure: '+status;
-          say('🎤 '+detail+' جرّبي نطق الكلمة بوضوح من مسافة قريبة.');
-        }
+        if(r.text){handleT(r.text);}else{say('🎤 تم تسجيل صوتك، لكن Azure لم يفهم الكلمة. جرّبي نطقها بوضوح من مسافة قريبة.');}
       }catch(e){
         console.error('Azure mobile STT',e);
         if(myToken===micStartToken){
