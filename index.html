@@ -1107,7 +1107,7 @@ async function ensureAzureSynth(force=false){
   const cfg=SDK.SpeechConfig.fromAuthorizationToken(token, azureRegion);
   cfg.speechSynthesisVoiceName=azureVoice;
   cfg.speechSynthesisLanguage='ar-JO';
-  azureSynth=new SDK.SpeechSynthesizer(cfg);
+  azureSynth=new SDK.SpeechSynthesizer(cfg, null);
   
   azureSynthTokenKey=key;
   return azureSynth;
@@ -1276,22 +1276,7 @@ async function refreshRecSet(){
 }
 function hasRec(w){ return recSet.has(norm(w)); }
 async function speak(t, r, cb){
-  if(hasRec(t)){
-    const b = await recGet(t);
-    if(b){
-      try{
-        const u = URL.createObjectURL(b);
-        recAudio.src = u;
-        recAudio.onended = ()=>{ URL.revokeObjectURL(u); cb && cb(); };
-        recAudio.onerror = ()=>{ cb && cb(); };
-        await recAudio.play();
-        return;
-      }catch(e){}
-    }
-  }
-  if(engine==='azure') return azureSpeak(t, cb, {fallback:false});
-  if(engine==='google') return gSpeak(t, cb);
-  return speakDevice(t, r, cb);
+  return azureSpeak(t, cb, {fallback:false, source:'reading'});
 }
 function speakDevice(t, r, cb){
   try{
@@ -1315,14 +1300,10 @@ function pauseReading(){
   if(pausedReading){
     pausedReading=false; $('pauseBtn').textContent='⏸ إيقاف مؤقت';
     try{ if(azureAudio.src) azureAudio.play().catch(()=>{}); }catch(e){}
-    try{ if(recAudio && recAudio.src && recAudio.paused) recAudio.play().catch(()=>{}); }catch(e){}
-    try{ speechSynthesis.resume(); }catch(e){}
     return;
   }
   pausedReading=true; $('pauseBtn').textContent='▶️ استئناف';
   try{ azureAudio.pause(); }catch(e){}
-  try{ recAudio.pause(); }catch(e){}
-  try{ speechSynthesis.pause(); }catch(e){}
 }
 function stopSpeechEngines(){try{if(azureSynth)azureSynth.stopSpeakingAsync(()=>{},()=>{});}catch(e){} try{speechSynthesis.cancel();}catch(e){} try{gAudio.pause();}catch(e){}}
 function continueReadingFrom(start){ if(!reading||pausedReading)return; activeReadIndex=start; if(readingMode==='word')readWords(start); else if(readingMode==='sentence')readSentence(start); else readSentence(start); }
