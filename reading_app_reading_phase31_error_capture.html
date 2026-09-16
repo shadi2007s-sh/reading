@@ -814,9 +814,20 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
       }
       const nbest=data.NBest?.[0]||{};
       const heard=(nbest.Display||data.DisplayText||'').trim();
-      const pa=nbest.PronunciationAssessment||{};
-      const score=Number(pa.PronScore ?? pa.AccuracyScore ?? 0);
-      return {result:{text:heard},data,pa,score,heard,blob,wav,durationMs,mime:mime||recorder.mimeType||blob.type,tokenRegion:t.region||cfg.REGION||'eastus',playbackUrl:pronPlaybackUrl};
+      // Azure may return the overall PronunciationAssessment on NBest[0],
+      // or (especially for Word granularity / short one-word audio) put the
+      // useful AccuracyScore on Words[0].PronunciationAssessment.
+      const topPa=nbest.PronunciationAssessment||{};
+      const wordEntry=(nbest.Words||[])[0]||{};
+      const wordPa=wordEntry.PronunciationAssessment||{};
+      const pa=Object.keys(topPa).length ? topPa : wordPa;
+      const score=Number(
+        topPa.PronScore ??
+        topPa.AccuracyScore ??
+        wordPa.AccuracyScore ??
+        0
+      );
+      return {result:{text:heard},data,pa,topPa,wordPa,score,heard,blob,wav,durationMs,mime:mime||recorder.mimeType||blob.type,tokenRegion:t.region||cfg.REGION||'eastus',playbackUrl:pronPlaybackUrl};
     }catch(e){
       try{stopPronMic();}catch(_e){}
       throw e;
@@ -845,6 +856,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
         <div class="v10-row"><strong>الدرجة</strong><strong>${Math.round(score)}%</strong></div>
         <div class="v10-meter"><i style="width:${Math.max(0,Math.min(100,score))}%"></i></div>
         <p class="v10-small">${escapeHtml(verdict)}</p>
+        <p class="v10-small">${r.wordPa?.AccuracyScore != null && r.topPa?.AccuracyScore == null ? 'تم أخذ الدرجة من تقييم الكلمة الذي أعاده Azure.' : ''}</p>
         <p class="v10-small">حجم التسجيل: ${r.blob.size.toLocaleString()} بايت · WAV: ${r.wav.size.toLocaleString()} بايت · المدة: ${(r.durationMs/1000).toFixed(2)} ث · النوع: ${escapeHtml(r.mime)}</p>
         <audio id="pronDiagAudio" controls preload="metadata" style="width:100%;margin-top:8px" src="${r.playbackUrl}"></audio>
         <p class="v10-small">▶️ شغّلي التسجيل أعلاه. إذا كان صوتك مسموعًا فيه، فالميكروفون يعمل وننتقل بعدها لفحص استجابة Azure.</p>`);
