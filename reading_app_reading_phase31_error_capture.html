@@ -684,13 +684,6 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
   }
   function hidePanel(){ panel.classList.add("hide"); }
 
-  async function token(){
-    const url = cfg.TOKEN_ENDPOINT;
-    if(!url || url.includes("YOUR-FUNCTION-APP")) throw new Error("TOKEN_ENDPOINT غير مضبوط.");
-    const r = await fetch(url,{cache:"no-store"});
-    if(!r.ok) throw new Error("فشل الحصول على Speech token.");
-    return await r.json();
-  }
   async function loadSdk(){
     if(typeof window.loadAzureSdk === "function") return window.loadAzureSdk();
     if(window.SpeechSDK) return window.SpeechSDK;
@@ -707,36 +700,126 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
       if(btn) btn.click();
     }
   };
-  async function assessPronunciation(referenceText){
-    const SDK = await loadSdk();
-    const t = await token();
-    const speechConfig = SDK.SpeechConfig.fromAuthorizationToken(t.token, t.region || cfg.REGION || "eastus");
-    speechConfig.speechRecognitionLanguage = "ar-SA";
-    const audioConfig = SDK.AudioConfig.fromDefaultMicrophoneInput();
-    const rec = new SDK.SpeechRecognizer(speechConfig, audioConfig);
-    const pac = new SDK.PronunciationAssessmentConfig(
-      referenceText,
-      SDK.PronunciationAssessmentGradingSystem.HundredMark,
-      SDK.PronunciationAssessmentGranularity.Word,
-      true
-    );
-    pac.applyTo(rec);
+  let pronSpeechConfig = null;
+  let pronSpeechConfigRegion = '';
+  let pronSpeechToken = '';
 
-    return await new Promise((resolve, reject)=>{
-      rec.recognizeOnceAsync(result=>{
+  async function getPronSpeechConfig(){
+    const [SDK, tokenValue] = await Promise.all([loadSdk(), getAzureToken(false)]);
+    const token = tokenValue?.token || tokenValue;
+    const region = String(tokenValue?.region || cfg.REGION || "eastus").trim().toLowerCase();
+    if(!pronSpeechConfig || pronSpeechConfigRegion !== region || pronSpeechToken !== token){
+      pronSpeechConfig = SDK.SpeechConfig.fromAuthorizationToken(token, region);
+      pronSpeechConfigRegion = region;
+      pronSpeechToken = token;
+        pronSpeechConfig.speechRecognitionLanguage = "ar-SA";
+      // Single-word mode: finish sooner after the learner stops speaking.
+      // This is especially important on iPhone/Safari, where waiting for
+      // the recognizer default silence window can make the learner repeat.
+      pronSpeechConfig.setProperty(
+        SDK.PropertyId.SpeechServiceConnection_EndSilenceTimeoutMs,
+        "850"
+      );
+      pronSpeechConfig.setProperty(
+        SDK.PropertyId.SpeechServiceConnection_InitialSilenceTimeoutMs,
+        "2500"
+      );
+    }
+    return {SDK, speechConfig: pronSpeechConfig};
+  }
+
+  let pronMicState={stream:null,recorder:null,chunks:[],timer:0,monitorTimer:0,silenceTimer:0,ctx:null,source:null,analyser:null,sawSpeech:false,startedAt:0,token:0};
+  let pronMicToken=0;
+
+  function stopPronMic(){
+    clearTimeout(pronMicState.timer);
+    clearTimeout(pronMicState.monitorTimer);
+    clearTimeout(pronMicState.silenceTimer);
+    try{pronMicState.source?.disconnect();}catch(e){}
+    try{pronMicState.analyser?.disconnect();}catch(e){}
+    try{pronMicState.ctx?.close();}catch(e){}
+    try{pronMicState.stream?.getTracks().forEach(t=>t.stop());}catch(e){}
+    pronMicState={stream:null,recorder:null,chunks:[],timer:0,monitorTimer:0,silenceTimer:0,ctx:null,source:null,analyser:null,sawSpeech:false,startedAt:0,token:pronMicState.token};
+  }
+
+  function startPronSpeechMonitor(stream,recorder,token){
+    const AC=window.AudioContext||window.webkitAudioContext;
+    if(!AC || !stream) return false;
+    try{
+      const ctx=new AC();
+      const source=ctx.createMediaStreamSource(stream);
+      const analyser=ctx.createAnalyser();
+      analyser.fftSize=1024;
+      analyser.smoothingTimeConstant=0.12;
+      source.connect(analyser);
+      pronMicState.ctx=ctx; pronMicState.source=source; pronMicState.analyser=analyser;
+      pronMicState.sawSpeech=false; pronMicState.startedAt=Date.now();
+      const data=new Uint8Array(analyser.fftSize);
+      const check=()=>{
+        if(token!==pronMicToken || pronMicState.recorder!==recorder) return;
+        analyser.getByteTimeDomainData(data);
+        let sum=0;
+        for(let i=0;i<data.length;i++){const x=(data[i]-128)/128;sum+=x*x;}
+        const rms=Math.sqrt(sum/data.length);
+        const elapsed=Date.now()-pronMicState.startedAt;
+        if(rms>0.035){
+          pronMicState.sawSpeech=true;
+          clearTimeout(pronMicState.silenceTimer); pronMicState.silenceTimer=0;
+        }else if(pronMicState.sawSpeech && elapsed>700 && !pronMicState.silenceTimer){
+          pronMicState.silenceTimer=setTimeout(()=>{
+            if(token!==pronMicToken || pronMicState.recorder!==recorder) return;
+            try{if(recorder.state!=='inactive') recorder.stop();}catch(e){}
+          },520);
+        }
+        pronMicState.monitorTimer=setTimeout(check,80);
+      };
+      ctx.resume().catch(()=>{}); check();
+      return true;
+    }catch(e){return false;}
+  }
+
+  async function assessPronunciation(referenceText){
+    if(!navigator.mediaDevices?.getUserMedia) throw new Error('MIC_UNSUPPORTED');
+    if(!window.MediaRecorder) throw new Error('RECORDER_UNSUPPORTED');
+    if(!window.isSecureContext) throw new Error('HTTPS_REQUIRED');
+
+    const tokenValue=await getAzureToken(false);
+    const token=tokenValue?.token||tokenValue;
+    const region=String(tokenValue?.region||cfg.REGION||'eastus').trim().toLowerCase();
+    const url=`https://${region}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=ar-SA&format=detailed`;
+    const assessment={ReferenceText:referenceText,GradingSystem:'HundredMark',Granularity:'Word',Dimension:'Comprehensive',EnableMiscue:false};
+    const assessmentHeader=btoa(unescape(encodeURIComponent(JSON.stringify(assessment))));
+
+    const myToken=++pronMicToken;
+    stopPronMic();
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+    if(myToken!==pronMicToken){stream.getTracks().forEach(t=>t.stop());throw new Error('PRON_CANCELLED');}
+    const mime=chooseRecordMime();
+    const recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+    pronMicState.stream=stream;pronMicState.recorder=recorder;pronMicState.chunks=[];pronMicState.token=myToken;
+
+    return await new Promise((resolve,reject)=>{
+      let settled=false;
+      const finish=(fn,val)=>{if(settled)return;settled=true;stopPronMic();fn(val);};
+      recorder.ondataavailable=e=>{if(e.data?.size)pronMicState.chunks.push(e.data);};
+      recorder.onerror=e=>finish(reject,new Error('RECORDER_ERROR'));
+      recorder.onstop=async()=>{
         try{
-          const json = result.properties.getProperty(
-            SDK.PropertyId.SpeechServiceResponse_JsonResult
-          );
-          const data = JSON.parse(json || "{}");
-          const pa = data.NBest?.[0]?.PronunciationAssessment || {};
-          resolve({result, data, pa});
-        }catch(e){ reject(e); }
-        finally { rec.close(); }
-      }, err=>{
-        try{ rec.close(); }catch(e){}
-        reject(new Error(err?.toString?.() || "Pronunciation assessment failed"));
-      });
+          const blob=new Blob(pronMicState.chunks.slice(),{type:recorder.mimeType||mime||'audio/webm'});
+          if(blob.size<1000) throw new Error('NO_AUDIO');
+          const wav=await blobToWav16kMono(blob);
+          if(wav.size<5000) throw new Error('AUDIO_TOO_SHORT');
+          const res=await fetch(url,{method:'POST',headers:{'Authorization':'Bearer '+token,'Content-Type':'audio/wav; codecs=audio/pcm; samplerate=16000','Accept':'application/json','Pronunciation-Assessment':assessmentHeader},body:wav,cache:'no-store'});
+          const body=await res.text();
+          if(!res.ok) throw new Error('PRON_HTTP_'+res.status+(body?' '+body.slice(0,180):''));
+          let data={};try{data=JSON.parse(body||'{}');}catch(e){throw new Error('PRON_BAD_JSON');}
+          const result={text:(data.NBest?.[0]?.Display||data.DisplayText||'').trim(),data,pa:data.NBest?.[0]?.PronunciationAssessment||{}};
+          finish(resolve,result);
+        }catch(e){finish(reject,e);}
+      };
+      try{recorder.start();}catch(e){finish(reject,e);return;}
+      startPronSpeechMonitor(stream,recorder,myToken);
+      pronMicState.timer=setTimeout(()=>{try{if(recorder.state!=='inactive')recorder.stop();}catch(e){}},2800);
     });
   }
 
@@ -748,7 +831,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
       showPanel("قيّم نطقي","هذا الزر لتقييم كلمة واحدة. لتقييم النص كاملاً استخدم زر «🎤 اقرئي وقيّمي».");
       return;
     }
-    showPanel("🎤 تقييم النطق", `<p>اقرأ: <strong>${escapeHtml(ref)}</strong></p><p>ابدأ الكلام الآن…</p>`);
+    showPanel("🎤 تقييم النطق", `<p>اقرأ: <strong>${escapeHtml(ref)}</strong></p><p>قل الكلمة <strong>مرة واحدة</strong> ثم توقّف — ستتوقف عملية التسجيل تلقائيًا بعد أن تنتهي من الكلام.</p>`);
     try{
       const r = await assessPronunciation(ref);
       const score = Number(r.pa?.PronScore || r.pa?.AccuracyScore || 0);
@@ -1281,6 +1364,13 @@ async function getAzureToken(force=false){
   azureTokenExpires=Date.now()+9*60*1000;
   return azureSpeechToken;
 }
+function warmAzureSpeech(){
+  try{
+    if(typeof window.loadAzureSdk === 'function') window.loadAzureSdk().catch(()=>{});
+    if(typeof window.getAzureToken === 'function') window.getAzureToken(false).catch(()=>{});
+  }catch(e){}
+}
+
 function azureRate(r){return Math.max(.65,Math.min(1.35,Number(r||rate||.9)));}
 function escapeXml(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function stripTashFn(t){return String(t||'').replace(/[\u064B-\u0652\u0670]/g,'');}
@@ -1390,9 +1480,16 @@ async function testAzureSana(){
   }catch(e){setAzureStatus('✕ '+azureUserError(e));}
 }
 window.loadAzureSdk=loadAzureSdk;
+window.getAzureToken=getAzureToken;
+window.warmAzureSpeech=warmAzureSpeech;
 window.testAzureSana=testAzureSana;
 window.azureSpeak=azureSpeak;
 function arVoice(){ return chosenVoice || arVoices()[0] || null; }
+try{
+  const warm = ()=>window.warmAzureSpeech?.();
+  if('requestIdleCallback' in window) requestIdleCallback(warm,{timeout:2500});
+  else setTimeout(warm,800);
+}catch(e){}
 
 const recAudio = new Audio();
 let recSet = new Set(), recIdx = 0, mr=null, mrChunks=[], mrStream=null;
