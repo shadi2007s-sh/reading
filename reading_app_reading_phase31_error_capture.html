@@ -1014,6 +1014,19 @@ let words=[], idx=0, score=0, listening=false, rec=null;
 let reading=false;
 let currentText={id:'',name:'',text:DEFAULT_TEXT};
 let savedTexts=[];
+
+// مشاركة النص الحالي مع صفحة الإملاء تلقائيًا
+const SHARED_READING_TEXT_KEY = 'readingAppSharedTextV1';
+function shareCurrentTextWithDictation(text, name){
+  try{
+    localStorage.setItem(SHARED_READING_TEXT_KEY, JSON.stringify({
+      text:String(text||'').trim(),
+      name:String(name||'النص من تدريب القراءة').trim(),
+      updatedAt:new Date().toISOString()
+    }));
+  }catch(e){}
+}
+
 let appState = {correct:0, wrong:0, streak:0, best:0, startedAt:null, mistakes:{}, attempts:0, finished:false, wordCount:0};
 let progressHistory=[];
 let readingMode='word';
@@ -1144,6 +1157,7 @@ function handleT(said){
   }
 }
 function build(txt){
+  shareCurrentTextWithDictation(txt, currentText?.name || 'النص من تدريب القراءة');
   invalidateFullAudioCache();
   const box=$('text'); box.innerHTML="";
   words = txt.trim().split(/\s+/).filter(Boolean);
