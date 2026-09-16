@@ -1938,7 +1938,7 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('clic
   }
   paint();
 }));
-$('diagBtn').onclick=()=>{ $('diag').innerHTML='جارٍ الفحص…'; $('diagDlg').showModal(); runDiag(); };
+$('diagBtn').onclick=()=>{ window.location.href='reading_app_diagnostics.html'; };
 let fmr=null, fmrChunks=[], fmrStream=null;
 async function refreshFull(){
   const b = await recGet(FULL_KEY);
