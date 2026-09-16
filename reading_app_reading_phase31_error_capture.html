@@ -707,71 +707,161 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
       if(btn) btn.click();
     }
   };
-  async function assessPronunciation(referenceText){
-    const SDK = await loadSdk();
-    const t = await token();
-    const speechConfig = SDK.SpeechConfig.fromAuthorizationToken(t.token, t.region || cfg.REGION || "eastus");
-    speechConfig.speechRecognitionLanguage = "ar-SA";
-    const audioConfig = SDK.AudioConfig.fromDefaultMicrophoneInput();
-    const rec = new SDK.SpeechRecognizer(speechConfig, audioConfig);
-    const pac = new SDK.PronunciationAssessmentConfig(
-      referenceText,
-      SDK.PronunciationAssessmentGradingSystem.HundredMark,
-      SDK.PronunciationAssessmentGranularity.Word,
-      true
-    );
-    pac.applyTo(rec);
+  let pronMicState={stream:null,recorder:null,chunks:[],ctx:null,source:null,analyser:null,monitorTimer:0,silenceTimer:0,startedAt:0,sawSpeech:false,token:0};
+  let pronPlaybackUrl=null;
 
-    return await new Promise((resolve, reject)=>{
-      rec.recognizeOnceAsync(result=>{
-        try{
-          const json = result.properties.getProperty(
-            SDK.PropertyId.SpeechServiceResponse_JsonResult
-          );
-          const data = JSON.parse(json || "{}");
-          const pa = data.NBest?.[0]?.PronunciationAssessment || {};
-          resolve({result, data, pa});
-        }catch(e){ reject(e); }
-        finally { rec.close(); }
-      }, err=>{
-        try{ rec.close(); }catch(e){}
-        reject(new Error(err?.toString?.() || "Pronunciation assessment failed"));
+  function stopPronMic(){
+    clearTimeout(pronMicState.monitorTimer);
+    clearTimeout(pronMicState.silenceTimer);
+    try{pronMicState.source?.disconnect();}catch(e){}
+    try{pronMicState.analyser?.disconnect();}catch(e){}
+    try{pronMicState.ctx?.close();}catch(e){}
+    try{pronMicState.stream?.getTracks().forEach(t=>t.stop());}catch(e){}
+    pronMicState={stream:null,recorder:null,chunks:[],ctx:null,source:null,analyser:null,monitorTimer:0,silenceTimer:0,startedAt:0,sawSpeech:false,token:pronMicState.token};
+  }
+
+  function setPronDiag(body){
+    showPanel('🎤 تشخيص تقييم النطق', body);
+  }
+
+  function makePronAssessmentHeader(referenceText){
+    const obj={ReferenceText:referenceText,GradingSystem:'HundredMark',Granularity:'Word',Dimension:'Comprehensive',EnableMiscue:false};
+    return btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+  }
+
+  async function assessPronunciation(referenceText){
+    if(!window.isSecureContext) throw new Error('🔒 يجب فتح الموقع عبر HTTPS حتى يعمل المايك.');
+    if(!navigator.mediaDevices?.getUserMedia) throw new Error('MIC_UNSUPPORTED');
+    if(!window.MediaRecorder) throw new Error('RECORDER_UNSUPPORTED');
+
+    stopPronMic();
+    const myToken=++pronMicState.token;
+    let stream=null, recorder=null, mime='';
+    const started=performance.now();
+    try{
+      setPronDiag(`<p>الكلمة المطلوبة: <strong>${escapeHtml(referenceText)}</strong></p><p>🎤 جاري فتح الميكروفون…</p><p class="v10-small">قولي الكلمة مرة واحدة وبصوت طبيعي. سيتوقف التسجيل تلقائيًا.</p>`);
+      const t=await token();
+      if(myToken!==pronMicState.token) throw new Error('PRON_CANCELLED');
+
+      stream=await navigator.mediaDevices.getUserMedia({audio:{channelCount:1,echoCancellation:true,noiseSuppression:true,autoGainControl:true}});
+      if(myToken!==pronMicState.token){stream.getTracks().forEach(t=>t.stop());throw new Error('PRON_CANCELLED');}
+      mime=chooseRecordMime();
+      recorder=mime?new MediaRecorder(stream,{mimeType:mime}):new MediaRecorder(stream);
+      pronMicState.stream=stream;pronMicState.recorder=recorder;pronMicState.chunks=[];pronMicState.startedAt=performance.now();
+
+      const stopped=new Promise((resolve,reject)=>{
+        recorder.ondataavailable=e=>{if(e.data?.size) pronMicState.chunks.push(e.data);};
+        recorder.onerror=e=>reject(new Error('RECORDER_ERROR'));
+        recorder.onstop=()=>resolve(new Blob(pronMicState.chunks,{type:recorder.mimeType||mime||'audio/webm'}));
       });
-    });
+
+      const finish=()=>{try{if(recorder.state!=='inactive') recorder.stop();}catch(e){}};
+      const AC=window.AudioContext||window.webkitAudioContext;
+      let monitorStarted=false;
+      if(AC){
+        try{
+          const ctx=new AC(); await ctx.resume().catch(()=>{});
+          const source=ctx.createMediaStreamSource(stream), analyser=ctx.createAnalyser();
+          analyser.fftSize=2048;analyser.smoothingTimeConstant=.15;source.connect(analyser);
+          pronMicState.ctx=ctx;pronMicState.source=source;pronMicState.analyser=analyser;monitorStarted=true;
+          const data=new Uint8Array(analyser.fftSize);
+          const check=()=>{
+            if(myToken!==pronMicState.token || pronMicState.recorder!==recorder) return;
+            analyser.getByteTimeDomainData(data);
+            let sum=0;for(let i=0;i<data.length;i++){const v=(data[i]-128)/128;sum+=v*v;}
+            const rms=Math.sqrt(sum/data.length);
+            const elapsed=performance.now()-pronMicState.startedAt;
+            if(rms>.018){pronMicState.sawSpeech=true;clearTimeout(pronMicState.silenceTimer);pronMicState.silenceTimer=0;}
+            else if(pronMicState.sawSpeech && elapsed>650 && !pronMicState.silenceTimer){
+              pronMicState.silenceTimer=setTimeout(finish,520);
+            }
+            if(elapsed>3300) finish();
+            else pronMicState.monitorTimer=setTimeout(check,100);
+          };
+          check();
+        }catch(e){ monitorStarted=false; }
+      }
+      if(!monitorStarted){ setTimeout(finish,3000); }
+      recorder.start(100);
+      // Some browsers need the monitor to be attached after start(); resume checking if it was created above.
+      if(monitorStarted && pronMicState.analyser && !pronMicState.monitorTimer){
+        /* monitor will be scheduled by the analyser loop */
+      }
+
+      setPronDiag(`<p>الكلمة المطلوبة: <strong>${escapeHtml(referenceText)}</strong></p><p>🔴 التسجيل يعمل الآن… قولي الكلمة مرة واحدة.</p><p class="v10-small">المدة القصوى 3.3 ثوانٍ، ويتوقف بعد هدوء قصير.</p>`);
+      const blob=await stopped;
+      if(myToken!==pronMicState.token) throw new Error('PRON_CANCELLED');
+      const durationMs=Math.round(performance.now()-started);
+      stopPronMic();
+      if(blob.size<1000) throw new Error('RECORDING_EMPTY');
+
+      const wav=await blobToWav16kMono(blob);
+      if(wav.size<5000) throw new Error('WAV_TOO_SMALL');
+
+      setPronDiag(`<p>الكلمة المطلوبة: <strong>${escapeHtml(referenceText)}</strong></p><p>☁️ تم تسجيل الصوت. جارٍ إرساله إلى Azure…</p><p class="v10-small">حجم التسجيل: ${blob.size.toLocaleString()} بايت · WAV: ${wav.size.toLocaleString()} بايت · المدة: ${(durationMs/1000).toFixed(2)} ث</p>`);
+
+      // Keep a local playback copy so we can verify whether the browser actually captured audio.
+      if(pronPlaybackUrl){try{URL.revokeObjectURL(pronPlaybackUrl);}catch(e){}}
+      pronPlaybackUrl=URL.createObjectURL(blob);
+      const url=`https://${t.region || cfg.REGION || 'eastus'}.stt.speech.microsoft.com/speech/recognition/conversation/cognitiveservices/v1?language=ar-SA&format=detailed`;
+      const res=await fetch(url,{method:'POST',headers:{'Authorization':'Bearer '+t.token,'Content-Type':'audio/wav; codecs=audio/pcm; samplerate=16000','Accept':'application/json','Pronunciation-Assessment':makePronAssessmentHeader(referenceText)},body:wav,cache:'no-store'});
+      const body=await res.text();
+      let data={};try{data=JSON.parse(body||'{}');}catch(e){data={raw:body};}
+      if(!res.ok){
+        const er=new Error('STT_HTTP_'+res.status+(body?' '+body.slice(0,220):''));
+        er.playbackUrl=pronPlaybackUrl; er.blob=blob; er.wav=wav; er.durationMs=durationMs; er.mime=mime||recorder.mimeType||blob.type;
+        throw er;
+      }
+      const nbest=data.NBest?.[0]||{};
+      const heard=(nbest.Display||data.DisplayText||'').trim();
+      const pa=nbest.PronunciationAssessment||{};
+      const score=Number(pa.PronScore ?? pa.AccuracyScore ?? 0);
+      return {result:{text:heard},data,pa,score,heard,blob,wav,durationMs,mime:mime||recorder.mimeType||blob.type,tokenRegion:t.region||cfg.REGION||'eastus',playbackUrl:pronPlaybackUrl};
+    }catch(e){
+      try{stopPronMic();}catch(_e){}
+      throw e;
+    }
   }
 
   async function runPron(){
-    // Read current sentence/word from the existing reading page.
     const ref = (document.getElementById('bigword')?.textContent || '').trim();
-    if(!ref){ showPanel("قيّم نطقي","لا توجد كلمة حالية."); return; }
+    if(!ref){ showPanel('قيّم نطقي','لا توجد كلمة حالية.'); return; }
     if(ref.split(/\s+/).length > 1){
-      showPanel("قيّم نطقي","هذا الزر لتقييم كلمة واحدة. لتقييم النص كاملاً استخدم زر «🎤 اقرئي وقيّمي».");
+      showPanel('قيّم نطقي','هذا الزر لتقييم كلمة واحدة. لتقييم النص كاملاً استخدم زر «🎤 اقرئي وقيّمي».');
       return;
     }
-    showPanel("🎤 تقييم النطق", `<p>اقرأ: <strong>${escapeHtml(ref)}</strong></p><p>ابدأ الكلام الآن…</p>`);
+    setPronDiag(`<p>الكلمة المطلوبة: <strong>${escapeHtml(ref)}</strong></p><p>🎤 اضغطي ابدئي ثم قولي الكلمة مرة واحدة…</p>`);
     try{
       const r = await assessPronunciation(ref);
-      const score = Number(r.pa?.PronScore || r.pa?.AccuracyScore || 0);
-      const heard = (r.result?.text || '').trim();
+      const score = Number(r.score || 0);
+      const heard = r.heard || '';
       const verdict = score >= 85 ? 'نطق ممتاز 🌟'
                     : score >= 70 ? 'جيد — كرّري الكلمة مرة أخرى'
                     : score > 0   ? 'تحتاج تدريبًا على هذه الكلمة'
-                    : 'لم أسمع الكلمة بوضوح — اقتربي من الميكروفون وأعيدي المحاولة';
-      showPanel("نتيجة النطق",
-        `<div class="v10-row"><strong>${escapeHtml(ref)}</strong><strong>${Math.round(score)}%</strong></div>
-         <div class="v10-meter"><i style="width:${Math.max(0,Math.min(100,score))}%"></i></div>
-         <p class="v10-small">${escapeHtml(verdict)}${heard && heard!==ref ? ' · سمعت: ' + escapeHtml(heard) : ''}</p>`);
+                    : 'لم أحصل على درجة واضحة.';
+      setPronDiag(`
+        <p><strong>الكلمة المطلوبة:</strong> ${escapeHtml(ref)}</p>
+        <p><strong>Azure سمع:</strong> ${escapeHtml(heard || '—')}</p>
+        <div class="v10-row"><strong>الدرجة</strong><strong>${Math.round(score)}%</strong></div>
+        <div class="v10-meter"><i style="width:${Math.max(0,Math.min(100,score))}%"></i></div>
+        <p class="v10-small">${escapeHtml(verdict)}</p>
+        <p class="v10-small">حجم التسجيل: ${r.blob.size.toLocaleString()} بايت · WAV: ${r.wav.size.toLocaleString()} بايت · المدة: ${(r.durationMs/1000).toFixed(2)} ث · النوع: ${escapeHtml(r.mime)}</p>
+        <audio id="pronDiagAudio" controls preload="metadata" style="width:100%;margin-top:8px" src="${r.playbackUrl}"></audio>
+        <p class="v10-small">▶️ شغّلي التسجيل أعلاه. إذا كان صوتك مسموعًا فيه، فالميكروفون يعمل وننتقل بعدها لفحص استجابة Azure.</p>`);
       if(score > 0){
-        state.sessions += 1;
-        state.words += 1;
-        state.bestAccuracy = Math.max(state.bestAccuracy, score);
+        state.sessions += 1; state.words += 1; state.bestAccuracy = Math.max(state.bestAccuracy, score);
         state.history.push({type:"pronunciation",at:new Date().toISOString(),word:ref,score});
         state.history = state.history.slice(-50);
         if(score < 85) state.hard[ref] = (state.hard[ref]||0)+1;
         persist();
       }
     }catch(e){
-      showPanel("تعذر التقييم", `<p>${escapeHtml(e.message || e)}</p><p class="v10-small">تأكد من السماح بالمايك وبقاء اتصال الإنترنت.</p>`);
+      const msg=String(e?.message||e);
+      let detail='';
+      if(msg.includes('RECORDING_EMPTY')) detail='لم يصل تسجيل صوتي قابل للاستخدام من المتصفح.';
+      else if(msg.includes('WAV_TOO_SMALL')) detail='تم إنشاء WAV لكنه صغير جدًا، وهذا يشير إلى أن التسجيل نفسه شبه فارغ.';
+      else if(msg.includes('STT_HTTP_')) detail='Azure رفض طلب التعرّف. يظهر رمز الاستجابة أدناه.';
+      setPronDiag(`<p><strong>لم يكتمل التقييم.</strong></p><p>${escapeHtml(detail || 'ظهر خطأ أثناء التسجيل أو الإرسال.')}</p><p class="v10-small">الخطأ الأصلي: ${escapeHtml(msg)}</p>${e.playbackUrl ? `<p class="v10-small">حجم التسجيل: ${e.blob?.size?.toLocaleString?.() || '—'} بايت · WAV: ${e.wav?.size?.toLocaleString?.() || '—'} بايت · المدة: ${e.durationMs ? (e.durationMs/1000).toFixed(2) : '—'} ث · النوع: ${escapeHtml(e.mime || '')}</p><audio controls preload="metadata" style="width:100%;margin-top:8px" src="${e.playbackUrl}"></audio><p class="v10-small">▶️ شغّلي التسجيل: هذه أهم خطوة الآن لمعرفة هل المشكلة من الميكروفون أم من Azure.</p>` : ''}<p class="v10-small">لا تغيّري إعدادات النص. أرسلي لي صورة لهذه النتيجة بعد التجربة.</p>`);
     }
   }
 
