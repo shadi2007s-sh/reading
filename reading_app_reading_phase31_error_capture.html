@@ -821,13 +821,25 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
       const wordEntry=(nbest.Words||[])[0]||{};
       const wordPa=wordEntry.PronunciationAssessment||{};
       const pa=Object.keys(topPa).length ? topPa : wordPa;
+      // REST returns the assessment scores directly on NBest[0] in the
+      // detailed response (for example NBest[0].AccuracyScore / PronScore).
+      // Some responses can also expose a word-level assessment under Words[0].
+      // The SDK shape is different, so support both without changing the full-text path.
       const score=Number(
+        nbest.PronScore ??
+        nbest.AccuracyScore ??
         topPa.PronScore ??
         topPa.AccuracyScore ??
         wordPa.AccuracyScore ??
         0
       );
-      return {result:{text:heard},data,pa,topPa,wordPa,score,heard,blob,wav,durationMs,mime:mime||recorder.mimeType||blob.type,tokenRegion:t.region||cfg.REGION||'eastus',playbackUrl:pronPlaybackUrl};
+      const fullScores={
+        AccuracyScore: nbest.AccuracyScore ?? topPa.AccuracyScore ?? null,
+        FluencyScore: nbest.FluencyScore ?? topPa.FluencyScore ?? null,
+        CompletenessScore: nbest.CompletenessScore ?? topPa.CompletenessScore ?? null,
+        PronScore: nbest.PronScore ?? topPa.PronScore ?? null
+      };
+      return {result:{text:heard},data,pa,topPa,wordPa,fullScores,score,heard,blob,wav,durationMs,mime:mime||recorder.mimeType||blob.type,tokenRegion:t.region||cfg.REGION||'eastus',playbackUrl:pronPlaybackUrl};
     }catch(e){
       try{stopPronMic();}catch(_e){}
       throw e;
@@ -856,7 +868,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
         <div class="v10-row"><strong>الدرجة</strong><strong>${Math.round(score)}%</strong></div>
         <div class="v10-meter"><i style="width:${Math.max(0,Math.min(100,score))}%"></i></div>
         <p class="v10-small">${escapeHtml(verdict)}</p>
-        <p class="v10-small">${r.wordPa?.AccuracyScore != null && r.topPa?.AccuracyScore == null ? 'تم أخذ الدرجة من تقييم الكلمة الذي أعاده Azure.' : ''}</p>
+        <p class="v10-small">${r.fullScores?.AccuracyScore != null ? `AccuracyScore: ${r.fullScores.AccuracyScore}` : ''}${r.fullScores?.PronScore != null ? ` · PronScore: ${r.fullScores.PronScore}` : ''}${r.wordPa?.AccuracyScore != null ? ` · Word Accuracy: ${r.wordPa.AccuracyScore}` : ''}</p>
         <p class="v10-small">حجم التسجيل: ${r.blob.size.toLocaleString()} بايت · WAV: ${r.wav.size.toLocaleString()} بايت · المدة: ${(r.durationMs/1000).toFixed(2)} ث · النوع: ${escapeHtml(r.mime)}</p>
         <audio id="pronDiagAudio" controls preload="metadata" style="width:100%;margin-top:8px" src="${r.playbackUrl}"></audio>
         <p class="v10-small">▶️ شغّلي التسجيل أعلاه. إذا كان صوتك مسموعًا فيه، فالميكروفون يعمل وننتقل بعدها لفحص استجابة Azure.</p>`);
