@@ -5,6 +5,7 @@
 <meta charset="utf-8"/>
 <meta content="width=device-width, initial-scale=1, maximum-scale=1" name="viewport"/>
 <title>مدرّب القراءة العربية — Sana Neural</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📖</text></svg>"/>
 <link href="https://fonts.googleapis.com" rel="preconnect"/>
 <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
 <link href="https://fonts.googleapis.com/css2?family=Baloo+Bhaijaan+2:wght@500;700;800&amp;family=Noto+Naskh+Arabic:wght@400;600;700&amp;display=swap" rel="stylesheet"/>
@@ -92,7 +93,6 @@
   .mistakes{margin:10px 0 0;background:#fff3cf;border:2px solid #f0b429;border-radius:14px;padding:10px;display:none}
   .mistakes.show{display:block}.mistakes-title{font-weight:800;margin-bottom:6px}.mistake-list{display:flex;gap:6px;flex-wrap:wrap}
   .mistake-chip{border:2px solid #d9cdb2;background:#fff;border-radius:999px;padding:4px 9px;font:700 .82rem var(--font-ui);cursor:pointer}
-  .home-btn{margin-top:8px;background:#fff;box-shadow:none;border-color:#d9cdb2;font-size:.82rem;padding:8px}
   .result-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:10px 0}.result-box{background:#fbf6e9;border-radius:12px;padding:8px}.result-box b{font-size:1.2rem}.result-box span{display:block;font-size:.7rem;color:#7b8085}
   @media(max-width:700px){body{padding-bottom:320px}}
 
@@ -283,7 +283,6 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <button id="okBtn">✓ صح</button>
 </div>
 <div class="row">
-<button class="hold" id="holdBtn">🎙 اضغطي واحكِ</button>
 <button id="prevBtn">⏮ السابقة</button>
 <button id="nextBtn">⏭ التالية</button>
 </div>
@@ -371,12 +370,6 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <dialog id="voiceDlg">
 <h3 style="margin-top:0">🎚 إعدادات الصوت</h3>
 <div class="set">
-<label for="engineSel">محرك النطق</label>
-<select id="engineSel">
-<option value="azure">☁️ Azure Neural — الموصى به</option>
-<option value="device">📱 صوت الجهاز (احتياطي)</option>
-<option value="google">🌐 Google (احتياطي)</option>
-</select>
 <label for="azureVoiceSel">الصوت العربي</label>
 <select id="azureVoiceSel">
 <option value="ar-JO-SanaNeural">🇯🇴 Sana — أنثى أردنية</option>
@@ -386,8 +379,6 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 <input id="azureRegion" readonly="" value="eastus"/>
 <div style="font-size:.78rem;color:#7b8085;background:#fff3cf;border:1px solid #f0b429;border-radius:10px;padding:8px;margin-top:8px">🔐 مفتاح Azure محفوظ داخل الخادم ولا يتم وضعه داخل GitHub.</div>
 <small style="display:block;color:#8b9096;margin-top:5px;line-height:1.5">🔐 للاستخدام المحلي فقط. لتطبيق منشور، ضع الاستدعاء في خادم وسيط ولا تضع المفتاح داخل الموقع.</small>
-<label for="voiceSel">الصوت المستخدم (عند اختيار صوت الجهاز)</label>
-<select id="voiceSel"></select>
 <label for="rateSel">سرعة القراءة: <span id="rateVal">0.70</span></label>
 <input id="rateSel" max="1.1" min="0.4" step="0.05" type="range" value="0.7"/>
 <div class="row" style="margin-top:7px">
@@ -758,9 +749,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
   }
 
   document.getElementById("v10Listen")?.addEventListener("click",()=>{
-    const text=(document.getElementById("bigword")?.textContent||"").trim();
-    if(window.v10Voice) window.v10Voice.speak(text,"azure");
-    else { const btn=document.getElementById("sayBtn"); if(btn) btn.click(); }
+    const btn=document.getElementById("sayBtn"); if(btn) btn.click();
   });
 
   document.getElementById("v10ReadAlong")?.addEventListener("click",()=>{
@@ -812,9 +801,8 @@ const DEFAULT_TEXT = "تدوينُ رؤوسِ الأقلامِ إحدى التق
 const TEXTS_STORAGE='readingSavedTextsV1';
 const SELECTED_TEXT_STORAGE='readingSelectedTextV1';
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-const LANGS = ['ar-JO','ar-SA','ar-EG','ar'];
-let langI=0, words=[], idx=0, score=0, listening=false, rec=null, micOK=false;
-let reading=false, holdRec=null;
+let words=[], idx=0, score=0, listening=false, rec=null;
+let reading=false;
 let currentText={id:'',name:'',text:DEFAULT_TEXT};
 let savedTexts=[];
 let appState = {correct:0, wrong:0, streak:0, best:0, startedAt:null, mistakes:{}, attempts:0, finished:false, wordCount:0};
@@ -900,15 +888,9 @@ function renderMistakes(){const box=$('mistakesBox'),list=$('mistakeList'); if(!
 function accuracy(){ const total=(appState.correct||0)+(appState.wrong||0); return total?Math.round((appState.correct||0)/total*100):0; }
 function elapsedMs(){ return appState.startedAt ? Math.max(0,Date.now()-appState.startedAt) : 0; }
 function fmtTime(ms){ const sec=Math.floor((ms||0)/1000), m=Math.floor(sec/60), s=sec%60; return String(m).padStart(2,'0')+':'+String(s).padStart(2,'0'); }
-function tickDashboard(){
-  if(appState.startedAt && !appState.finished){
-    const el=document.getElementById('liveTime'); if(el)el.textContent=fmtTime(elapsedMs());
-    const el2=document.getElementById('liveAcc'); if(el2)el2.textContent=accuracy()+'%';
-  }
-}
 function resetLessonStats(){ appState={correct:0,wrong:0,streak:0,best:0,startedAt:Date.now(),mistakes:{},attempts:0,finished:false,wordCount:0}; pausedReading=false; activeReadIndex=0; readSessionStartedAt=Date.now(); saveState(); renderDashboard(); }
 function restoreDashboard(){loadState();renderDashboard();}
-let micStartToken=0, holdStartToken=0, fullRecToken=0, wordRecToken=0;
+let micStartToken=0, fullRecToken=0, wordRecToken=0;
 const $ = id => document.getElementById(id);
 const say = h => $('heard').textContent = h;
 function norm(s){
@@ -934,41 +916,7 @@ function accept(said,target){
   return sim(s,t) >= th;
 }
 
-function primeMic(){
-  return new Promise(async resolve=>{
-    try{
-      if(!window.isSecureContext || !navigator.mediaDevices?.getUserMedia){ resolve(false); return; }
-      const stream=await navigator.mediaDevices.getUserMedia({audio:true});
-      stream.getTracks().forEach(t=>t.stop());
-      micOK=true; resolve(true);
-    }catch(e){
-      micOK=false; say(e?.name==='NotAllowedError'?'🎤 اسمحي للمتصفح باستخدام المايك ثم اضغطي مرة أخرى.':'🎤 تعذر فتح المايك.');
-      resolve(false);
-    }
-  });
-}
-function makeRec(continuous=true){
-  const R=window.SpeechRecognition||window.webkitSpeechRecognition;
-  if(!R) throw new Error('SpeechRecognition unsupported');
-  const r=new R();
-  r.lang=LANGS[langI]||'ar-JO';
-  r.interimResults=true;
-  r.continuous=!!continuous;
-  r.maxAlternatives=5;
-  return r;
-}
 
-function recognitionErrorMessage(code){
-  const m={
-    'no-speech':'لم أسمع كلامًا. قرّبي الميكروفون وتكلمي بوضوح ثم حاولي مرة أخرى.',
-    'audio-capture':'لم أستطع الوصول إلى الميكروفون.',
-    'not-allowed':'اسمحي للمتصفح باستخدام الميكروفون.',
-    'service-not-allowed':'المتصفح منع خدمة التعرف على الصوت.',
-    'network':'تعذر الاتصال بخدمة التعرف على الصوت.',
-    'aborted':'تم إيقاف الاستماع.'
-  };
-  return m[code]||('تعذر التعرف على الصوت: '+code);
-}
 function handleT(said){
   const heard=String(said||'').trim();
   const target=words[idx]||'';
@@ -1029,17 +977,6 @@ function beep(f,d){
 function allVoices(){ return speechSynthesis.getVoices(); }
 function arVoices(){ return allVoices().filter(v=>/^ar/i.test(v.lang)||/arab/i.test(v.name)); }
 let chosenVoice=null, rate=0.7, stripTash=false, warned=false;
-function fillVoices(){
-  const sel=$('voiceSel'); if(!sel) return;
-  const ar=arVoices(), all=allVoices();
-  const list = ar.length ? ar : all;
-  sel.innerHTML='';
-  list.forEach(v=>{ const o=document.createElement('option');
-    o.value=v.name; o.textContent=v.name+' ('+v.lang+')'; sel.appendChild(o); });
-  if(!chosenVoice && list.length) chosenVoice=list[0];
-  if(chosenVoice) sel.value=chosenVoice.name;
-  checkVoice();
-}
 function checkVoice(){
   const bn=$('banner');
   if(bn) bn.classList.add('hide');
@@ -1061,7 +998,6 @@ function loadAzureConfig(){
   try{ azureVoice=localStorage.getItem('azureVoice')||'ar-JO-SanaNeural'; }catch(e){}
   if($('azureVoiceSel')) $('azureVoiceSel').value=azureVoice;
   if($('azureRegion')) $('azureRegion').value=azureRegion;
-  if($('engineSel')) $('engineSel').value='azure';
 }
 function saveAzureConfig(){
   azureVoice=$('azureVoiceSel')?.value || azureVoice || 'ar-JO-SanaNeural';
@@ -1126,7 +1062,7 @@ function azureRate(r){return Math.max(.65,Math.min(1.35,Number(r||rate||.9)));}
 function escapeXml(t){return String(t||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');}
 function stripTashFn(t){return String(t||'').replace(/[\u064B-\u0652\u0670]/g,'');}
 function buildAzureSSML(text){
-  let clean=escapeXml(stripTashFn(text));
+  let clean=escapeXml(stripTash ? stripTashFn(text) : text);
   const pauseMap={short:{comma:110,end:250,colon:90},normal:{comma:170,end:360,colon:140},long:{comma:240,end:520,colon:200}};
   const pp=pauseMap[pausePreset]||pauseMap.normal;
   clean=clean.replace(/([،؛])/g,'$1<break time="'+pp.comma+'ms"/>').replace(/([.؟!])/g,'$1<break time="'+pp.end+'ms"/>').replace(/[:]/g,':<break time="'+pp.colon+'ms"/>');
@@ -1232,44 +1168,9 @@ async function testAzureSana(){
 }
 window.loadAzureSdk=loadAzureSdk;
 window.testAzureSana=testAzureSana;
+window.azureSpeak=azureSpeak;
 function arVoice(){ return chosenVoice || arVoices()[0] || null; }
 
-function gUrl(t){
-  return 'https://translate.google.com/translate_tts?ie=UTF-8&client=tw-ob&tl=ar&total=1&idx=0&prev=input&textlen=' + t.length + '&q=' + encodeURIComponent(t);
-}
-let audioUnlocked=false;
-function unlockAudio(){
-  if(audioUnlocked) return;
-  audioUnlocked=true;
-  try{
-    gAudio.src='data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAESsAACJWAAACABAAZGF0YQAAAAA=';
-    gAudio.play().then(()=>{ gAudio.pause(); }).catch(()=>{});
-  }catch(e){}
-}
-document.addEventListener('pointerdown', unlockAudio, {once:true});
-function gTest(cb){
-  const a=new Audio();
-  const to=setTimeout(()=>cb({ok:false,why:'timeout'}),5000);
-  a.onloadedmetadata=()=>{clearTimeout(to); cb({ok:true,dur:a.duration});};
-  a.onerror=()=>{clearTimeout(to); cb({ok:false,why:(a.error&&a.error.message)||'error'});};
-  a.src=gUrl('مرحبا'); a.load();
-}
-function gRate(){ return Math.min(1, Math.max(.55, rate + .2)); }
-function stripT(t){ return t.replace(/[\u064B-\u0652\u0670]/g,''); }
-let gSpeakGuard=null;
-function gSpeak(t, cb){
-  try{
-    gAudio.pause();
-    gAudio.src = gUrl(stripTash ? stripT(t) : t);
-    gAudio.playbackRate = gRate();
-    const fallback=()=>{ if(gSpeakGuard) { clearTimeout(gSpeakGuard); gSpeakGuard=null; } engine='device'; say('⚠️ Google ما زبط — رجعنا لصوت الجهاز 📱'); speakDevice(t, rate, cb); };
-    gAudio.onended = ()=>{ if(gSpeakGuard){ clearTimeout(gSpeakGuard); gSpeakGuard=null; } cb && cb(); };
-    gAudio.onerror = fallback;
-    gSpeakGuard=setTimeout(()=>{ if(gAudio.paused) fallback(); }, 3500);
-    gAudio.onplaying=()=>{ if(gSpeakGuard){ clearTimeout(gSpeakGuard); gSpeakGuard=null; } };
-    gAudio.play().catch(fallback);
-  }catch(e){ cb && cb(); }
-}
 const recAudio = new Audio();
 let recSet = new Set(), recIdx = 0, mr=null, mrChunks=[], mrStream=null;
 function idb(){
@@ -1309,21 +1210,6 @@ async function refreshRecSet(){
 function hasRec(w){ return recSet.has(norm(w)); }
 async function speak(t, r, cb){
   return azureSpeak(t, cb, {fallback:false, source:'reading', playWhenActive:true});
-}
-function speakDevice(t, r, cb){
-  try{
-    if(arVoices().length===0){
-      if(!warned){ warned=true; checkVoice(); say('⚠️ ما في صوت عربي على الجهاز — نزّليه عشان النطق يطلع صح.'); }
-      cb&&cb(); return;
-    }
-    const txt = stripTash ? t.replace(/[\u064B-\u0652\u0670]/g,'') : t;
-    const u=new SpeechSynthesisUtterance(txt);
-    const v=chosenVoice||arVoices()[0];
-    if(v){ u.voice=v; u.lang=v.lang; } else u.lang='ar-SA';
-    u.rate = r || rate; u.pitch=1;
-    u.onend=()=>cb&&cb(); u.onerror=()=>cb&&cb();
-    speechSynthesis.speak(u);
-  }catch(e){ cb&&cb(); }
 }
 function testVoice(){ testAzureSana(); }
 function repeatCurrentWord(){ if(!words[idx])return; stopRead(); azureSpeak(words[idx],null,{source:'repeat-word',playWhenActive:false}); }
@@ -1543,7 +1429,6 @@ async function readAloud(from){
 
   // Hard-stop every other browser audio engine before starting the single reader.
   try{ speechSynthesis.cancel(); }catch(e){}
-  try{ gAudio.pause(); gAudio.currentTime=0; }catch(e){}
   try{ recAudio.pause(); recAudio.currentTime=0; }catch(e){}
 
   stopMic();
@@ -1562,29 +1447,12 @@ async function readAloud(from){
   readWordOnly(activeReadIndex);
 }
 
-function readWords(i){
-  const BATCH_WORDS=8;
-  const batch=words.slice(i,i+BATCH_WORDS);
-  if(!reading || !batch.length){ stopRead(); return; }
-  activeReadIndex=i;
-  hi(i);
-  speak(batch.join(' '),rate,()=>{
-    if(!reading || pausedReading) return;
-    const next=i+batch.length;
-    activeReadIndex=next;
-    if(next>=words.length){ stopRead(); return; }
-    setTimeout(()=>readWords(next),pausePreset==='long'?420:pausePreset==='short'?80:160);
-  });
-}
-
 function stopRead(){
   reading=false;
   pausedReading=false;
   clearReadTimers();
   cancelAzure();
   try{ speechSynthesis.cancel(); }catch(e){}
-  try{ if(gAudio){ gAudio.onended=null; gAudio.onerror=null; } }catch(e){}
-  try{ gAudio.pause(); gAudio.currentTime=0; }catch(e){}
   try{ recAudio.pause(); recAudio.currentTime=0; }catch(e){}
   try{ azureAudio.pause(); azureAudio.currentTime=0; azureAudio.src=''; azureAudio.ontimeupdate=null; }catch(e){}
   document.querySelectorAll('.w').forEach(el=>el.classList.remove('spk'));
@@ -1687,15 +1555,12 @@ async function transcribeWavWithAzure(wav,token){
   const body=await res.text();
   if(!res.ok) throw new Error('STT_HTTP_'+res.status+(body?' '+body.slice(0,180):''));
   let data={};try{data=JSON.parse(body||'{}');}catch(e){throw new Error('STT_BAD_JSON');}
-  // TEMP DIAGNOSTIC: log the full Azure response to see RecognitionStatus
-  // (values like "Success", "NoMatch", "InitialSilenceTimeout" tell us the real cause)
   // Use DisplayText/Display only — Lexical can return Latin-script
   // phonetic transliterations, which we don't want here.
   let text=(data.DisplayText||data.NBest?.[0]?.Display||'').trim();
   // Reject any result that contains Latin letters — treat as no match
   // rather than accepting/showing an English word.
   if(text && /[A-Za-z]/.test(text)){
-    console.log('Rejected non-Arabic STT result:', text);
     text='';
   }
   return {text,data};
@@ -1774,49 +1639,10 @@ function stopMic(){
   listening=false;
   try{if(mobileMicState.recorder && mobileMicState.recorder.state!=='inactive') mobileMicState.recorder.stop();}catch(e){}
   stopMobileMicTracks();
-  try{rec && (rec.onend=null,rec.stop());}catch(e){}
   $('micBtn').classList.remove('on'); $('micBtn').textContent='🎤 ابدئي القراءة';
 }
 
 function stopAll(){stopMic();reading=false;$('readBtn').textContent='📖 اقرأ لي النص'; try{speechSynthesis.cancel();}catch(e){} }
-async function holdStart(ev){
-  ev.preventDefault();
-  const token=++holdStartToken;
-  if(!SR){ say('المتصفح ما بيدعم المايك.'); return; }
-  if(!(await primeMic()) || token!==holdStartToken) return;
-  stopMic();
-  if(token!==holdStartToken) return;
-  try{
-    holdRec=makeRec(false);
-    holdRec.onresult=e=>{ let h="";
-      for(let i=e.resultIndex;i<e.results.length;i++)
-        for(let a=0;a<e.results[i].length;a++) h+=" "+e.results[i][a].transcript;
-      handleT(h); };
-    holdRec.onend=()=>{ $('holdBtn').textContent='🎙 اضغطي واحكِ'; };
-    holdRec.start(); $('holdBtn').textContent='🔴 احكِ الآن…';
-  }catch(e){}
-}
-function holdEnd(){ ++holdStartToken; try{ holdRec && holdRec.stop(); }catch(e){} }
-async function runDiag(){
-  const rows=[]; const add=(k,v,g)=>rows.push('<div><span>'+k+'</span><b style="color:'+(g?'#2f8f5b':'#e2725b')+'">'+v+'</b></div>');
-  add('التعرّف على الصوت', SR?'مدعوم ✓':'غير مدعوم ✗', !!SR);
-  add('اتصال آمن https', window.isSecureContext?'نعم ✓':'لا ✗', window.isSecureContext);
-  const v=arVoice();
-  add('صوت عربي للقراءة', v? v.name : 'ما في صوت عربي ✗', !!v);
-  add('عدد الأصوات', speechSynthesis.getVoices().length, true);
-  let perm='غير معروف', good=true;
-  try{ const p=await navigator.permissions.query({name:'microphone'}); perm=p.state; good=p.state!=='denied'; }catch(e){}
-  add('إذن المايك', perm, good);
-  try{ const st=await navigator.mediaDevices.getUserMedia({audio:true});
-    st.getTracks().forEach(t=>t.stop()); add('فتح المايك','نجح ✓',true);
-  }catch(e){ add('فتح المايك','فشل: '+e.name,false); }
-  add('اللغة', LANGS[langI], true);
-  add('المحرك الحالي', engine==='azure'?'☁️ Azure Neural':(engine==='google'?'🌐 Google':'📱 الجهاز'), true);
-  add('Azure Neural', azureConfigured()?'Token endpoint ✓':'غير مُعد', azureConfigured());
-  if(engine==='google'){ const g=await new Promise(r=>gTest(r)); add('اختبار صوت Google', g.ok?('يعمل ✓ ('+Math.round(g.dur*10)/10+'ث)'):('فشل: '+g.why), g.ok); } else { add('اختبار صوت Google','تخطي — Azure هو المحرك الرئيسي',true); }
-  $('diag').innerHTML = rows.join('') +
-   '<p style="margin:10px 0 0;color:#7b8085">إذا «صوت عربي» أحمر: نزّلي صوت عربي من إعدادات الجهاز (Android: إعدادات ثم اللغة ثم تحويل النص لكلام ثم تنزيل العربية — iPhone: الإعدادات ثم إمكانية الوصول ثم المحتوى المنطوق ثم الأصوات ثم العربية).</p>';
-}
 async function exportTexts(){
   const payload={version:1,exportedAt:new Date().toISOString(),texts:savedTexts,selectedId:currentText.id};
   const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='reading-texts-backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
@@ -1878,7 +1704,6 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('clic
   document.querySelectorAll('[data-mode]').forEach(b=>b.classList.toggle('active',b===btn));
   if(readingMode==='full'){
     $('fullView').classList.remove('hide');
-    prepareFullAudio(false).catch(()=>{});
     $('cardView').classList.add('hide');
     // نبدأ تجهيز الصوت في الخلفية؛ عند الضغط على التشغيل يكون غالبًا جاهزًا.
     prepareFullAudio(false).catch(()=>{});
@@ -1891,11 +1716,6 @@ document.querySelectorAll('[data-mode]').forEach(btn=>btn.addEventListener('clic
   paint();
 }));
 $('diagBtn').onclick=()=>{ $('diag').innerHTML='جارٍ الفحص…'; $('diagDlg').showModal(); runDiag(); };
-const hb=$('holdBtn');
-hb.addEventListener('pointerdown',holdStart);
-hb.addEventListener('pointerup',holdEnd);
-hb.addEventListener('pointercancel',holdEnd);
-hb.addEventListener('pointerleave',holdEnd);
 let fmr=null, fmrChunks=[], fmrStream=null;
 async function refreshFull(){
   const b = await recGet(FULL_KEY);
@@ -1930,30 +1750,6 @@ async function playFull(){
   const u = URL.createObjectURL(b);
   recAudio.src = u; recAudio.onended = ()=> URL.revokeObjectURL(u);
   try{ await recAudio.play(); }catch(e){}
-}
-async function readFullWithHighlight(){
-  const b = await recGet(FULL_KEY);
-  if(!b) return false;
-  reading = true; $('readBtn').textContent='⏹ وقّف القراءة';
-  const u = URL.createObjectURL(b);
-  recAudio.src = u;
-  await new Promise(res=>{
-    recAudio.onloadedmetadata = res;
-    recAudio.load();
-  });
-  const total = recAudio.duration || (words.join(' ').length * .09);
-  const totalChars = words.reduce((a,w)=>a+w.length+1,0);
-  const timers = [];
-  let t = 0;
-  words.forEach((w,i)=>{
-    const at = t;
-    timers.push(setTimeout(()=>{ if(reading) hi(i); }, at*1000));
-    t += total * ((w.length+1)/totalChars);
-  });
-  recAudio.onended = ()=>{ timers.forEach(x=>clearTimeout(x)); URL.revokeObjectURL(u); stopRead(); };
-  try{ await recAudio.play(); }
-  catch(e){ timers.forEach(x=>clearTimeout(x)); stopRead(); return true; }
-  return true;
 }
 function renderRec(){
   $('rWord').textContent = words[recIdx] || '';
@@ -2017,7 +1813,7 @@ rr.addEventListener('pointerdown', mrStart);
 rr.addEventListener('pointerup', mrStop);
 rr.addEventListener('pointercancel', mrStop);
 rr.addEventListener('pointerleave', mrStop);
-$('rPlay').onclick = ()=> speak(words[recIdx], rate);
+$('rPlay').onclick = ()=> { if(words[recIdx]) azureSpeak(words[recIdx],null,{source:'rec-preview',playWhenActive:false}); };
 $('rPrev').onclick = ()=>{ if(recIdx>0){ recIdx--; renderRec(); } };
 $('rNext').onclick = ()=>{ if(recIdx<words.length-1){ recIdx++; renderRec(); } };
 $('rDel').onclick = async ()=>{ await recDelete(words[recIdx]); await refreshRecSet(); renderRec(); };
@@ -2025,29 +1821,19 @@ $('rExp').onclick = exportRecs;
 $('rImp').onclick = ()=> $('rFile').click();
 $('rFile').onchange = e=>{ if(e.target.files[0]) importRecs(e.target.files[0]); };
 
-$('voiceBtn').onclick=()=>{ fillVoices(); $('voiceDlg').showModal(); };
-$('voiceSel').onchange=e=>{ chosenVoice = allVoices().find(v=>v.name===e.target.value)||null; };
+$('voiceBtn').onclick=()=>{ $('voiceDlg').showModal(); };
 $('rateSel').oninput=e=>{ rate=parseFloat(e.target.value); $('rateVal').textContent=rate.toFixed(2); };
 document.querySelectorAll('[data-speed]').forEach(btn=>btn.addEventListener('click',()=>{const v=parseFloat(btn.dataset.speed);rate=v;$('rateSel').value=v;$('rateVal').textContent=v.toFixed(2);}));
-$('noTash').onchange=e=>{ stripTash=e.target.checked; };
-$('engineSel').onchange=e=>{
-  engine=e.target.value;
-  if(engine==='azure'){saveAzureConfig(); say(azureConfigured()?'Azure Neural مفعّل ☁️':'⚙️ اختاري Region وSpeech Key ثم جرّبي الصوت.');}
-  else if(engine==='google'){say('صوت Google الاحتياطي مفعّل 🌐');}
-  else {checkVoice(); say('صوت الجهاز الاحتياطي مفعّل 📱');}
-};
+$('noTash').onchange=e=>{ stripTash=e.target.checked; invalidateFullAudioCache(); };
 $('azureVoiceSel').onchange=e=>{azureVoice=e.target.value;saveAzureConfig();};
 
 $('pausePreset').onchange=e=>{pausePreset=e.target.value;};
 loadAzureConfig();
 engine='azure';
-if($('engineSel')) $('engineSel').value='azure';
 loadTexts();
-if(window.speechSynthesis){ speechSynthesis.onvoiceschanged=()=>{ fillVoices(); }; setTimeout(fillVoices,600); }
 build(currentText.text);
 $('reviewBtn').onclick=()=>{ $('win').classList.remove('show'); renderMistakes(); const first=Object.keys(appState.mistakes||{})[0]; if(first){const i=words.findIndex(w=>norm(w)===first); if(i>=0){idx=i;paint();}} };
 window.addEventListener('beforeunload',saveState);
-setInterval(tickDashboard,1000);
 restoreDashboard();
 renderDashboard();
 renderTextMeta();
