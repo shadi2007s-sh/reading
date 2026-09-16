@@ -486,7 +486,14 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
   function escapeHtml(s){ return String(s).replace(/[&<>"']/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
   function showPanel(title, body){
     panel.classList.remove("hide");
-    panel.innerHTML = `<h3>${escapeHtml(title)}</h3>${body}`;
+    panel.innerHTML =
+      `<h3 style="display:flex;justify-content:space-between;align-items:center;gap:8px">
+         <span>${escapeHtml(title)}</span>
+         <button type="button" id="v10ClosePanel" aria-label="إغلاق"
+           style="flex:none;border:1px solid #d9cdb2;background:#fff;border-radius:10px;
+                  padding:4px 11px;font:700 .85rem inherit;cursor:pointer;box-shadow:none">✕</button>
+       </h3>${body}`;
+    panel.querySelector("#v10ClosePanel")?.addEventListener("click", hidePanel);
   }
   function hidePanel(){ panel.classList.add("hide"); }
 
@@ -517,7 +524,7 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
     const SDK = await loadSdk();
     const t = await token();
     const speechConfig = SDK.SpeechConfig.fromAuthorizationToken(t.token, t.region || cfg.REGION || "eastus");
-    speechConfig.speechRecognitionLanguage = "ar-JO";
+    speechConfig.speechRecognitionLanguage = "ar-SA";
     const audioConfig = SDK.AudioConfig.fromDefaultMicrophoneInput();
     const rec = new SDK.SpeechRecognizer(speechConfig, audioConfig);
     const pac = new SDK.PronunciationAssessmentConfig(
@@ -548,25 +555,34 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 
   async function runPron(){
     // Read current sentence/word from the existing reading page.
-    const currentText = (document.getElementById('bigword')?.textContent || '').trim();
-    const ref = (typeof window.getReadingReference==='function' ? window.getReadingReference() : currentText);
+    const ref = (document.getElementById('bigword')?.textContent || '').trim();
     if(!ref){ showPanel("قيّم نطقي","لا توجد كلمة حالية."); return; }
+    if(ref.split(/\s+/).length > 1){
+      showPanel("قيّم نطقي","هذا الزر لتقييم كلمة واحدة. لتقييم النص كاملاً استخدم زر «🎤 اقرئي وقيّمي».");
+      return;
+    }
     showPanel("🎤 تقييم النطق", `<p>اقرأ: <strong>${escapeHtml(ref)}</strong></p><p>ابدأ الكلام الآن…</p>`);
     try{
       const r = await assessPronunciation(ref);
       const score = Number(r.pa?.PronScore || r.pa?.AccuracyScore || 0);
+      const heard = (r.result?.text || '').trim();
+      const verdict = score >= 85 ? 'نطق ممتاز 🌟'
+                    : score >= 70 ? 'جيد — كرّري الكلمة مرة أخرى'
+                    : score > 0   ? 'تحتاج تدريبًا على هذه الكلمة'
+                    : 'لم أسمع الكلمة بوضوح — اقتربي من الميكروفون وأعيدي المحاولة';
       showPanel("نتيجة النطق",
         `<div class="v10-row"><strong>${escapeHtml(ref)}</strong><strong>${Math.round(score)}%</strong></div>
          <div class="v10-meter"><i style="width:${Math.max(0,Math.min(100,score))}%"></i></div>
-         <p class="v10-small">النتيجة من Azure Pronunciation Assessment.</p>`);
-      state.sessions += 1;
-      state.words += 1;
-      state.bestAccuracy = Math.max(state.bestAccuracy, score);
-      state.history.push({type:"pronunciation",at:new Date().toISOString(),word:ref,score});
-      state.history = state.history.slice(-50);
-      if(score < 85) state.hard[ref] = (state.hard[ref]||0)+1;
-      persist();
-      renderProgress();
+         <p class="v10-small">${escapeHtml(verdict)}${heard && heard!==ref ? ' · سمعت: ' + escapeHtml(heard) : ''}</p>`);
+      if(score > 0){
+        state.sessions += 1;
+        state.words += 1;
+        state.bestAccuracy = Math.max(state.bestAccuracy, score);
+        state.history.push({type:"pronunciation",at:new Date().toISOString(),word:ref,score});
+        state.history = state.history.slice(-50);
+        if(score < 85) state.hard[ref] = (state.hard[ref]||0)+1;
+        persist();
+      }
     }catch(e){
       showPanel("تعذر التقييم", `<p>${escapeHtml(e.message || e)}</p><p class="v10-small">تأكد من السماح بالمايك وبقاء اتصال الإنترنت.</p>`);
     }
@@ -757,6 +773,12 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
   });
 
   document.getElementById("v10Pron")?.addEventListener("click",runPron);
+
+  // A result belongs to one word — drop it as soon as the child moves on.
+  ["nextBtn","prevBtn","micBtn","readBtn","resetBtn"].forEach(id=>{
+    document.getElementById(id)?.addEventListener("click",hidePanel);
+  });
+  document.querySelectorAll("[data-mode]").forEach(b=>b.addEventListener("click",hidePanel));
 
   document.getElementById("v10Hard")?.addEventListener("click",()=>{
     const hard = Object.entries(state.hard).sort((a,b)=>b[1]-a[1]);
