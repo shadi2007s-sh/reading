@@ -7,9 +7,7 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
   TOKEN_ENDPOINT: 'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token',
   REGION: 'eastus',
   VOICE: 'ar-JO-SanaNeural',
-  SDK_URL: 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js',
-  // النص المشترك: صفحة القراءة هي المصدر، والإملاء يقرأ آخر نص محفوظ هنا.
-  SHARED_TEXT_KEY: 'sana_current_learning_text_v1'
+  SDK_URL: 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'
 };
 
 // أسماء بديلة يستخدمها كل ملف تاريخيًا — تشير كلها لنفس الكائن أعلاه،
@@ -17,61 +15,175 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
 window.DICTATION_APP_CONFIG = window.READING_APP_CONFIG;
 
 
-
 /* ============================================================
- * النص المشترك بين القراءة والإملاء
- * القراءة = المصدر الرئيسي
- * الإملاء = يستهلك آخر نص محفوظ تلقائيًا
+ * اكتشاف الجهاز والتخطيط الأفضل
+ * المصدر المركزي: كل الصفحات تقرأ النتيجة من هذا الجزء.
  * ============================================================ */
-window.sanaTextSync = window.sanaTextSync || (() => {
-  const CONFIG = window.READING_APP_CONFIG;
-  const KEY = CONFIG.SHARED_TEXT_KEY;
+window.READING_APP_CONFIG.DEVICE = window.READING_APP_CONFIG.DEVICE || (() => {
+  const state = { lastSignature: '' };
 
-  function publish(text, meta = {}) {
-    const value = String(text || '').trim();
-    if (!value) return false;
-    const payload = {
-      text: value,
-      name: String(meta.name || ''),
-      textId: String(meta.textId || ''),
-      updatedAt: new Date().toISOString()
-    };
-    try {
-      localStorage.setItem(KEY, JSON.stringify(payload));
-      return true;
-    } catch (_) {
-      return false;
+  function getInfo() {
+    const w = Math.max(window.innerWidth || 0, document.documentElement?.clientWidth || 0);
+    const h = Math.max(window.innerHeight || 0, document.documentElement?.clientHeight || 0);
+    const ua = String(navigator.userAgent || '');
+    const platform = String(navigator.platform || '');
+    const touchPoints = Number(navigator.maxTouchPoints || 0);
+    const touch = touchPoints > 0;
+    const coarse = !!window.matchMedia?.('(pointer: coarse)').matches;
+    const hover = !!window.matchMedia?.('(hover: hover)').matches;
+
+    /* iPadOS can advertise itself as a Mac. Touch points are the key signal. */
+    const isIPadUA = /iPad/i.test(ua);
+    const isIPadOSDesktopUA = /Macintosh/i.test(ua) && touchPoints > 1;
+    const isAndroid = /Android/i.test(ua);
+    const isAndroidTablet = isAndroid && !/Mobile/i.test(ua);
+    const isIPhone = /iPhone|iPod/i.test(ua);
+    const isPhoneUA = isIPhone || (isAndroid && /Mobile/i.test(ua));
+    const isTabletUA = isIPadUA || isIPadOSDesktopUA || isAndroidTablet;
+
+    let device = 'desktop';
+    if (isPhoneUA) {
+      device = 'phone';
+    } else if (isTabletUA) {
+      device = 'tablet';
+    } else if (touch && coarse && w <= 1200) {
+      /* Covers other touch-first tablets whose UA is not distinctive. */
+      device = 'tablet';
+    } else if (w <= 700) {
+      /* Small browser windows behave best like phone layout. */
+      device = 'phone';
     }
+
+    let orientation = w >= h ? 'landscape' : 'portrait';
+    if (device === 'phone') orientation = 'portrait';
+
+    /* Keep layout=portrait/landscape for compatibility with existing CSS.
+     * view is the more specific presentation selected by the classifier. */
+    const view = device === 'phone'
+      ? 'phone'
+      : device === 'tablet'
+        ? `tablet-${orientation}`
+        : 'desktop';
+
+    return {
+      device,
+      layout: orientation,
+      view,
+      orientation,
+      width: w,
+      height: h,
+      touch,
+      coarse,
+      hover,
+      touchPoints,
+      isIPad: isIPadUA || isIPadOSDesktopUA,
+      isAndroid,
+      isTablet: device === 'tablet',
+      isPhone: device === 'phone',
+      isDesktop: device === 'desktop'
+    };
   }
 
-  function get() {
-    try {
+  function apply() {
+    const info = getInfo();
+    const signature = [
+      info.device, info.view, info.orientation,
+      info.width, info.height, info.touchPoints
+    ].join('|');
+
+    document.documentElement.dataset.sanaDevice = info.device;
+    document.documentElement.dataset.sanaLayout = info.layout;
+    document.documentElement.dataset.sanaView = info.view;
+    document.documentElement.dataset.sanaOrientation = info.orientation;
+    document.documentElement.dataset.sanaTouch = info.touch ? '1' : '0';
+    document.documentElement.dataset.sanaHover = info.hover ? '1' : '0';
+
+    document.body?.setAttribute('data-sana-device', info.device);
+    document.body?.setAttribute('data-sana-layout', info.layout);
+    document.body?.setAttribute('data-sana-view', info.view);
+    document.body?.setAttribute('data-sana-orientation', info.orientation);
+    document.body?.setAttribute('data-sana-touch', info.touch ? '1' : '0');
+    document.body?.setAttribute('data-sana-hover', info.hover ? '1' : '0');
+
+    const changed = signature !== state.lastSignature;
+    state.lastSignature = signature;
+
+    if (changed) {
+      window.dispatchEvent(new CustomEvent('sana:devicechange', { detail: info }));
+    }
+    return info;
+  }
+
+  function start() {
+    if (!document.body) return getInfo();
+    apply();
+    const refresh = () => apply();
+    window.addEventListener('resize', refresh, { passive: true });
+    window.addEventListener('orientationchange', () => setTimeout(refresh, 100), { passive: true });
+    return getInfo();
+  }
+
+  return Object.freeze({ getInfo, apply, start });
+})();
+
+window.initSanaDeviceDetection = window.initSanaDeviceDetection || (() => {
+  const start = () => window.READING_APP_CONFIG.DEVICE.start();
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', start, { once: true });
+  } else {
+    start();
+  }
+  return window.READING_APP_CONFIG.DEVICE;
+})();
+
+/* ============================================================
+ * مزامنة النص المشترك بين القراءة والإملاء
+ * القراءة هي المصدر الرئيسي، والإملاء يستقبل آخر نص مختار تلقائيًا.
+ * ============================================================ */
+window.READING_APP_CONFIG.SHARED_TEXT_KEY =
+  window.READING_APP_CONFIG.SHARED_TEXT_KEY || 'sana_current_learning_text_v1';
+
+window.sanaTextSync = window.sanaTextSync || (() => {
+  const KEY = window.READING_APP_CONFIG.SHARED_TEXT_KEY;
+  const listeners = new Set();
+
+  function get(){
+    try{
       const raw = localStorage.getItem(KEY);
-      if (!raw) return null;
-      const value = JSON.parse(raw);
-      if (!value || typeof value.text !== 'string' || !value.text.trim()) return null;
-      return value;
-    } catch (_) {
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){
       return null;
     }
   }
 
-  function onChange(callback) {
-    if (typeof callback !== 'function') return () => {};
-    const handler = event => {
-      if (event.key !== KEY || !event.newValue) return;
-      try {
-        const value = JSON.parse(event.newValue);
-        if (value && typeof value.text === 'string' && value.text.trim()) {
-          callback(value);
-        }
-      } catch (_) {}
+  function publish(text, meta={}){
+    const value = String(text || '').trim();
+    if(!value) return;
+    const payload = {
+      text: value,
+      name: String(meta.name || 'النص الحالي'),
+      textId: String(meta.textId || ''),
+      updatedAt: new Date().toISOString()
     };
-    window.addEventListener('storage', handler);
-    return () => window.removeEventListener('storage', handler);
+    try{ localStorage.setItem(KEY, JSON.stringify(payload)); }catch(e){}
+    listeners.forEach(fn => { try{ fn(payload); }catch(e){} });
   }
 
-  return Object.freeze({ key: KEY, publish, get, onChange });
+  function onChange(fn){
+    if(typeof fn !== 'function') return () => {};
+    listeners.add(fn);
+    return () => listeners.delete(fn);
+  }
+
+  window.addEventListener('storage', e => {
+    if(e.key !== KEY || !e.newValue) return;
+    try{
+      const payload = JSON.parse(e.newValue);
+      listeners.forEach(fn => { try{ fn(payload); }catch(err){} });
+    }catch(err){}
+  });
+
+  return Object.freeze({ KEY, get, publish, onChange });
 })();
 
 /* ============================================================

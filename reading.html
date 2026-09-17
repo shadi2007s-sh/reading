@@ -512,37 +512,112 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
   #readingRightSidebar .v10-grid{grid-template-columns:1fr}
 }
 
-@media(max-width:860px){
-  body{padding-bottom:24px}
+@media (min-width:701px) and (max-width:900px){
+  /* iPad / medium tablets: keep the three-column layout, but compact it. */
   #readingResponsiveLayout{
-    grid-template-columns:minmax(0,1fr);
-    grid-template-areas:"center" "left" "right";
-    gap:10px;
+    grid-template-columns:175px minmax(360px,1fr) 175px;
+    gap:8px;
     margin-top:8px;
   }
-  #readingLeftSidebar,#readingRightSidebar{
-    position:static;
-    max-height:none;
-    overflow:visible;
+  .reading-sidebar{
+    padding:9px;
+    border-radius:20px;
+    max-height:calc(100vh - 20px);
   }
-  .reading-sidebar-title{padding:2px 4px 0}
-  .reading-sidebar-title .side-toggle{display:block;}
-  .reading-sidebar-content{
-    display:none;
-    margin-top:10px;
+  .reading-sidebar-title{
+    font-size:.9rem;
+    padding:3px 4px 8px;
   }
-  .reading-sidebar.open .reading-sidebar-content{display:block}
-  #readingLeftSidebar .text-manager,
-  #readingLeftSidebar .top-actions,
-  #readingLeftSidebar .text-meta,
-  #readingLeftSidebar .side-inner-actions{
-    width:100%;
+  .reading-sidebar-title .side-icon{font-size:1.1rem}
+  #readingLeftSidebar .top-actions{gap:6px}
+  #readingRightSidebar .v10-grid{grid-template-columns:1fr}
+  #readingRightSidebar .v10-btn{
+    font-size:.82rem;
+    padding:9px 6px;
   }
-  #readingRightSidebar .v10-tools{display:block}
-  #readingRightSidebar .v10-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  #readingCenter .bigword{font-size:clamp(3.1rem,18vw,5rem)}
+  #readingRightSidebar .v10-panel{max-height:42vh}
+  #readingCenter .bigword{font-size:clamp(3rem,10vw,5rem)}
   #readingCenter .sheet{padding:20px 14px}
-  #readingCenter #text{font-size:clamp(1.55rem,5vw,2rem);text-align:center}
+  #readingCenter #text{font-size:clamp(1.55rem,3vw,2rem);text-align:center}
+}
+
+/* Device-aware rules: the JS classifier adds data-sana-device / data-sana-layout. */
+body[data-sana-device="tablet"][data-sana-layout="landscape"] #readingResponsiveLayout{
+  grid-template-columns:220px minmax(0,1fr) 250px;
+  grid-template-areas:"left center right";
+  gap:12px;
+}
+body[data-sana-device="tablet"][data-sana-layout="landscape"] .reading-sidebar{
+  padding:10px;
+}
+body[data-sana-device="tablet"][data-sana-layout="landscape"] .reading-sidebar-title{
+  font-size:.92rem;
+}
+body[data-sana-device="tablet"][data-sana-layout="landscape"] #readingRightSidebar .v10-btn{
+  font-size:.84rem;
+  padding:9px 7px;
+}
+body[data-sana-device="tablet"][data-sana-layout="landscape"] #readingRightSidebar .v10-grid{
+  grid-template-columns:1fr;
+}
+
+body[data-sana-device="tablet"][data-sana-layout="portrait"] #readingResponsiveLayout,
+body[data-sana-device="phone"] #readingResponsiveLayout{
+  grid-template-columns:minmax(0,1fr);
+  grid-template-areas:"center" "left" "right";
+  gap:10px;
+  margin-top:8px;
+}
+body[data-sana-device="tablet"][data-sana-layout="portrait"] #readingLeftSidebar,
+body[data-sana-device="tablet"][data-sana-layout="portrait"] #readingRightSidebar,
+body[data-sana-device="phone"] #readingLeftSidebar,
+body[data-sana-device="phone"] #readingRightSidebar{
+  position:static;
+  max-height:none;
+  overflow:visible;
+}
+body[data-sana-device="tablet"][data-sana-layout="portrait"] .reading-sidebar-title,
+body[data-sana-device="phone"] .reading-sidebar-title{
+  padding:2px 4px 0;
+}
+body[data-sana-device="tablet"][data-sana-layout="portrait"] .reading-sidebar-title .side-toggle,
+body[data-sana-device="phone"] .reading-sidebar-title .side-toggle{
+  display:block;
+}
+body[data-sana-device="tablet"][data-sana-layout="portrait"] .reading-sidebar-content,
+body[data-sana-device="phone"] .reading-sidebar-content{
+  display:none;
+  margin-top:10px;
+}
+body[data-sana-device="tablet"][data-sana-layout="portrait"] .reading-sidebar.open .reading-sidebar-content,
+body[data-sana-device="phone"] .reading-sidebar.open .reading-sidebar-content{
+  display:block;
+}
+body[data-sana-device="tablet"][data-sana-layout="portrait"] #readingRightSidebar .v10-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+body[data-sana-device="phone"] #readingRightSidebar .v10-grid{
+  grid-template-columns:repeat(2,minmax(0,1fr));
+}
+
+body[data-sana-device="tablet"] #readingCenter #text{
+  text-align:center;
+}
+body[data-sana-device="tablet"][data-sana-layout="portrait"] #readingCenter .bigword{
+  font-size:clamp(3.1rem,10vw,5rem);
+}
+body[data-sana-device="phone"] #readingCenter .bigword{
+  font-size:clamp(3.1rem,18vw,5rem);
+}
+body[data-sana-device="tablet"][data-sana-layout="portrait"] #readingCenter .sheet,
+body[data-sana-device="phone"] #readingCenter .sheet{
+  padding:20px 14px;
+}
+body[data-sana-device="tablet"][data-sana-layout="portrait"] #readingCenter #text{
+  font-size:clamp(1.6rem,4.1vw,2.2rem);
+}
+body[data-sana-device="phone"] #readingCenter #text{
+  font-size:clamp(1.55rem,5vw,2rem);
 }
 
 @media(max-width:560px){
@@ -2438,15 +2513,28 @@ renderTextMeta();
       });
     });
 
-    // Desktop: menus stay open. Mobile: keep text menu closed initially so the reading area comes first.
-    const mq=window.matchMedia('(max-width: 860px)');
-    const sync=()=>{
-      if(!mq.matches){
-        layout.querySelectorAll('.reading-sidebar').forEach(side=>side.classList.add('open'));
-      }
+    // Device detection is centralized in reading-app-config.js.
+    // This page only reacts to the selected device/layout.
+    const syncSidebars=(info)=>{
+      const compact = info.device === 'phone' || info.layout === 'tablet-portrait';
+      layout.querySelectorAll('.reading-sidebar').forEach(side=>{
+        const btn=side.querySelector('.side-toggle');
+        if(compact){
+          side.classList.remove('open');
+          btn?.setAttribute('aria-expanded','false');
+          if(btn) btn.textContent='فتح القائمة';
+        }else{
+          side.classList.add('open');
+          btn?.setAttribute('aria-expanded','true');
+          if(btn) btn.textContent='';
+        }
+      });
     };
-    mq.addEventListener?.('change',sync);
-    sync();
+
+    const deviceApi=window.READING_APP_CONFIG?.DEVICE;
+    const currentDevice=deviceApi?.apply?.() || deviceApi?.getInfo?.() || {device:'desktop',layout:'desktop'};
+    syncSidebars(currentDevice);
+    window.addEventListener('sana:devicechange', e=>syncSidebars(e.detail || currentDevice));
   }
 
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',setupResponsiveReadingLayout);
