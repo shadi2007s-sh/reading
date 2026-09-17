@@ -368,6 +368,205 @@ body>div:first-of-type a{border:0!important;background:#fff!important;color:#315
 .result-box{border-radius:18px}
 @media(max-width:700px){.card{padding:18px}.controls .row:first-child button{font-size:1rem}.controls{padding-left:8px;padding-right:8px}}
 </style>
+<style id="responsive-reading-layout-css">
+/* ============================================================
+   Responsive reading layout — centered text with side menus
+   Desktop: left = text library, center = reading, right = tools
+   Mobile: side menus collapse behind compact toggles
+   ============================================================ */
+#v8ReadSection .wrap{
+  max-width:1400px;
+}
+#readingResponsiveLayout{
+  display:grid;
+  grid-template-columns:260px minmax(420px,760px) 260px;
+  grid-template-areas:"left center right";
+  gap:18px;
+  align-items:start;
+  justify-content:center;
+  direction:ltr;
+  margin:12px auto 24px;
+}
+#readingCenter{
+  grid-area:center;
+  direction:rtl;
+  min-width:0;
+}
+#readingLeftSidebar{
+  grid-area:left;
+  direction:rtl;
+}
+#readingRightSidebar{
+  grid-area:right;
+  direction:rtl;
+}
+.reading-sidebar{
+  background:rgba(255,255,255,.94);
+  border:2px solid var(--kid-line);
+  border-radius:24px;
+  box-shadow:0 10px 24px rgba(40,75,95,.08);
+  padding:12px;
+  position:sticky;
+  top:14px;
+  max-height:calc(100vh - 28px);
+  overflow:auto;
+}
+.reading-sidebar-title{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  padding:4px 6px 10px;
+  font-size:1rem;
+  font-weight:800;
+  color:#31576c;
+}
+.reading-sidebar-title .side-icon{font-size:1.3rem}
+.reading-sidebar .side-toggle{
+  display:none;
+  width:100%;
+  box-shadow:none;
+  border-color:#cfe4ee;
+  background:#fff;
+}
+#readingLeftSidebar .text-manager{
+  margin:0 0 10px;
+}
+#readingLeftSidebar .top-actions{
+  grid-template-columns:1fr;
+  margin:8px 0;
+}
+#readingLeftSidebar .top-actions button{
+  width:100%;
+}
+#readingLeftSidebar .text-meta{
+  margin-top:8px;
+}
+#readingLeftSidebar .moreToolsRow{
+  margin-top:8px;
+}
+#readingRightSidebar .v10-tools{
+  max-width:none;
+  margin:0;
+  padding:0;
+  border:0;
+  box-shadow:none;
+  background:transparent;
+}
+#readingRightSidebar .v10-grid{
+  grid-template-columns:1fr;
+}
+#readingRightSidebar .v10-panel{
+  max-height:52vh;
+  overflow:auto;
+}
+#readingRightSidebar .side-card{
+  margin-top:10px;
+  background:#fafdff;
+  border:1px solid #d8e8f0;
+  border-radius:18px;
+  padding:9px;
+}
+#readingCenter .more-toggle-row{display:none!important}
+#readingCenter .card{
+  width:100%;
+  min-height:270px;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+}
+#readingCenter .sheet{
+  width:100%;
+}
+#readingCenter .mistakes{
+  width:100%;
+}
+#readingCenter #v8ReadControlsWrap{
+  margin-top:10px;
+}
+#readingCenter .controls{
+  position:static;
+  padding:0;
+  background:transparent;
+  backdrop-filter:none;
+}
+#readingCenter .controls .row{
+  max-width:none;
+}
+#readingCenter .controls .settings-hint{display:none}
+#readingCenter .heard{margin-left:0;margin-right:0}
+
+/* Keep child intro and parent dashboard outside the three-column reading area */
+#v8ReadSection>.wrap>header{
+  max-width:760px;
+  margin-left:auto;
+  margin-right:auto;
+}
+
+@media(max-width:1080px){
+  #readingResponsiveLayout{
+    grid-template-columns:220px minmax(380px,680px) 220px;
+    gap:12px;
+  }
+  .reading-sidebar{padding:10px}
+  #readingRightSidebar .v10-grid{grid-template-columns:1fr}
+}
+
+@media(max-width:860px){
+  body{padding-bottom:24px}
+  #readingResponsiveLayout{
+    grid-template-columns:minmax(0,1fr);
+    grid-template-areas:"center" "left" "right";
+    gap:10px;
+    margin-top:8px;
+  }
+  #readingLeftSidebar,#readingRightSidebar{
+    position:static;
+    max-height:none;
+    overflow:visible;
+  }
+  .reading-sidebar-title{padding:2px 4px 0}
+  .reading-sidebar-title .side-toggle{display:block;}
+  .reading-sidebar-content{
+    display:none;
+    margin-top:10px;
+  }
+  .reading-sidebar.open .reading-sidebar-content{display:block}
+  #readingLeftSidebar .text-manager,
+  #readingLeftSidebar .top-actions,
+  #readingLeftSidebar .text-meta,
+  #readingLeftSidebar .side-inner-actions{
+    width:100%;
+  }
+  #readingRightSidebar .v10-tools{display:block}
+  #readingRightSidebar .v10-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  #readingCenter .bigword{font-size:clamp(3.1rem,18vw,5rem)}
+  #readingCenter .sheet{padding:20px 14px}
+  #readingCenter #text{font-size:clamp(1.55rem,5vw,2rem);text-align:center}
+}
+
+@media(max-width:560px){
+  #readingResponsiveLayout{gap:8px}
+  #readingCenter .card{min-height:230px;padding:14px}
+  #readingCenter .ghostw{font-size:1rem}
+  #readingCenter .bigword{font-size:clamp(2.8rem,19vw,4.5rem)}
+  #readingCenter .mode-strip,
+  #readingCenter .pause-bar{gap:5px}
+  #readingCenter .controls .row{gap:6px}
+  #readingCenter .controls button{font-size:.9rem;padding:10px 6px}
+  #readingRightSidebar .v10-grid{grid-template-columns:1fr 1fr}
+  #readingLeftSidebar .top-actions{grid-template-columns:1fr 1fr}
+}
+
+@media(max-width:420px){
+  #readingCenter .controls .row{flex-wrap:wrap}
+  #readingCenter .controls .row button{min-width:31%}
+  #readingCenter .controls .row:first-child button.mic{min-width:100%}
+  #readingCenter .controls .row:first-child{flex-direction:column}
+  #readingCenter .controls .row:first-child button{width:100%}
+  #readingLeftSidebar .top-actions{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
 <div style="max-width:860px;margin:0 auto 10px;text-align:center">
@@ -2115,5 +2314,145 @@ renderTextMeta();
 
 
 </script>
+
+<script id="responsive-reading-layout-js">
+(() => {
+  function setupResponsiveReadingLayout(){
+    const section=document.getElementById('v8ReadSection');
+    const wrap=section?.querySelector(':scope > .wrap');
+    if(!section || !wrap || document.getElementById('readingResponsiveLayout')) return;
+
+    const morePanel=document.getElementById('moreToolsPanel');
+    const v10=document.getElementById('v10ToolsWrap');
+    const moreBtn=document.getElementById('moreToolsBtn');
+    const moreRow=moreBtn?.closest('.more-toggle-row');
+    const coach=document.getElementById('coachPanelsBtn');
+    const dashboard=document.getElementById('v9Dashboard');
+
+    // The central reading area keeps only the learning/reading experience.
+    const center=document.createElement('div');
+    center.id='readingCenter';
+
+    const layout=document.createElement('div');
+    layout.id='readingResponsiveLayout';
+
+    const left=document.createElement('aside');
+    left.id='readingLeftSidebar';
+    left.className='reading-sidebar';
+    left.innerHTML=`
+      <div class="reading-sidebar-title">
+        <span><span class="side-icon">📚</span> النصوص</span>
+        <button type="button" class="side-toggle" aria-expanded="false">فتح القائمة</button>
+      </div>
+      <div class="reading-sidebar-content" id="readingLeftContent"></div>`;
+
+    const right=document.createElement('aside');
+    right.id='readingRightSidebar';
+    right.className='reading-sidebar';
+    right.innerHTML=`
+      <div class="reading-sidebar-title">
+        <span><span class="side-icon">⚙️</span> الإعدادات والأدوات</span>
+        <button type="button" class="side-toggle" aria-expanded="false">فتح القائمة</button>
+      </div>
+      <div class="reading-sidebar-content" id="readingRightContent"></div>`;
+
+    const leftContent=left.querySelector('#readingLeftContent');
+    const rightContent=right.querySelector('#readingRightContent');
+
+    if(morePanel){
+      morePanel.classList.remove('hide');
+      morePanel.style.removeProperty('display');
+      if(moreRow) moreRow.style.display='none';
+
+      // Left rail: saved texts only.
+      const textManager=morePanel.querySelector('.text-manager');
+      if(textManager) leftContent.appendChild(textManager);
+      const savedCount=morePanel.querySelector('#savedCount');
+      // savedCount lives inside text-manager; keep this guard for future markup changes.
+
+      // Right rail: progress, sharing and reading tools.
+      const topActions=morePanel.querySelector('.top-actions');
+      if(topActions) rightContent.appendChild(topActions);
+      const textMeta=morePanel.querySelector('#textMeta');
+      if(textMeta) rightContent.appendChild(textMeta);
+      Array.from(morePanel.children).forEach(child=>{
+        if(child===textManager || child===topActions || child===textMeta) return;
+        // The remaining .row contains recording, voice, diagnostics and edit actions.
+        rightContent.appendChild(child);
+      });
+      morePanel.remove();
+    }
+
+    // Advanced/parent tools stay in the right rail and keep their existing behavior.
+    if(v10){ rightContent.appendChild(v10); }
+    if(coach){
+      const coachWrap=document.createElement('div');
+      coachWrap.className='side-card';
+      coachWrap.appendChild(coach);
+      rightContent.prepend(coachWrap);
+    }
+    if(dashboard){
+      rightContent.appendChild(dashboard);
+    }
+
+    // Move the actual reading content into the center column.
+    const centerIds=['cardView','fullView','fill','mode-strip','pause-bar','heard','azureSecureStatus','mistakesBox','v8ReadControlsWrap'];
+    const centerNodes=[];
+    for(const id of centerIds){
+      const el=id==='fill' ? document.getElementById('fill')?.closest('.bar') :
+               id==='mode-strip' ? wrap.querySelector('.mode-strip') :
+               id==='pause-bar' ? wrap.querySelector('.pause-bar') :
+               document.getElementById(id);
+      if(el && !centerNodes.includes(el)) centerNodes.push(el);
+    }
+
+    // Capture all content after the header/banner that belongs to the reading experience.
+    const header=wrap.querySelector('header');
+    const banner=document.getElementById('banner');
+    if(header) center.appendChild(header);
+    if(banner) center.appendChild(banner);
+    centerNodes.forEach(el=>center.appendChild(el));
+
+    // Any remaining direct children are moved into center, except the side/menu pieces.
+    Array.from(wrap.children).forEach(el=>{
+      if(el===header || el===banner || el===moreRow || el===morePanel) return;
+      if(el.classList.contains('mistakes') || el.id==='v8ReadControlsWrap' || el.id==='cardView' || el.id==='fullView' || el.classList.contains('bar') || el.classList.contains('mode-strip') || el.classList.contains('pause-bar') || el.id==='heard' || el.id==='azureSecureStatus') return;
+      // Keep anything else in center so existing dialogs/scripts are not affected.
+      if(el.parentElement===wrap) center.appendChild(el);
+    });
+
+    layout.appendChild(left);
+    layout.appendChild(center);
+    layout.appendChild(right);
+    wrap.parentNode.insertBefore(layout, wrap);
+    wrap.style.display='none';
+
+    // Mobile accordion behavior.
+    layout.querySelectorAll('.reading-sidebar').forEach(side=>{
+      const btn=side.querySelector('.side-toggle');
+      const content=side.querySelector('.reading-sidebar-content');
+      btn?.addEventListener('click',()=>{
+        const open=side.classList.toggle('open');
+        btn.setAttribute('aria-expanded',String(open));
+        btn.textContent=open?'إغلاق القائمة':'فتح القائمة';
+      });
+    });
+
+    // Desktop: menus stay open. Mobile: keep text menu closed initially so the reading area comes first.
+    const mq=window.matchMedia('(max-width: 860px)');
+    const sync=()=>{
+      if(!mq.matches){
+        layout.querySelectorAll('.reading-sidebar').forEach(side=>side.classList.add('open'));
+      }
+    };
+    mq.addEventListener?.('change',sync);
+    sync();
+  }
+
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',setupResponsiveReadingLayout);
+  else setupResponsiveReadingLayout();
+})();
+</script>
+
 </body>
 </html>
