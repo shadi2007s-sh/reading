@@ -1119,6 +1119,7 @@ function selectSavedText(id, autoStart=true){
   const t=TextManager.select(id); if(!t)return;
   renderTextSelector();
   stopAll(); build(t.text); resetLessonStats(); say('📖 النص المختار: '+t.name);
+  syncSharedText();
   const ta=$('ta'),name=$('textName'); if(ta)ta.value=t.text; if(name)name.value=t.name;
 }
 function openTextManager(){
@@ -1131,7 +1132,20 @@ function createSavedText(){
   if(!text){say('اكتبي نصًا أولًا.');return;}
   const t=TextManager.create(name, text);
   renderTextSelector(); build(t.text); resetLessonStats(); say('✅ تم حفظ النص: '+name);
+  syncSharedText();
 }
+function syncSharedText(){
+  try{
+    localStorage.setItem('readingAppSharedText', JSON.stringify({
+      name: TextManager.current?.name || '',
+      text: TextManager.current?.text || ''
+    }));
+  }catch(e){}
+}
+
+$('ta')?.addEventListener('input',()=>{
+  try{ localStorage.setItem('readingAppSharedText', JSON.stringify({name:$('textName')?.value||'', text:$('ta')?.value||''})); }catch(e){}
+});
 function updateSavedText(){
   const text=($('ta').value||'').trim();
   if(!text){say('اكتبي نصًا أولًا.');return;}
@@ -1150,7 +1164,7 @@ function useManagedText(){
   const text=($('ta').value||'').trim(); if(!text){say('اكتبي نصًا أولًا.');return;}
   const entry={...TextManager.current, name:(($('textName').value||'').trim()||TextManager.current.name||'نص جديد'), text};
   TextManager.upsert(entry);
-  renderTextSelector(); build(text); resetLessonStats(); say('📖 تم استخدام النص: '+TextManager.current.name); $('dlg').close();
+  renderTextSelector(); build(text); resetLessonStats(); syncSharedText(); say('📖 تم استخدام النص: '+TextManager.current.name); $('dlg').close();
 }
 function recordWrong(target){appState.wrong++;appState.attempts++;appState.streak=0;appState.wordCount=(appState.wordCount||0)+1; const k=norm(target); appState.mistakes[k]=(appState.mistakes[k]||0)+1;saveState();renderDashboard();}
 function recordCorrect(target){appState.correct++;appState.attempts++;appState.streak++;appState.wordCount=(appState.wordCount||0)+1;appState.best=Math.max(appState.best,appState.streak);saveState();renderDashboard();}
@@ -1929,7 +1943,7 @@ async function importTexts(file){
       }
     });
     TextManager.current=TextManager.list[0];
-    TextManager.save(); renderTextSelector(); build(TextManager.current.text); resetLessonStats(); say('✅ تم استرجاع النصوص.');
+    TextManager.save(); renderTextSelector(); build(TextManager.current.text); resetLessonStats(); syncSharedText(); say('✅ تم استرجاع النصوص.');
   }catch(e){say('❌ ملف النصوص غير صالح.');}
 }
 function shareCurrentText(){
@@ -2113,6 +2127,7 @@ loadAzureConfig();
 engine='azure';
 loadTexts();
 build(TextManager.current.text);
+try{localStorage.setItem('readingAppSharedText', JSON.stringify({name:TextManager.current?.name||'', text:TextManager.current?.text||''}));}catch(e){}
 $('reviewBtn').onclick=()=>{ $('win').classList.remove('show'); renderMistakes(); const first=Object.keys(appState.mistakes||{})[0]; if(first){const i=words.findIndex(w=>norm(w)===first); if(i>=0){idx=i;paint();}} };
 window.addEventListener('beforeunload',saveState);
 restoreDashboard();
