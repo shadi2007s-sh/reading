@@ -7,12 +7,72 @@ window.READING_APP_CONFIG = window.READING_APP_CONFIG || {
   TOKEN_ENDPOINT: 'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token',
   REGION: 'eastus',
   VOICE: 'ar-JO-SanaNeural',
-  SDK_URL: 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'
+  SDK_URL: 'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js',
+  // النص المشترك: صفحة القراءة هي المصدر، والإملاء يقرأ آخر نص محفوظ هنا.
+  SHARED_TEXT_KEY: 'sana_current_learning_text_v1'
 };
 
 // أسماء بديلة يستخدمها كل ملف تاريخيًا — تشير كلها لنفس الكائن أعلاه،
 // حتى لا نضطر لتعديل بقية الكود في كل صفحة.
 window.DICTATION_APP_CONFIG = window.READING_APP_CONFIG;
+
+
+
+/* ============================================================
+ * النص المشترك بين القراءة والإملاء
+ * القراءة = المصدر الرئيسي
+ * الإملاء = يستهلك آخر نص محفوظ تلقائيًا
+ * ============================================================ */
+window.sanaTextSync = window.sanaTextSync || (() => {
+  const CONFIG = window.READING_APP_CONFIG;
+  const KEY = CONFIG.SHARED_TEXT_KEY;
+
+  function publish(text, meta = {}) {
+    const value = String(text || '').trim();
+    if (!value) return false;
+    const payload = {
+      text: value,
+      name: String(meta.name || ''),
+      textId: String(meta.textId || ''),
+      updatedAt: new Date().toISOString()
+    };
+    try {
+      localStorage.setItem(KEY, JSON.stringify(payload));
+      return true;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  function get() {
+    try {
+      const raw = localStorage.getItem(KEY);
+      if (!raw) return null;
+      const value = JSON.parse(raw);
+      if (!value || typeof value.text !== 'string' || !value.text.trim()) return null;
+      return value;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function onChange(callback) {
+    if (typeof callback !== 'function') return () => {};
+    const handler = event => {
+      if (event.key !== KEY || !event.newValue) return;
+      try {
+        const value = JSON.parse(event.newValue);
+        if (value && typeof value.text === 'string' && value.text.trim()) {
+          callback(value);
+        }
+      } catch (_) {}
+    };
+    window.addEventListener('storage', handler);
+    return () => window.removeEventListener('storage', handler);
+  }
+
+  return Object.freeze({ key: KEY, publish, get, onChange });
+})();
 
 /* ============================================================
  * التنقل المركزي بين صفحات التطبيق

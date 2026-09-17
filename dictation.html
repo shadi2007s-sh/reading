@@ -499,7 +499,20 @@ $('againWrong').onclick = ()=>{
 $('againAll').onclick = ()=>{ $('win').classList.remove('show'); build(words.join(' ')); };
 function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
 if(window.speechSynthesis) speechSynthesis.onvoiceschanged = ()=>{};
-build(DEFAULT_TEXT);
+
+// القراءة هي المصدر الرئيسي للنص. عند فتح الإملاء نستخدم آخر نص محفوظ،
+// وأي تغيير جديد من صفحة القراءة يصل هنا تلقائيًا عبر storage event.
+const initialSharedText = window.sanaTextSync?.get?.();
+build(initialSharedText?.text || DEFAULT_TEXT);
+if(window.sanaTextSync?.onChange){
+  window.sanaTextSync.onChange(shared => {
+    const incoming = String(shared?.text || '').trim();
+    if(!incoming) return;
+    build(incoming);
+    msg('🔄 تم تحديث النص تلقائيًا من تدريب القراءة.');
+    setTimeout(()=>say(target(), rate), 120);
+  });
+}
 </script>
 
 </body>

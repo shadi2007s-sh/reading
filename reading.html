@@ -1028,11 +1028,15 @@ const TextManager = {
     if(!this.list.length){ this.list=[{id:uid(), name:'النص الافتراضي', text: DEFAULT_TEXT}]; }
     let selected=''; try{ selected = localStorage.getItem(this.SELECTED_KEY)||''; }catch(e){}
     this.current = this.list.find(x=>x.id===selected) || this.list[0];
+    try{
+      window.sanaTextSync?.publish(this.current.text, {name:this.current.name, textId:this.current.id});
+    }catch(e){}
   },
   save(){
     try{
       localStorage.setItem(this.STORAGE_KEY, JSON.stringify(this.list));
       localStorage.setItem(this.SELECTED_KEY, this.current.id);
+      window.sanaTextSync?.publish(this.current.text, {name:this.current.name, textId:this.current.id});
     }catch(e){}
   },
   findIndex(id){ return this.list.findIndex(x=>x.id===id); },
