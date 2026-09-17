@@ -89,8 +89,8 @@
   .hide{display:none}
   .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
 </style>
-<script>window.DICTATION_APP_CONFIG={TOKEN_ENDPOINT:'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token',REGION:'eastus',VOICE:'ar-JO-SanaNeural',SDK_URL:'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'};
-window.__azureSdkPromise=null;
+<script src="reading-app-config.js"></script>
+<script>window.__azureSdkPromise=null;
 window.loadAzureSdk=function(){
   if(window.SpeechSDK) return Promise.resolve(window.SpeechSDK);
   if(window.__azureSdkPromise) return window.__azureSdkPromise;
@@ -105,18 +105,9 @@ window.loadAzureSdk=function(){
   });
   return window.__azureSdkPromise;
 };
-</script>
-<style id="child-friendly-redesign-dictation">
-:root{--kid-blue:#67b8e9;--kid-green:#61c391;--kid-yellow:#ffd568;--kid-ink:#253844;--kid-line:#d8e8f0}
-body{background:linear-gradient(180deg,#edf8ff 0,#fffaf1 62%,#f3fff8 100%);color:var(--kid-ink)}
-body>div:first-of-type{max-width:860px!important;margin:0 auto 10px!important}.back{font-size:.92rem}
-body>div:first-of-type a{border:0!important;background:#fff!important;color:#31576c!important;box-shadow:0 7px 0 #c9e2ee!important;border-radius:18px!important;padding:12px!important}
-.wrap{max-width:860px}.card{background:#fffdf8;border:3px solid #e7e0cf;border-radius:30px;box-shadow:0 18px 36px rgba(40,75,95,.12);padding:22px}.modes{gap:8px;margin-bottom:12px}.modes button{border-color:var(--kid-line);box-shadow:0 3px 0 #e4eef3;border-radius:17px;background:#fff}.modes button.act{background:#4f9fcb;color:#fff;border-color:#3f81a5}
-.stats .pill{border-color:var(--kid-line);box-shadow:0 3px 0 #e4eef3}.counter{font-size:1rem}.slots{color:#b7cbd6;font-size:2.2rem}.msg{background:#eef8ff;border:2px solid #cfe7f5;border-radius:16px;padding:9px}.bar{height:13px;background:#e5eef2}.bar i{background:linear-gradient(90deg,#ffd568,#61c391)}input#ans{border-color:#cfe4ee;background:#fff;font-size:2.25rem;border-radius:18px}#tileBox{border-color:#cfe4ee;border-radius:18px}.tiles button{border-color:#cfe4ee;box-shadow:0 3px 0 #bcd7e5;background:#fff;border-radius:12px}.controls{background:linear-gradient(to top,rgba(237,248,255,.98) 76%,rgba(237,248,255,0));backdrop-filter:blur(6px);padding:9px 10px calc(10px + env(safe-area-inset-bottom))}.controls button{border-color:#bcd7e5;box-shadow:0 4px 0 #bcd7e5;border-radius:16px}.controls button.main{background:#61c391;border-color:#3c9368;box-shadow:0 4px 0 #3c9368}.controls button.hear{background:#67b8e9;border-color:#3f88b4;box-shadow:0 4px 0 #3f88b4}.controls button.ghost{box-shadow:none}.reveal{color:#3f9c6d}.win>div{max-width:620px;background:rgba(255,255,255,.12);border-radius:28px;padding:26px}@media(max-width:700px){.card{padding:17px}.modes button{font-size:.9rem;padding:10px 7px}.controls{padding-left:7px;padding-right:7px}}
-</style>
-</head>
+</script></head>
 <body><div style="max-width:760px;margin:0 auto 10px;display:flex;gap:8px;"><a href="reading_app_reading.html" style="display:block;flex:1;text-align:center;text-decoration:none;background:#fff;border:2px solid #d9cdb2;border-radius:14px;padding:10px;font-weight:800;color:#2f3437;box-shadow:0 3px 0 #d9cdb2;">📖 الانتقال إلى تدريب القراءة</a></div>
-<div style="max-width:860px;margin:8px auto 10px;text-align:center;background:#fff;border:2px solid #d8e8f0;border-radius:22px;padding:12px 16px;box-shadow:0 8px 18px rgba(40,75,95,.07)"><div style="font-size:1.5rem">⭐ وقت الإملاء!</div><div style="color:#6c7d86;font-size:.95rem">اسمعي الكلمة 🔊 واكتبيها بهدوء ✍️ ثم اضغطي تحقّقي.</div></div><div class="wrap">
+<div class="wrap">
 <header>
 <h1>تدريب <span>الإملاء</span> ✍️</h1>
 <div class="stats">
@@ -505,20 +496,9 @@ $('againWrong').onclick = ()=>{
   say(target(), rate);
 };
 $('againAll').onclick = ()=>{ $('win').classList.remove('show'); build(words.join(' ')); };
-function loadSharedText(){
-  try{
-    const raw=localStorage.getItem('readingAppSharedText');
-    if(!raw)return false;
-    const data=JSON.parse(raw);
-    const text=String(data?.text||'').trim();
-    if(!text)return false;
-    build(text);
-    return true;
-  }catch(e){ return false; }
-}
-function applyText(){ const v=$('ta').value.trim(); if(v){ build(v); try{ localStorage.setItem('readingAppSharedText', JSON.stringify({name:'', text:v})); }catch(e){} } $('dlg').close(); }
+function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
 if(window.speechSynthesis) speechSynthesis.onvoiceschanged = ()=>{};
-if(!loadSharedText()) build(DEFAULT_TEXT);
+build(DEFAULT_TEXT);
 </script>
 
 </body>
