@@ -89,8 +89,8 @@
   .hide{display:none}
   .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
 </style>
-<script src="reading-app-config.js"></script>
-<script>window.__azureSdkPromise=null;
+<script>window.DICTATION_APP_CONFIG={TOKEN_ENDPOINT:'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token',REGION:'eastus',VOICE:'ar-JO-SanaNeural',SDK_URL:'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'};
+window.__azureSdkPromise=null;
 window.loadAzureSdk=function(){
   if(window.SpeechSDK) return Promise.resolve(window.SpeechSDK);
   if(window.__azureSdkPromise) return window.__azureSdkPromise;
@@ -106,7 +106,7 @@ window.loadAzureSdk=function(){
   return window.__azureSdkPromise;
 };
 </script></head>
-<body><div style="max-width:760px;margin:0 auto 10px;display:flex;gap:8px;"><a href="reading_app_reading.html" style="display:block;flex:1;text-align:center;text-decoration:none;background:#fff;border:2px solid #d9cdb2;border-radius:14px;padding:10px;font-weight:800;color:#2f3437;box-shadow:0 3px 0 #d9cdb2;">📖 الانتقال إلى تدريب القراءة</a></div>
+<body><div style="max-width:760px;margin:0 auto 10px;display:flex;gap:8px;"><a href="reading_app_reading_phase31_error_capture.html" style="display:block;flex:1;text-align:center;text-decoration:none;background:#fff;border:2px solid #d9cdb2;border-radius:14px;padding:10px;font-weight:800;color:#2f3437;box-shadow:0 3px 0 #d9cdb2;">📖 الانتقال إلى تدريب القراءة</a></div>
 <div class="wrap">
 <header>
 <h1>تدريب <span>الإملاء</span> ✍️</h1>
