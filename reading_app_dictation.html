@@ -89,8 +89,8 @@
   .hide{display:none}
   .confetti{position:fixed;top:-20px;width:10px;height:16px;z-index:10;pointer-events:none;border-radius:2px}
 </style>
-<script>window.DICTATION_APP_CONFIG={TOKEN_ENDPOINT:'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token',REGION:'eastus',VOICE:'ar-JO-SanaNeural',SDK_URL:'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'};
-window.__azureSdkPromise=null;
+<script src="reading-app-config.js"></script>
+<script>window.__azureSdkPromise=null;
 window.loadAzureSdk=function(){
   if(window.SpeechSDK) return Promise.resolve(window.SpeechSDK);
   if(window.__azureSdkPromise) return window.__azureSdkPromise;
@@ -177,7 +177,6 @@ window.loadAzureSdk=function(){
 <dialog id="dlg">
 <h3 style="margin-top:0">غيّري النص</h3>
 <textarea id="ta"></textarea>
-<div id="readingSharedStatus" style="margin-top:7px;font-size:.82rem;color:#2f8f5b;font-weight:700;min-height:1.2em;text-align:center"></div>
 <div class="row" style="margin-top:10px">
 <button onclick="applyText()">حفظ وابدأ</button>
 <button class="ghost" onclick="document.getElementById('dlg').close()">إلغاء</button>
@@ -497,24 +496,9 @@ $('againWrong').onclick = ()=>{
   say(target(), rate);
 };
 $('againAll').onclick = ()=>{ $('win').classList.remove('show'); build(words.join(' ')); };
-function loadReadingTextAutomatically(){
-  const KEY='readingAppSharedTextV1';
-  try{
-    const raw=localStorage.getItem(KEY);
-    if(!raw) return;
-    const data=JSON.parse(raw);
-    const text=String(data?.text||'').trim();
-    if(!text) return;
-    build(text);
-    const name=String(data?.name||'النص من تدريب القراءة').trim();
-    const status=$('readingSharedStatus');
-    if(status) status.textContent='📖 تم نقل النص مباشرة من تدريب القراءة'+(name?' — '+name:'');
-  }catch(e){}
-}
 function applyText(){ const v=$('ta').value.trim(); if(v) build(v); $('dlg').close(); }
 if(window.speechSynthesis) speechSynthesis.onvoiceschanged = ()=>{};
 build(DEFAULT_TEXT);
-loadReadingTextAutomatically();
 </script>
 
 </body>

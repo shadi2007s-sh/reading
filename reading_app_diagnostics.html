@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html dir="rtl" lang="ar">
 <head>
+<script src="reading-app-config.js"></script>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>فحص النظام — مدرّب القراءة</title>
@@ -466,10 +467,12 @@ addCheck('groupAzure','ttsTest','نطق Sana');
 addCheck('groupAzure','sttTest','تحويل صوتك إلى نص');
 
 /* ============================================================
-   5. CONFIG — mirrors the reading app
+   5. CONFIG — loaded from reading-app-config.js (shared with the
+      reading and dictation pages). Fallback only covers the case
+      where that file failed to load.
    ============================================================ */
 const CONFIG = window.READING_APP_CONFIG || {
-  TOKEN_ENDPOINT:'https://reading-speech-api-e9hbc8fscfaxacgv.israelcentral-01.azurewebsites.net/api/speech-token',
+  TOKEN_ENDPOINT:'',
   REGION:'eastus',
   VOICE:'ar-JO-SanaNeural',
   SDK_URL:'https://cdn.jsdelivr.net/npm/microsoft-cognitiveservices-speech-sdk@1.46.0/distrib/browser/microsoft.cognitiveservices.speech.sdk.bundle-min.js'
